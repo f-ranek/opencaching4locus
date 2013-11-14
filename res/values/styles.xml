@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <style name="Theme.Transparent" parent="android:Theme">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+<!--
+    <shape name="gradient_edt_focused" 
+        android:shape="rectangle">
+        <stroke android:width="1dip" android:color="@color/color_edit_error" />
+        <solid android:color="#00000000" />
+    </shape>
+    
+    <selector  > 
+<item android:state_pressed="true" android:drawable="@layout/gradient_edt_pressed"/>
+<item android:state_focused="true" android:drawable="@layout/gradient_edt_focused"/>
+<item android:drawable="@layout/gradient_edt_default"/>
+</selector>-->
+
+</resources>

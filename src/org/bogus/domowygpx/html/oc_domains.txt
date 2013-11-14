@@ -1,0 +1,6 @@
+# List of OpenCaching domains
+opencaching.pl
+opencaching.de
+opencaching.us
+opencaching.nl
+opencaching.org.uk

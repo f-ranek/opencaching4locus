@@ -1,0 +1,7 @@
+# Path patterns that indicate shared (meta) images
+\Qlib/tinymce/plugins/
+\Qimages/cacheatr/
+\Qimages/avatars/
+\Qimages/attributes/
+images/[^/]+$
+\Qtpl/stdstyle/images/log/

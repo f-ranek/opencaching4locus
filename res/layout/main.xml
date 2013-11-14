@@ -1,0 +1,470 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content" >
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:text="@string/info1"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <TableLayout
+            android:id="@+id/tableLayout1"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:shrinkColumns="1"
+            android:stretchColumns="1" >
+
+            <TableRow
+                android:id="@+id/tableRowLatitude"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" >
+
+                <TextView
+                    android:id="@+id/textViewLatitude"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:paddingRight="10dp"
+                    android:text="@string/latitude"
+                    android:textAppearance="?android:attr/textAppearanceMedium" >
+                </TextView>
+
+                <EditText
+                    android:id="@+id/editLatitude"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/hintGeoData"
+                    android:inputType="textNoSuggestions"
+                    android:maxLines="1"
+                    android:nextFocusDown="@+id/editLongitude" >
+                </EditText>
+            </TableRow>
+
+            <TableRow
+                android:id="@+id/tableRowLongitude"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" >
+
+                <TextView
+                    android:id="@+id/textViewLongitude"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:paddingRight="10dp"
+                    android:text="@string/longitude"
+                    android:textAppearance="?android:attr/textAppearanceMedium" >
+                </TextView>
+
+                <LinearLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" >
+
+                    <EditText
+                        android:id="@+id/editLongitude"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/hintGeoData"
+                        android:inputType="textNoSuggestions"
+                        android:maxLines="1"
+                        android:nextFocusDown="@+id/editMaxNumOfCaches" />
+
+                    <TextView
+                        android:id="@+id/errorLocation"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingRight="10dp"
+                        android:text="@string/errorPlaceholderText"
+                        android:textAppearance="?android:attr/textAppearanceSmall" />
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow
+                android:id="@+id/tableRowGetLocationFromGps"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" >
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingRight="10dp"
+                    android:textAppearance="?android:attr/textAppearanceMedium" >
+                </TextView>
+
+                <Button
+                    android:id="@+id/btnGetLocationFromGps"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:nextFocusUp="@string/btnGetLocationFromGps"
+                    android:onClick="onBtnGetLocationFromGpsClicked"
+                    android:text="@string/getLocationFromGps"
+                    android:textAppearance="?android:attr/textAppearanceMediumInverse" />
+            </TableRow>
+
+            <TableRow
+                android:id="@+id/tableRowMaxNumOfCaches"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" >
+
+                <TextView
+                    android:id="@+id/textViewMaxNumOfCaches"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:paddingRight="10dp"
+                    android:text="@string/maxNumOfCaches"
+                    android:textAppearance="?android:attr/textAppearanceMedium" >
+                </TextView>
+
+                <LinearLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" >
+
+                    <EditText
+                        android:id="@+id/editMaxNumOfCaches"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/hintMaxNumOfCaches"
+                        android:inputType="number"
+                        android:maxLines="1"
+                        android:nextFocusDown="@+id/editMaxCacheDistance"
+                        android:text="@string/maxNumOfCachesDefault" />
+
+                    <TextView
+                        android:id="@+id/errorMaxNumOfCaches"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingRight="10dp"
+                        android:text="@string/errorPlaceholderText"
+                        android:textAppearance="?android:attr/textAppearanceSmall" />
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow
+                android:id="@+id/tableRowMaxCacheDistance"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" >
+
+                <TextView
+                    android:id="@+id/textViewMaxCacheDistance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="fill_parent"
+                    android:layout_gravity="center_vertical"
+                    android:gravity="center_vertical"
+                    android:maxWidth="80dp"
+                    android:paddingRight="10dp"
+                    android:text="@string/maxCacheDistance" />
+
+                <LinearLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" >
+
+                    <EditText
+                        android:id="@+id/editMaxCacheDistance"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/hintMaxCacheDistance"
+                        android:inputType="textNoSuggestions"
+                        android:maxLines="1"
+                        android:nextFocusDown="@+id/editTargetFileName" />
+
+                    <TextView
+                        android:id="@+id/errorMaxCacheDistance"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingRight="10dp"
+                        android:text="@string/errorPlaceholderText"
+                        android:textAppearance="?android:attr/textAppearanceSmall" />
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow
+                android:id="@+id/tableRowTargetFileName"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" >
+
+                <TextView
+                    android:id="@+id/textViewTargetFileName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:paddingRight="10dp"
+                    android:text="@string/targetFileName"
+                    android:textAppearance="?android:attr/textAppearanceMedium" />
+
+                <LinearLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" >
+
+                    <EditText
+                        android:id="@+id/editTargetFileName"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/hintTargetFileName"
+                        android:inputType="textMultiLine"
+                        android:nextFocusDown="@+id/editTargetDirName"
+                        android:textAppearance="?android:attr/textAppearanceSmallInverse" >
+
+                    </EditText>
+
+                    <TextView
+                        android:id="@+id/errorTargetFileName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingRight="10dp"
+                        android:text="@string/errorPlaceholderText"
+                        android:textAppearance="?android:attr/textAppearanceSmall" />
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow
+                android:id="@+id/tableRowDownloadImagesStrategy"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" >
+
+                <TextView
+                    android:id="@+id/textViewDownloadImagesStrategy"
+                    android:layout_width="match_parent"
+                    android:layout_height="fill_parent"
+                    android:gravity="center_vertical"
+                    android:maxWidth="80dp"
+                    android:paddingRight="10dp"
+                    android:text="@string/downloadImagesStrategy"
+                    android:textAppearance="?android:attr/textAppearanceMedium" />
+
+                <RadioGroup
+                    android:id="@+id/radioDownloadImagesStrategy"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" >
+
+                    <RadioButton
+                        android:id="@+id/radioDownloadImagesStrategyAlways"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:tag="always"
+                        android:text="@string/downloadImagesStrategyAlways"
+                        android:textAppearance="?android:attr/textAppearance" />
+
+                    <RadioButton
+                        android:id="@+id/radioDownloadImagesStrategyOnlyWiFi"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:tag="onlyOnWIFI"
+                        android:text="@string/downloadImagesStrategyOnWiFi" />
+
+                    <RadioButton
+                        android:id="@+id/radioDownloadImagesStrategyNever"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:tag="never"
+                        android:text="@string/downloadImagesStrategyNever" />
+                </RadioGroup>
+            </TableRow>
+
+            <TableRow
+                android:id="@+id/tableRowTargetDirName"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" >
+
+                <TextView
+                    android:id="@+id/textViewTargetDirName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:paddingRight="10dp"
+                    android:text="@string/targetDirName"
+                    android:textAppearance="?android:attr/textAppearanceMedium" />
+
+                <LinearLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" >
+
+                    <EditText
+                        android:id="@+id/editTargetDirName"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/hintTargetDirName"
+                        android:inputType="textNoSuggestions"
+                        android:maxLines="1"
+                        android:nextFocusDown="@+id/editUserName"
+                        android:textAppearance="?android:attr/textAppearanceSmallInverse" />
+
+                    <TextView
+                        android:id="@+id/errorTargetDirName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingRight="10dp"
+                        android:text="@string/errorPlaceholderText"
+                        android:textAppearance="?android:attr/textAppearanceSmall" />
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow
+                android:id="@+id/tableRowUserName"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" >
+
+                <TextView
+                    android:id="@+id/textViewUserName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:paddingRight="10dp"
+                    android:text="@string/userName"
+                    android:textAppearance="?android:attr/textAppearanceMedium" >
+                </TextView>
+
+                <EditText
+                    android:id="@+id/editUserName"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/hintUserName"
+                    android:maxLines="1"
+                    android:nextFocusDown="@+id/editSourceCachesList" />
+            </TableRow>
+
+            <TableRow
+                android:id="@+id/tableRowFoundStrategy"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" >
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="fill_parent"
+                    android:gravity="center_vertical"
+                    android:maxWidth="80dp"
+                    android:paddingRight="10dp"
+                    android:text="@string/foundStrategy"
+                    android:textAppearance="?android:attr/textAppearanceSmall" />
+
+                <RadioGroup
+                    android:id="@+id/radioFoundStrategy"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" >
+
+                    <RadioButton
+                        android:id="@+id/radioFoundStrategySkip"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:tag="skip"
+                        android:text="@string/foundStrategySkipped" />
+
+                    <RadioButton
+                        android:id="@+id/radioFoundStrategyMark"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:tag="mark"
+                        android:text="@string/foundStrategyMarked" />
+                </RadioGroup>
+            </TableRow>
+
+            <TableRow
+                android:id="@+id/tableRowSourceCachesList"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" >
+
+                <TextView
+                    android:id="@+id/textViewSourceCachesList"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:paddingRight="10dp"
+                    android:text="@string/sourceCachesList"
+                    android:textAppearance="?android:attr/textAppearanceSmall" >
+                </TextView>
+
+                <LinearLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" >
+
+                    <EditText
+                        android:id="@+id/editSourceCachesList"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/hintSourceCachesList"
+                        android:inputType="textMultiLine"
+                        android:nextFocusDown="@+id/btnStart"
+                        android:textAppearance="?android:attr/textAppearanceSmallInverse" />
+
+                    <TextView
+                        android:id="@+id/errorSourceCachesList"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingRight="10dp"
+                        android:text="@string/errorPlaceholderText"
+                        android:textAppearance="?android:attr/textAppearanceSmall" />
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow
+                android:id="@+id/tableRowStart"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" >
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingRight="10dp"
+                    android:textAppearance="?android:attr/textAppearanceMedium" >
+                </TextView>
+
+                <LinearLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" >
+
+                    <Button
+                        android:id="@+id/btnStart"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:onClick="onBtnStartClicked"
+                        android:text="@string/start"
+                        android:textAppearance="?android:attr/textAppearanceLargeInverse" >
+                    </Button>
+
+                    <TextView
+                        android:id="@+id/errorOthers"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingRight="10dp"
+                        android:text="@string/errorPlaceholderText"
+                        android:textAppearance="?android:attr/textAppearanceSmall" />
+                </LinearLayout>
+            </TableRow>
+        </TableLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:text="@string/star"
+            android:textAppearance="?android:attr/textAppearanceMedium" >
+        </TextView>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:text="@string/history"
+            android:textAppearance="?android:attr/textAppearanceMedium" >
+        </TextView>
+    </LinearLayout>
+
+</ScrollView>

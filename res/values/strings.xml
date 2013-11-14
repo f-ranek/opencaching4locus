@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="applicationName">Opencaching</string>
+    <string name="info1">Dobra, jakiś sensowny opis poproszę :D\nProgram przygotowany został do współpracy z programami Locus i Columbus trochę też.</string>
+    <string name="btnGetLocationFromGps">Pobierz z GPSa</string>
+    <string name="latitude">Szerokość*:</string>
+    <string name="longitude">Długość*:</string>
+    <string name="hintGeoData">ddd:mm:ss.ssss</string>
+    <string name="getLocationFromGps">Pobierz z GPS</string>
+    <string name="getLocationFromGpsCancel">Anuluj pobieranie</string>
+    <string name="star">* - dozwolone formaty:\n1. [+-]ddd.ddddd\n2. [+-]ddd:mm.mmmmm\n3. [+-]ddd:mm:ss.sssss\n4. WGS84 (NSEW ddd° mm.mmm\')</string>
+
+    <string name="userName">Login:</string>
+    <string name="hintUserName">Login w serwisie OC</string>
+    <string name="foundStrategy">Skrzynki znalezione przez użytkownika zostaną:</string>
+    <string name="foundStrategyMarked">oznaczone</string>
+    <string name="foundStrategySkipped">pominięte</string>
+
+    <string name="targetFileName">Zapisz jako:</string>
+    <string name="hintTargetFileName">Pełna ścieżka do pliku GPX</string>
+    <string name="targetDirName">Kat. obrazów:</string>
+    <string name="hintTargetDirName">Pełna ścieżka, lub względna do powyższej</string>
+
+    <string name="downloadImagesStrategy">Pobieranie dołączonych obrazów</string>
+    <string name="downloadImagesStrategyAlways">zawsze</string>
+    <string name="downloadImagesStrategyOnWiFi">gdy na WiFi</string>
+    <string name="downloadImagesStrategyNever">nigdy</string>
+
+    <string name="start">Start</string>
+
+    <string name="maxNumOfCaches">Limit liczby:</string>
+    <string name="maxCacheDistance">Limit odległości [km/m]:</string>
+
+    <string name="hintMaxNumOfCaches">np. 200 keszy</string>
+    <string name="hintMaxCacheDistance">np. 10km</string>
+
+    <string name="maxNumOfCachesDefault">50</string>
+
+    <string name="history">Historia zmian:\n1.0 - pierwsza wersja, na bazie programu Awaryjny GPX.</string>
+
+    <string name="sourceCachesList">Kesze do pobrania:</string>
+    <string name="hintSourceCachesList">Nazwa pliku lub lista keszy</string>
+
+    <string name="errorPlaceholderText">ERROR_TEXT_GOES_HERE</string>
+
+    <string name="gpxDownloaderServiceName">Usługa pobierania GPX</string>
+    <string name="gpxDownloaderServiceDescription">Usługa realizuje pobranie i przetwarzanie pliku GPX</string>
+    <string name="filesDownloaderServiceName">Usługa pobierania plików</string>
+    <string name="filesDownloaderServiceDescription">Usługa realizuje pobranie plików zasobów</string>
+    
+    <color name="colorError">#FF0000</color>
+    <color name="colorWarning">#FF8000</color>
+    <color name="colorDoneOk">#00B200</color>
+    
+    
+    <string name="titleActivityDownloadList">Lista pobieranych plików</string>
+    <string name="menuGoToDownloadsList">Pobieranie plików</string>
+
+</resources>

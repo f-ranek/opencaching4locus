@@ -1,0 +1,6 @@
+# Path patterns that will be replaced by a single slash
+# The \Q at the beginning makes the pattern a quote (substring search)
+\Q../
+\Qimages/uploads/
+\Qimages/
+\Qlib/tinymce/plugins/
