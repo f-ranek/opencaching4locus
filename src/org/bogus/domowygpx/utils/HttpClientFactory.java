@@ -25,6 +25,8 @@ import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.bogus.domowygpx.apache.http.impl.client.DecompressingHttpClient;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.http.AndroidHttpClient;
 
 public class HttpClientFactory
@@ -134,8 +136,9 @@ public class HttpClientFactory
 
     }
     
-    public static HttpClient createHttpClient(boolean shared)
+    public static HttpClient createHttpClient(boolean shared, final Context context)
     {
+        
         final DefaultHttpClient httpClient = new DefaultHttpClient();
 
         final HttpParams params = httpClient.getParams();
@@ -147,8 +150,9 @@ public class HttpClientFactory
                 @Override
                 public int getMaxForRoute(HttpRoute route)
                 {
-                    // TODO: should be in accordance with number of worker threads
-                    return 4;
+                    // should we cache it in any way?
+                    final SharedPreferences config = context.getSharedPreferences("egpx", Context.MODE_PRIVATE);
+                    return config.getInt("HttpClientFactory_maxConnectionsPerHost", 4);
                 }});
             
             params.setParameter(ClientPNames.CONNECTION_MANAGER_FACTORY, new ClientConnectionManagerFactory(){
@@ -170,6 +174,12 @@ public class HttpClientFactory
         
         RawSocketBuffSizeFactoryDecorator.decorateHttpClient(httpClient);
         
+        final SharedPreferences config = context.getSharedPreferences("egpx", Context.MODE_PRIVATE);
+        boolean disableCompression = config.getBoolean("HttpClientFactory_disableCompression", false);
+        if (disableCompression){
+            return httpClient;
+        } 
+        // setup compression
         final DecompressingHttpClient decompressingHttpClient = new DecompressingHttpClient(httpClient) ;
         return decompressingHttpClient;
     }
