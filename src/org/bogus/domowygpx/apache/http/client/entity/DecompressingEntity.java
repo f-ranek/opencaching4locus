@@ -30,20 +30,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
-import org.apache.http.entity.HttpEntityWrapper;
 
 /**
  * Common base class for decompressing {@link HttpEntity} implementations.
  *
  * @since 4.1
  */
-abstract class DecompressingEntity extends HttpEntityWrapper {
-
-    /**
-     * Default buffer size.
-     */
-    private static final int BUFFER_SIZE = 1024 * 2;
+public abstract class DecompressingEntity extends CountingEntity {
 
     /**
      * {@link #getContent()} method must return the same {@link InputStream}
@@ -64,7 +59,7 @@ abstract class DecompressingEntity extends HttpEntityWrapper {
     abstract InputStream decorate(final InputStream wrapped) throws IOException;
 
     private InputStream getDecompressingStream() throws IOException {
-        final InputStream in = wrappedEntity.getContent();
+        final InputStream in = super.getContent();
         try {
             return decorate(in);
         } catch (final IOException ex) {
@@ -95,14 +90,9 @@ abstract class DecompressingEntity extends HttpEntityWrapper {
     public void writeTo(final OutputStream outstream) throws IOException {
         final InputStream instream = getContent();
         try {
-            final byte[] buffer = new byte[BUFFER_SIZE];
-            int l;
-            while ((l = instream.read(buffer)) != -1) {
-                outstream.write(buffer, 0, l);
-            }
+            IOUtils.copy(instream, outstream);
         } finally {
             instream.close();
         }
     }
-
 }
