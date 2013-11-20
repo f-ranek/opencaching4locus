@@ -57,4 +57,36 @@
     <string name="titleActivityDownloadList">Lista pobieranych plików</string>
     <string name="menuGoToDownloadsList">Pobieranie plików</string>
 
+    <string name="btnDownloadItemPlayDescription">Uruchamia zadanie</string>
+    <string name="btnDownloadItemPauseDescription">Wstrzymuje zadanie</string>
+    <string name="btnDownloadItemReplayDescription">Ponawia zadanie</string>
+    <string name="btnDownloadItemStopDescription">Zatrzymuje zadanie</string>
+    <string name="btnDownloadItemCancelDescription">Usuwa zadanie</string>
+    
+    
+    <plurals name="cache">
+        <item quantity="one">%d kesz</item>
+        <item quantity="few">%d kesze</item>
+        <item quantity="other">%d keszy</item>
+    </plurals>
+    <plurals name="error">
+        <item quantity="one">%d błąd</item>
+        <item quantity="few">%d błędy</item>
+        <item quantity="other">%d błędów</item>
+    </plurals>
+    <plurals name="skipped">
+        <item quantity="one">%d pominięty</item>
+        <item quantity="few">%d pominięte</item>
+        <item quantity="other">%d pominiętych</item>
+    </plurals>
+    <plurals name="finished">
+        <item quantity="one">%d zakończone</item>
+        <item quantity="few">%d zakończone</item>
+        <item quantity="other">%d zakończonych</item>
+    </plurals>
+    <plurals name="filesCountOverTotal">
+        <item quantity="one">%1$d/%2$d plik</item>
+        <item quantity="few">%1$d/%2$d pliki</item>
+        <item quantity="other">%1$d/%2$d plików</item>
+    </plurals>
 </resources>

@@ -30,8 +30,8 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.AutoCloseInputStream;
 import org.apache.commons.logging.Log;
-import org.bogus.domowygpx.downloader.FileData;
 import org.bogus.domowygpx.gpx.GpxState;
+import org.bogus.domowygpx.services.downloader.FileData;
 import org.bogus.logging.LogFactory;
 
 

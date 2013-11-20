@@ -412,7 +412,7 @@ public class MainActivity extends Activity
 	{
 		super.onStop();
 
-        Editor config = this.getSharedPreferences("egpx", 0).edit();
+        Editor config = this.getSharedPreferences("egpx", MODE_PRIVATE).edit();
         config.putInt("configVersion", 1);
         
         config.putString("latitude", editLat.getText().toString());

@@ -1,4 +1,4 @@
-package org.bogus.domowygpx.downloader;
+package org.bogus.domowygpx.utils;
 
 import java.io.IOException;
 import java.net.InetAddress;

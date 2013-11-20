@@ -31,7 +31,71 @@
             android:text="Godzina\nData"
             android:textAppearance="?android:attr/textAppearanceSmall"
             tools:ignore="HardcodedText" />
+    </TableRow>
 
+    <TableRow
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" >
+
+        <ProgressBar
+            android:id="@+id/progressBar1"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="fill_parent"
+            android:layout_gravity="center_vertical"
+            android:max="80"
+            android:minHeight="23dp"
+            android:progress="12" />
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:paddingTop="2dp" >
+
+            <ImageButton
+                
+                android:id="@+id/btnDownloadItemPlay"
+                style="?android:attr/buttonStyleSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:contentDescription="@string/btnDownloadItemPlayDescription"
+                android:src="@drawable/ic_play_2" />
+
+            <ImageButton
+                android:id="@+id/btnDownloadItemPause"
+                style="?android:attr/buttonStyleSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:contentDescription="@string/btnDownloadItemPauseDescription"
+                android:src="@drawable/ic_pause_2" />
+
+            <ImageButton
+                android:id="@+id/btnDownloadItemReplay"
+                style="?android:attr/buttonStyleSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:contentDescription="@string/btnDownloadItemReplayDescription"
+                android:src="@drawable/ic_replay_3" />
+            <ImageButton
+                android:id="@+id/btnDownloadItemStop"
+                style="?android:attr/buttonStyleSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:contentDescription="@string/btnDownloadItemStopDescription"
+                android:src="@drawable/ic_stop_2" />
+            <ImageButton
+                android:id="@+id/btnDownloadItemCancel"
+                style="?android:attr/buttonStyleSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:contentDescription="@string/btnDownloadItemCancelDescription"
+                android:src="@drawable/ic_cancel_3" />
+            </LinearLayout>
     </TableRow>
 
     <TableRow
@@ -46,7 +110,6 @@
             android:text="A tu szczegóły"
             android:textAppearance="?android:attr/textAppearanceSmall"
             tools:ignore="HardcodedText" />
-
     </TableRow>
 
 </TableLayout>

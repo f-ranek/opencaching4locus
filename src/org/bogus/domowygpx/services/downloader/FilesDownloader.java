@@ -1,4 +1,4 @@
-package org.bogus.domowygpx.downloader;
+package org.bogus.domowygpx.services.downloader;
 
 import java.io.BufferedOutputStream;
 import java.io.Closeable;
@@ -11,7 +11,9 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ThreadFactory;
@@ -20,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.logging.Log;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -28,21 +31,25 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.bogus.domowygpx.apache.http.client.utils.DateUtils;
+import org.bogus.domowygpx.utils.HttpException;
+import org.bogus.logging.LogFactory;
 
 public class FilesDownloader implements Closeable
 {
     final static AtomicInteger threadCount = new AtomicInteger();
     
-    // private final static Log logger = LogFactory.getLog(FilesDownloader.class);
-    private final ArrayList<DownloadedFileData> outputQueue = new ArrayList<DownloadedFileData>();
+    private final static Log logger = LogFactory.getLog(FilesDownloader.class);
+    //private final ArrayList<DownloadedFileData> outputQueue = new ArrayList<DownloadedFileData>();
     private final List<DownloadProgressMonitor> observers = new CopyOnWriteArrayList<DownloadProgressMonitor>();
-    private final Thread constructingThread;
+    final Thread constructingThread;
     private volatile boolean abortFlag;
-    private final ConcurrentHashMap<File, Boolean> filesOnHold;
+    private final ConcurrentMap<File, Boolean> filesOnHold;
     
     private final ThreadPoolExecutor executorService;
-    private final List<DownloadTask> currentlyRunningTasks;
+    final List<DownloadTask> currentlyRunningTasks;
     private final HttpClient httpClient;
+    
+    boolean paused; 
     
     class DownloadTask implements Runnable
     {
@@ -52,7 +59,7 @@ public class FilesDownloader implements Closeable
             this.data = data;
         }
 
-        private volatile HttpUriRequest currentRequest;
+        volatile HttpUriRequest currentRequest;
         
         @Override
         public void run()
@@ -61,6 +68,20 @@ public class FilesDownloader implements Closeable
                 currentlyRunningTasks.add(this);
             }
             try{
+                synchronized(FilesDownloader.this){
+                    if (paused){ // find some class that implements this semaphore pattern
+                        do{
+                            try{
+                                FilesDownloader.this.wait();
+                            }catch(InterruptedException ie){
+                                // ignore
+                            }
+                            if (isClosed()){
+                                return ;
+                            }
+                        }while(paused);
+                    }
+                }
                 doDownloadInThread(data, this);
             }finally{
                 synchronized(currentlyRunningTasks){
@@ -83,7 +104,8 @@ public class FilesDownloader implements Closeable
         }
     }
     
-    public FilesDownloader(HttpClient httpClient, int numOfWorkerThreads)
+    public FilesDownloader(HttpClient httpClient, int numOfWorkerThreads, 
+        ConcurrentMap<File, Boolean> filesOnHold)
     {
         this.constructingThread = Thread.currentThread();
         this.httpClient = httpClient;
@@ -127,7 +149,11 @@ public class FilesDownloader implements Closeable
             0L, TimeUnit.MILLISECONDS, tasksQueue, 
             tf);
         
-        filesOnHold = new ConcurrentHashMap<File, Boolean>(numOfWorkerThreads);
+        if (filesOnHold != null){
+            this.filesOnHold = filesOnHold; 
+        } else {
+            this.filesOnHold = new ConcurrentHashMap<File, Boolean>(numOfWorkerThreads);
+        }
     
     }
     
@@ -161,9 +187,9 @@ public class FilesDownloader implements Closeable
     public synchronized void submit(List<FileData> fileData)
     {
         checkState();
-        synchronized(outputQueue){
+        /*synchronized(outputQueue){
             outputQueue.ensureCapacity(outputQueue.size() + fileData.size());
-        }
+        }*/
         for (FileData fd : fileData){
             submitInternal(fd);
         }
@@ -173,6 +199,7 @@ public class FilesDownloader implements Closeable
     {
         this.abortFlag |= abortFlag;
         executorService.getQueue().clear();
+        setPaused(false);
         if (this.abortFlag){
             executorService.shutdownNow();
         } else {
@@ -186,6 +213,7 @@ public class FilesDownloader implements Closeable
     /**
      * Finish tasks in progress, and shutdown when all the files being currently downloaded are done.
      * Files in a queue are not started
+     * TODO: return list of queued tasks
      */
     public synchronized void stopDownload()
     {
@@ -194,6 +222,7 @@ public class FilesDownloader implements Closeable
     
     /**
      * Abruptly aborts all tasks
+     * TODO: return list of queued tasks
      */
     public synchronized void abortDownload()
     {
@@ -258,6 +287,20 @@ public class FilesDownloader implements Closeable
         return executorService.awaitTermination(timeout, unit);
     }
     
+    static void closeResponse(HttpResponse response)
+    {
+        try{
+            if (response != null){
+                HttpEntity e = response.getEntity();
+                if (e != null){
+                    e.consumeContent();
+                }
+            }
+        }catch(Exception e){
+            // ignore
+        }
+    }
+    
     protected void doDownloadInThread(final FileData data, final DownloadTask downloadTask)
     {
         HttpResponse response = null;
@@ -283,30 +326,115 @@ public class FilesDownloader implements Closeable
                 return ;
             }
         }            
-        final DownloadedFileData dfd = new DownloadedFileData();
-        dfd.fileData = data;
         
         try{
             for (DownloadProgressMonitor o : observers){
                 try{
-                    o.notifyFileStarted(data);
+                    o.notifyFileStarting(data);
                 }catch(Exception e2){
                     
                 }
             }
+
+            boolean acceptByteRanges = false;
+            boolean tryReasume = false;
+            boolean gotFullFile = false;
+            boolean gotPartialFile = false;
             
-            final HttpGet get = new HttpGet(data.source);
-            downloadTask.currentRequest = get;
+            final File tempFile = new File(data.target.getParent(), data.target.getName() + ".progress");
+            String eTag = null;
+            String lastModified = null;
+            if (tempFile.exists() && tempFile.canRead() && tempFile.canWrite()){
+                // try parse previous headers
+                if (data.headers != null){
+                    for (String[] header: data.headers){
+                        String headerName = header[0].toLowerCase(Locale.US);
+                        if (headerName.equals("accept-ranges")){
+                            if (header[1].toLowerCase(Locale.US).equals("bytes")){
+                                acceptByteRanges = true;
+                            }
+                        } else 
+                        if (headerName.equals("last-modified")){
+                            lastModified = header[1];
+                        } else 
+                        if (headerName.equals("etag")){
+                            eTag = header[1];
+                        }
+                    }
+                }
+            }
+            HttpGet get = null; 
+            if (acceptByteRanges){
+                get = new HttpGet(data.source);
+                if (eTag != null || lastModified != null){
+                    if (eTag != null){
+                        get.addHeader("If-None-Match", eTag);
+                    }
+                    if (lastModified != null){
+                        get.addHeader("If-Modified-Since", lastModified);
+                    }
+                }
+                downloadTask.currentRequest = get;
+                response = httpClient.execute(get);
+                final int httpCode = response.getStatusLine().getStatusCode(); 
+                if (httpCode == 304){
+                    // not modified: try reasume
+                    tryReasume = true;
+                    closeResponse(response);
+                } else
+                if (httpCode == 200){
+                    // modified: we got full file
+                    gotFullFile = true;
+                } else 
+                if (httpCode == 404){
+                    throw new FileNotFoundException(data.source.toASCIIString());
+                } else 
+                if (httpCode == 204 || response.getEntity() == null){
+                    // no content
+                    return ;
+                } else {
+                    logger.warn("Got unexpected response while checking if file has been modified: " + response.getStatusLine());
+                    closeResponse(response);
+                }
+            }
             
-            response = httpClient.execute(get);
+            if (tryReasume){
+                get = new HttpGet(data.source);
+                get.addHeader("Range", "bytes=" + tempFile.length() + "-");
+                downloadTask.currentRequest = get;
+                response = httpClient.execute(get);
+                final int httpCode = response.getStatusLine().getStatusCode(); 
+                if (httpCode == 200){
+                    // This should not happen, but we got full file
+                    gotFullFile = true;
+                } else 
+                if (httpCode == 206){
+                    gotPartialFile = true;
+                }
+                if (httpCode == 416){ 
+                    // Requested range not satisfiable
+                    // -> download full file
+                } else {
+                    logger.warn("Got unexpected response while asking for partial file data: " + response.getStatusLine());
+                    closeResponse(response);
+                }
+            }
+            
+            if (!gotFullFile && !gotPartialFile){
+                get = new HttpGet(data.source);
+                downloadTask.currentRequest = get;
+                response = httpClient.execute(get);
+            }
+            
+            @SuppressWarnings("null")
             final StatusLine statusLine = response.getStatusLine();
-            dfd.statusLine  = statusLine.toString();
+            data.statusLine  = statusLine.toString();
             final Header[] allHeaders = response.getAllHeaders();
-            dfd.headers = new String[allHeaders.length][];
+            data.headers = new String[allHeaders.length][];
             for (int i=0; i<allHeaders.length; i++){
                 final Header h = allHeaders[i];
                 final String[] h2 = new String[]{h.getName(), h.getValue()}; 
-                dfd.headers[i] = h2;
+                data.headers[i] = h2;
             }
             
             if (statusLine.getStatusCode() == 404){
@@ -317,9 +445,30 @@ public class FilesDownloader implements Closeable
                 return ;
             }
             
+            if (statusLine.getStatusCode() != 200){
+                throw HttpException.fromHttpResponse(response, get);
+            }
+            
+            for (DownloadProgressMonitor o : observers){
+                try{
+                    o.notifyFileStarted(data);
+                }catch(Exception e2){
+                    
+                }
+            }
+            
+            if (Thread.interrupted()){
+                throw new InterruptedException();
+            }
+            
+            long totalCount = 0;
             final int fileSize;
             {
                 long fileSize0 = response.getEntity().getContentLength();
+                if (gotPartialFile){
+                    totalCount = tempFile.length();
+                    fileSize0 += totalCount;
+                }
                 if (fileSize0 < 0 || fileSize0 > Integer.MAX_VALUE){
                     fileSize = -1;
                 } else {
@@ -339,26 +488,29 @@ public class FilesDownloader implements Closeable
             byte[] buffer = new byte[16384];
             int lastSizeNotification = 0;
             is = response.getEntity().getContent();
-            final File tempFile = new File(data.target.getParent(), data.target.getName() + ".progress");
             tempFile.getParentFile().mkdirs();
-            os = new FileOutputStream(tempFile); 
+            os = new FileOutputStream(tempFile, gotPartialFile);
             os = new BufferedOutputStream(os, buffer.length);
             int count;
-            long totalCount = 0;
+            long lastProgressUpdateCall = System.currentTimeMillis();
             while ((count = is.read(buffer)) != -1){
                 os.write(buffer, 0, count);
                 totalCount += count;
-                int bytesDone = (int)Math.round(totalCount / 1024.0);
-                if (bytesDone > lastSizeNotification){
-                    lastSizeNotification = bytesDone;
-                    for (DownloadProgressMonitor o : observers){
-                        try{
-                            o.notifyFileProgress(data, bytesDone, fileSize);
-                        }catch(Exception e2){
+                final int kbDone = (int)Math.round(totalCount / 1024.0);
+                if (kbDone > lastSizeNotification){
+                    final long now = System.currentTimeMillis();
+                    if (lastProgressUpdateCall+1000L < now){
+                        lastProgressUpdateCall = now;
+                        lastSizeNotification = kbDone;
+                        for (DownloadProgressMonitor o : observers){
+                            try{
+                                o.notifyFileProgress(data, kbDone, fileSize);
+                            }catch(Exception e2){
+                            }
                         }
                     }
                 }
-                if (abortFlag){
+                if (abortFlag || Thread.interrupted()){
                     throw new InterruptedException();
                 }
             }
@@ -368,56 +520,49 @@ public class FilesDownloader implements Closeable
             os = null;
             is.close();
             is = null;
-            dfd.size = totalCount;
+            data.size = totalCount;
             if (!tempFile.renameTo(data.target)){
                 throw new IOException("Failed to rename temp file to " + data.target);
             }
-            final Header lastModified = response.getFirstHeader("Last-Modified");
-            if (lastModified != null){
-                try{
-                    final long date = DateUtils.parseDate(lastModified.getValue()).getTime();
-                    if (date < System.currentTimeMillis() + 24L*60L*60L*1000L){
-                        data.target.setLastModified(date);
+            {
+                final Header lastModifiedHeader = response.getFirstHeader("Last-Modified");
+                if (lastModifiedHeader != null){
+                    try{
+                        final long date = DateUtils.parseDate(lastModifiedHeader.getValue()).getTime();
+                        if (date < System.currentTimeMillis() + 24L*60L*60L*1000L){
+                            data.target.setLastModified(date);
+                        }
+                    }catch(Exception e){
+                        // ignore
                     }
-                }catch(Exception e){
-                    // ignore
                 }
             }
             isOk = true;
         }catch(Exception e){
-            dfd.exception = e;
+            data.exception = e;
             for (DownloadProgressMonitor o : observers){
                 try{
-                    o.notifyFileFinished(dfd, e);
+                    o.notifyFileFinished(data, e);
                 }catch(Exception e2){
                     
                 }
             }
         }finally{
             filesOnHold.remove(data.target);
-            synchronized(outputQueue){
+            /*synchronized(outputQueue){
                 outputQueue.add(dfd);
-            }
+            }*/
             downloadTask.currentRequest = null;
             IOUtils.closeQuietly(os);
             IOUtils.closeQuietly(is);
             //if (response instanceof CloseableHttpResponse){
             //    IOUtils.closeQuietly((CloseableHttpResponse)response);
             //}
-            try{
-                if (response != null){
-                    HttpEntity e = response.getEntity();
-                    if (e != null){
-                        e.consumeContent();
-                    }
-                }
-            }catch(Exception e){
-                // ignore
-            }
+            closeResponse(response);
             if (isOk){
                 for (DownloadProgressMonitor o : observers){
                     try{
-                        o.notifyFileFinished(dfd, null);
+                        o.notifyFileFinished(data, null);
                     }catch(Exception e2){
                         
                     }
@@ -432,10 +577,16 @@ public class FilesDownloader implements Closeable
         return executorService.getCorePoolSize();
     }
 
+    /**
+     * Sets the number of worker threads. If the value increases, new threads are started to process 
+     * tasks. If the value decreases, existing tasks are allowed to finish, and then their threads are
+     * released
+     * @param numOfWorkerThreads
+     */
     public void setNumOfWorkerThreads(final int numOfWorkerThreads)
     {
-        if (numOfWorkerThreads < 1){
-            throw new IllegalArgumentException("numOfWorkerThreads=" + numOfWorkerThreads + " < 1");
+        if (numOfWorkerThreads < 0){
+            throw new IllegalArgumentException("numOfWorkerThreads=" + numOfWorkerThreads + " < 0");
         }
         final int curr = executorService.getCorePoolSize();
         if (curr == numOfWorkerThreads){
@@ -448,6 +599,24 @@ public class FilesDownloader implements Closeable
             executorService.setCorePoolSize(numOfWorkerThreads);
             executorService.setMaximumPoolSize(numOfWorkerThreads);
         }
+    }
+
+    public boolean isPaused()
+    {
+        return paused;
+    }
+
+    /**
+     * Pauses or unpauses the downloader. In paused state, no new tasks will start, but currently running
+     * tasks will continue their work. This functionality is intended only to temporarly pause new tasks
+     * from starting, in case of network outage or similar, temporary problems. To permanently pause the
+     * downloader, {@link #setNumOfWorkerThreads(int)} to 0.
+     * @param paused
+     */
+    public synchronized void setPaused(boolean paused)
+    {
+        this.paused = paused;
+        this.notifyAll();
     }
 
 }

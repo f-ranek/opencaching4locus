@@ -2,6 +2,7 @@ package org.bogus.domowygpx.services;
 
 import java.util.List;
 
+import org.bogus.domowygpx.activities.TaskConfiguration;
 import org.bogus.domowygpx.services.GpxDownloaderService.GpxTask;
 
 /**
@@ -11,6 +12,14 @@ import org.bogus.domowygpx.services.GpxDownloaderService.GpxTask;
  */
 public interface GpxDownloaderApi
 {
+    
+    /**
+     * Submit GPX download task, requires {@link TaskConfiguration} as {@link #INTENT_EXTRA_TASK_CONFIGURATION} extra parameter.
+     */
+    public static final String INTENT_ACTION_START_DOWNLOAD = "org.bogus.domowygpx.services.GpxDownloaderService.START_DOWNLOAD_GPX";
+
+    public static final String INTENT_EXTRA_TASK_CONFIGURATION = "org.bogus.domowygpx.services.GpxDownloaderService.TASK_CONFIGURATION";
+    
     /**
      * Sends an asynchronous signal to cancel the given task. When the task finishes, 
      * it will send an appropriate event
