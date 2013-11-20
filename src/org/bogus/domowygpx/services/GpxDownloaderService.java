@@ -26,7 +26,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.input.CountingInputStream;
 import org.apache.commons.io.input.TeeInputStream;
 import org.apache.http.Header;
 import org.apache.http.HeaderElement;
@@ -39,6 +38,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.bogus.ToStringBuilder;
 import org.bogus.domowygpx.activities.DownloadListActivity;
 import org.bogus.domowygpx.activities.TaskConfiguration;
+import org.bogus.domowygpx.apache.http.client.utils.ResponseUtils;
 import org.bogus.domowygpx.application.OKAPI;
 import org.bogus.domowygpx.gpx.GpxProcessMonitor;
 import org.bogus.domowygpx.gpx.GpxProcessor;
@@ -113,6 +113,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         public String stateDescription;
         public String currentCacheCode;
         public int totalKB;
+        public int expectedTotalKB;
         public int totalCacheCount;
         
         /** Events attached only if attachEvents was true in call to {@link GpxDownloaderApi#getTasks(int, boolean)} */
@@ -193,8 +194,9 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         final TaskConfiguration taskConfig;
         final GpxTask taskState;
         private boolean hasErrorDescription;
-        private CountingInputStream cos;
         private List<File> touchedFiles;
+        volatile HttpUriRequest currentRequest;
+        HttpResponse mainResponse;
         
         public WorkerThread(TaskConfiguration taskConfiguration, GpxTask taskState)
         {
@@ -245,6 +247,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     Log.v(LOG_TAG, "Failed to dump response", e);
                 }
             }
+            ResponseUtils.closeResponse(resp);
         }
         
         protected final Object getJSONObjectFromResponse(final HttpUriRequest request, final HttpResponse resp)
@@ -270,6 +273,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 }
             }finally{
                 IOUtils.closeQuietly(is);
+                ResponseUtils.closeResponse(resp);
             }
         }
         
@@ -331,6 +335,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             if (userName == null){
                 return null;
             }
+            HttpResponse resp = null;
             try{
                 final Properties cache = new Properties();
                 InputStream cacheIs = null;
@@ -350,7 +355,9 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                             "&fields=uuid&consumer_key=" + okApi.getAPIKey();
                     Log.v(LOG_TAG, url);
                     final HttpGet get = new HttpGet(url);
-                    final HttpResponse resp = httpClient.execute(get);
+                    currentRequest = get;
+                    resp = httpClient.execute(get);
+                    currentRequest = null;
                     final JSONObject obj = (JSONObject)getJSONObjectFromResponse(get, resp);
                     userUuid = (String)obj.opt("uuid");
                     if (userUuid == null){
@@ -374,6 +381,8 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 Log.e(LOG_TAG, "Failed to get user UUID for userName=" + userName);
                 // setErrorDescription("Nie udało się pobrać danych użytkownika", e);
                 throw e;
+            }finally{
+                ResponseUtils.closeResponse(resp);
             }
         }
         
@@ -409,7 +418,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             GpxProcessor gpxProcessor = null;
 
             final MarkingInputStream mis = new MarkingInputStream();
-            cos = new CountingInputStream(mis);
+            // cos = new CountingInputStream(mis);
             touchedFiles = new ArrayList<File>();
             try{
                 sendProgressInfo("Przygotowuję parametry"); 
@@ -422,7 +431,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 gpxProcessor = new GpxProcessor();
                 gpxProcessor.setTempDir(cacheDir);
                 gpxProcessor.setDestFileBaseName(taskConfig.getOutTargetFileName());
-                gpxProcessor.setSourceStream(cos);
+                gpxProcessor.setSourceStream(mis);
                 gpxProcessor.addObserver(this);
                 
                 try{
@@ -441,7 +450,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
 
                 checkInterrupted();
                 
-                HttpResponse mainResponse = null; 
+                HttpResponse resp = null;
                 try{
                     final OKAPI okApi = OKAPI.getInstance(GpxDownloaderService.this); 
                     StringBuilder requestURL = new StringBuilder(256);
@@ -493,7 +502,9 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                             final String url = requestURL.toString();
                             final HttpGet get = new HttpGet(url);
                             requestURL.setLength(0);
-                            final HttpResponse resp = httpClient.execute(get);
+                            currentRequest = get;
+                            resp = httpClient.execute(get);
+                            currentRequest = null;
                             final JSONObject obj = (JSONObject)getJSONObjectFromResponse(get, resp);
                             final JSONArray caches = obj.getJSONArray("results");
                             int len = caches.length();
@@ -536,12 +547,15 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     final String url = requestURL.toString();
                     Log.v(LOG_TAG, url);
                     final HttpGet get = new HttpGet(url);
+                    currentRequest = get;
                     mainResponse = httpClient.execute(get);
+                    ResponseUtils.wrapResponseToBeCountable(mainResponse);
+                    taskState.expectedTotalKB = (int)(ResponseUtils.getContentLength(mainResponse) / 1024L);
                     final StatusLine statusLine = mainResponse.getStatusLine();
                     final int statusCode = statusLine.getStatusCode();
                     if (statusCode == 404 || statusCode == 204){
                         logResponseContent(mainResponse);
-                        throw new FileNotFoundException("Got " + statusCode + " for " + url);  //$NON-NLS-2$
+                        throw new FileNotFoundException("Got " + statusCode + " for " + url);
                     } else if (statusCode != 200){
                         logResponseContent(mainResponse);
                         throw HttpException.fromHttpResponse(mainResponse, get);
@@ -552,7 +566,11 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                         setErrorDescription("Błąd wyszukiwania keszy", e); 
                     }
                     throw e;
+                }finally{
+                    ResponseUtils.closeResponse(resp);
                 }
+                
+                checkInterrupted();
                 
                 // process main response
                 is = mainResponse.getEntity().getContent();
@@ -646,11 +664,13 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 
                 finishTaskWithError(exception);
             }finally{
+                currentRequest = null;
                 IOUtils.closeQuietly(gpxProcessor);
                 IOUtils.closeQuietly(is);
                 IOUtils.closeQuietly(mis);
                 IOUtils.closeQuietly(os);
-                IOUtils.closeQuietly(cos);
+                ResponseUtils.closeResponse(mainResponse);
+                // IOUtils.closeQuietly(cos);
                 touchFiles();
             }
         }
@@ -678,7 +698,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             final GpxTaskEvent event = taskState.createTaskEvent();
             event.currentCacheCode = cacheCode;
             event.eventType = GpxTaskEvent.EVENT_TYPE_CACHE_CODE;
-            event.totalKB = (int)(cos.getByteCount() / 1024L);
+            event.totalKB = (int)(ResponseUtils.getBytesRead(mainResponse) / 1024L);
             taskState.currentCacheCode = cacheCode;
             taskState.totalKB = event.totalKB;
 
@@ -687,6 +707,18 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 taskState.totalCacheCount++;
             }
             
+            broadcastEvent(event, taskState);
+        }
+
+        @Override
+        public void onPeriodicUpdate(String cacheCode)
+        {
+            final GpxTaskEvent event = taskState.createTaskEvent();
+            event.currentCacheCode = cacheCode;
+            event.eventType = GpxTaskEvent.EVENT_TYPE_CACHE_CODE;
+            event.totalKB = (int)(ResponseUtils.getBytesRead(mainResponse) / 1024L);
+            taskState.currentCacheCode = cacheCode;
+            taskState.totalKB = event.totalKB;
             broadcastEvent(event, taskState);
         }
         
@@ -707,7 +739,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         {
             final GpxTaskEvent event = taskState.createTaskEvent();
             event.eventType = GpxTaskEvent.EVENT_TYPE_FINISHED_OK;
-            event.totalKB = (int)(cos.getByteCount() / 1024L);
+            event.totalKB = (int)(ResponseUtils.getBytesRead(mainResponse) / 1024L);
             event.description = "Gotowe"; 
             
             taskState.stateCode = event.eventType;
@@ -730,7 +762,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             }
             
             final GpxTaskEvent event = taskState.createTaskEvent();
-            event.totalKB = (int)(cos.getByteCount() / 1024L);
+            event.totalKB = (int)(ResponseUtils.getBytesRead(mainResponse) / 1024L);
             if (canceled){
                 taskState.stateCode = event.eventType = GpxTaskEvent.EVENT_TYPE_FINISHED_CANCEL;
                 taskState.stateDescription = event.description = "Przerwano"; 
@@ -742,7 +774,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     taskState.stateDescription = event.description = "Wystąpił nieznany błąd"; 
                 }
             }
-            taskState.totalKB = event.totalKB = (int)(cos.getByteCount() / 1024L);
+            taskState.totalKB = event.totalKB = (int)(ResponseUtils.getBytesRead(mainResponse) / 1024L);
             taskState.currentCacheCode = null;
 
             updateTaskInDatabase(taskState, event);
@@ -1083,7 +1115,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             if (newVersion == 2){
-                db.execSQL("ALTER TABLE tasks ADD (downloader_task_id INTEGER);");
+                db.execSQL("ALTER TABLE tasks ADD COLUMN downloader_task_id INTEGER;");
                 
             }
         }
@@ -1095,14 +1127,15 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         Log.i(LOG_TAG, "Called onCreate");
         super.onCreate();
         
-        httpClient = HttpClientFactory.createHttpClient(true);
+        httpClient = HttpClientFactory.createHttpClient(true, this);
         httpClient.getParams().setIntParameter(HttpClientFactory.RAW_SOCKET_RECEIVE_BUFFER_SIZE, 32*1024);
         
         try{
             databaseHelper = new DatabaseHelper(this, "GpxDownloaderDatabase.db", null, 2);
             database = databaseHelper.getWritableDatabase();
         }catch(SQLiteException sqle){
-            Log.e(LOG_TAG, "Failed to create database", sqle); 
+            Log.e(LOG_TAG, "Failed to create database", sqle);
+            throw sqle;
         }
 
         cleanupDatabase();
@@ -1367,6 +1400,14 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         for (WorkerThread t : threads){
             if (t.taskState.taskId == taskId){
                 t.interrupt();
+                final HttpUriRequest request = t.currentRequest;
+                if (request != null){
+                    try{
+                        request.abort();
+                    }catch(Exception e){
+                        // ignore
+                    }
+                }
                 Log.i(LOG_TAG, "cancelTask, taskId=" + taskId + ", result=true");
                 return true;
             }

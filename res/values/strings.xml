@@ -52,6 +52,7 @@
     <color name="colorError">#FF0000</color>
     <color name="colorWarning">#FF8000</color>
     <color name="colorDoneOk">#00B200</color>
+    <color name="colorListItemBackgroundRemovalIndicator">#6A6A6A</color>
     
     
     <string name="titleActivityDownloadList">Lista pobieranych plików</string>

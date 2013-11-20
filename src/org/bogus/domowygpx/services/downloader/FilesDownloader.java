@@ -24,13 +24,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.http.Header;
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.bogus.domowygpx.apache.http.client.utils.DateUtils;
+import org.bogus.domowygpx.apache.http.client.utils.ResponseUtils;
 import org.bogus.domowygpx.utils.HttpException;
 import org.bogus.logging.LogFactory;
 
@@ -287,20 +287,6 @@ public class FilesDownloader implements Closeable
         return executorService.awaitTermination(timeout, unit);
     }
     
-    static void closeResponse(HttpResponse response)
-    {
-        try{
-            if (response != null){
-                HttpEntity e = response.getEntity();
-                if (e != null){
-                    e.consumeContent();
-                }
-            }
-        }catch(Exception e){
-            // ignore
-        }
-    }
-    
     protected void doDownloadInThread(final FileData data, final DownloadTask downloadTask)
     {
         HttpResponse response = null;
@@ -380,7 +366,7 @@ public class FilesDownloader implements Closeable
                 if (httpCode == 304){
                     // not modified: try reasume
                     tryReasume = true;
-                    closeResponse(response);
+                    ResponseUtils.closeResponse(response);
                 } else
                 if (httpCode == 200){
                     // modified: we got full file
@@ -394,7 +380,7 @@ public class FilesDownloader implements Closeable
                     return ;
                 } else {
                     logger.warn("Got unexpected response while checking if file has been modified: " + response.getStatusLine());
-                    closeResponse(response);
+                    ResponseUtils.closeResponse(response);
                 }
             }
             
@@ -416,7 +402,7 @@ public class FilesDownloader implements Closeable
                     // -> download full file
                 } else {
                     logger.warn("Got unexpected response while asking for partial file data: " + response.getStatusLine());
-                    closeResponse(response);
+                    ResponseUtils.closeResponse(response);
                 }
             }
             
@@ -555,10 +541,7 @@ public class FilesDownloader implements Closeable
             downloadTask.currentRequest = null;
             IOUtils.closeQuietly(os);
             IOUtils.closeQuietly(is);
-            //if (response instanceof CloseableHttpResponse){
-            //    IOUtils.closeQuietly((CloseableHttpResponse)response);
-            //}
-            closeResponse(response);
+            ResponseUtils.closeResponse(response);
             if (isOk){
                 for (DownloadProgressMonitor o : observers){
                     try{

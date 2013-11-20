@@ -171,16 +171,18 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
                 modifiedFields.add("TARGET_FILE");
             }
             if (outTargetFileName.isDirectory()){
-                errors.add(Pair.makePair("TARGET_FILE", "Docelowy plik istnieje, i jest katalogiem"));
+                errors.add(Pair.makePair("TARGET_FILE", "Docelowy plik już istnieje, i jest katalogiem"));
             } else if (outTargetFileName.exists()){
                 if (!outTargetFileName.canWrite() || !_parent.canWrite()){
-                    errors.add(Pair.makePair("TARGET_FILE", "Docelowy plik istnieje, i nie można go zastąpić"));
+                    errors.add(Pair.makePair("TARGET_FILE", "Docelowy plik już istnieje, i nie można go zastąpić"));
                 } else {
-                    warnings.add(Pair.makePair("TARGET_FILE", "Docelowy plik istnieje"));
+                    warnings.add(Pair.makePair("TARGET_FILE", "Docelowy plik już istnieje"));
                 }
             } else {
-                _parent.mkdirs();
-                if (!_parent.exists()){
+                if (_parent != null){
+                    _parent.mkdirs();
+                }
+                if (_parent == null || !_parent.exists()){
                     errors.add(Pair.makePair("TARGET_FILE", "Nie można utworzyć katalogu na docelowy plik"));
                 }
             }

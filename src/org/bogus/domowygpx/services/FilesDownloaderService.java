@@ -804,7 +804,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                     "created_date LONG NOT NULL, " +
                     "state INTEGER NOT NULL DEFAULT 0, " +
                     "flags INTEGER NOT NULL DEFAULT 0, " +
-                    "total_files_size_kb INTEGER, " +
+                    "total_files_size_kb INTEGER " +
                     ");"); 
             db.execSQL("CREATE TABLE files(" +
                     "_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
@@ -818,9 +818,9 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                     "retry_count INTEGER NOT NULL DEFAULT 0, " +
                     "status_line TEXT, " + 
                     "headers TEXT, " +
-                    "exception TEXT" +
+                    "exception TEXT " +
                     ");"); 
-            db.execSQL("CREATE INDEX files_idx1 ON headers(task_id);");
+            db.execSQL("CREATE INDEX files_idx1 ON files(task_id);");
             /*db.execSQL("CREATE TABLE headers( " +
                     "_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     "file_id INTEGER NOT NULL, " +
@@ -919,13 +919,14 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     public synchronized void onCreate()
     {
         super.onCreate();
-        httpClient = HttpClientFactory.createHttpClient(true);
+        httpClient = HttpClientFactory.createHttpClient(true, this);
         
         try{
             databaseHelper = new DatabaseHelper(this, "FilesDownloaderDatabase.db", null, 1);
             database = databaseHelper.getWritableDatabase();
         }catch(SQLiteException sqle){
             Log.e(LOG_TAG, "Failed to create database", sqle);
+            throw sqle;
         }   
         
         cleanupDatabase();
@@ -959,11 +960,11 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             }
             cursor.close();
             
-            database.execSQL("update tasks t set state=" + 
+            database.execSQL("update tasks set state=" + 
                     FilesDownloadTask.STATE_FINISHED + 
-                    " where t.state <> " + FilesDownloadTask.STATE_FINISHED +
+                    " where state <> " + FilesDownloadTask.STATE_FINISHED +
                     " and not exists (" +
-                    "   select 1 from files f where f.task_id = t._id and f.state in " +
+                    "   select 1 from files f where f.task_id = tasks._id and f.state in " +
                     "       (" + FileData.FILE_STATE_SCHEDULED + ", " + FileData.FILE_STATE_TRANSIENT_ERROR + "))");
             cursor = database.rawQuery("select changes()", null);
             if (cursor.moveToFirst()){

@@ -1,7 +1,6 @@
 package org.bogus.domowygpx.gpx;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,11 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -25,7 +20,6 @@ import org.apache.commons.io.output.CountingOutputStream;
 import org.apache.commons.logging.Log;
 import org.bogus.domowygpx.html.HTMLProcessor;
 import org.bogus.domowygpx.html.ImageSourceResolver;
-import org.bogus.geocaching.egpx.BuildConfig;
 import org.bogus.logging.LogFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -271,7 +265,6 @@ public class GpxProcessor implements GpxState, Closeable
         int fileCount = 0;
         
         try{
-            final long time0 = System.nanoTime(); 
             if (sourceStream != null){
                 is = sourceStream;
             } else {
@@ -306,19 +299,7 @@ public class GpxProcessor implements GpxState, Closeable
             parser.setInput(is, null); // TODO: get charset from HTTP headers
             fileCount = 1;
             
-            int startTagCount = 0;
-            long startTagSumTime = 0;
-            long startTagMaxTime = Long.MIN_VALUE;
-            long startTagMinTime = Long.MAX_VALUE;
-            long lastStartTagTime = 0;
-            
-            int startCacheCount = 0;
-            long startCacheSumTime = 0;
-            long startCacheMaxTime = Long.MIN_VALUE;
-            long startCacheMinTime = Long.MAX_VALUE;
-            long lastStartCacheTime = 0;
-            
-            final long time1 = System.nanoTime();
+            long lastPeriodicUpdateCall = System.currentTimeMillis();
             int eventType;
             do{
                 if (Thread.interrupted()){
@@ -328,40 +309,24 @@ public class GpxProcessor implements GpxState, Closeable
                 eventType = parser.getEventType();
                 if (eventType == XmlPullParser.START_TAG){
                     {
-                        long newNanoTime = System.nanoTime();
-                        if (lastStartTagTime > 0){
-                            long diff = newNanoTime-lastStartTagTime;
-                            startTagSumTime = startTagSumTime + diff;
-                            if (diff > startTagMaxTime){
-                                startTagMaxTime = diff;
+                        final long now = System.currentTimeMillis();
+                        if (now > lastPeriodicUpdateCall + 1000L){
+                            lastPeriodicUpdateCall = now;
+                            if (currentCacheCode != null){
+                                for (GpxProcessMonitor gpm : observers){
+                                    try{
+                                        gpm.onPeriodicUpdate(currentCacheCode);
+                                    }catch(Exception e){
+                                        
+                                    }
+                                }
                             }
-                            if (diff < startTagMinTime){
-                                startTagMinTime = diff;
-                            }
-                            startTagCount++;
                         }
-                        lastStartTagTime = newNanoTime;
                     }
                     
                     final String localName = parser.getName(); 
                     final int parserDepth = parser.getDepth();
                     if ("wpt".equals(localName)){
-                        {
-                            long newNanoTime = System.nanoTime();
-                            if (lastStartCacheTime > 0){
-                                long diff = newNanoTime-lastStartCacheTime;
-                                startCacheSumTime = startCacheSumTime + diff;
-                                if (diff > startCacheMaxTime){
-                                    startCacheMaxTime = diff;
-                                }
-                                if (diff < startCacheMinTime){
-                                    startCacheMinTime = diff;
-                                }
-                                startCacheCount++;
-                            }
-                            lastStartCacheTime = newNanoTime;
-                        }
-                        
                         if (saveEventStream){
                             XMLEvent lastEvent = gpxHeader.get(gpxHeader.size()-1);
                             if (lastEvent.getEventType() == XmlPullParser.TEXT && 
@@ -396,7 +361,8 @@ public class GpxProcessor implements GpxState, Closeable
                         writeCurrentEvent();
                         currentCacheCode = parser.nextText();
                         serializeText(currentCacheCode);
-                                                
+                                      
+                        lastPeriodicUpdateCall = System.currentTimeMillis();
                         for (GpxProcessMonitor gpm : observers){
                             try{
                                 gpm.onStartedCacheCode(currentCacheCode/*, currentLatitude, currentLongitude*/);
@@ -516,7 +482,6 @@ public class GpxProcessor implements GpxState, Closeable
                 eventType = parser.nextToken();
             }while(eventType != XmlPullParser.END_DOCUMENT);
             writeCurrentEvent();
-            final long time3 = System.nanoTime();
             
             currentCacheCode = null;
             
@@ -527,46 +492,7 @@ public class GpxProcessor implements GpxState, Closeable
             if (fileCount > 1 && !hasAnyWpt){
                 lastCreatedFile.delete();
             }
-            
-            final long time4 = System.nanoTime();
-            try{
-                String s1 = "Total start tags=" + startTagCount + ", time=" + startTagSumTime +
-                        ", min=" + startTagMinTime + ", max=" + startTagMaxTime + 
-                        ", avg=" + Math.round((double)startTagSumTime / (double)startTagCount);
-                String s2 = "Total caches=" + startCacheCount + ", time=" + startCacheSumTime +
-                        ", min=" + startCacheMinTime + ", max=" + startCacheMaxTime + 
-                        ", avg=" + Math.round((double)startCacheSumTime / (double)startCacheCount);
-                String s3 = "Total processing time=" + (time4-time0) + 
-                        ", preparation time=" + (time1-time0) + 
-                        ", processing time=" + (time3-time1) +
-                        ", finalization time=" + (time4-time3);
-                if (logger.isDebugEnabled() || BuildConfig.DEBUG){
-                    logger.debug(s1);
-                    logger.debug(s2);
-                    logger.debug(s3);
-                }
-                if (tempDir != null){
-                    OutputStream os = null;
-                    try{
-                        os = new FileOutputStream(new File(tempDir, "GpxProcessor_timing.log"), true);
-                        os = new BufferedOutputStream(os, 1024);
-                        PrintWriter w = new PrintWriter(new OutputStreamWriter(os));
-                        w.println(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
-                        w.print("thread id: ");
-                        w.println(Thread.currentThread().getId());
-                        w.println(s1);
-                        w.println(s2);
-                        w.println(s3);
-                        w.println();
-                        w.flush();
-                    }finally{
-                        IOUtils.closeQuietly(os);
-                    }
-                    
-                }
-            }catch(Exception e){
-                
-            }
+
         }catch(Exception e){
             logger.error("Failed processing cacheCode=" + currentCacheCode + ", filePart=" + fileCount);
             if (parser != null){
