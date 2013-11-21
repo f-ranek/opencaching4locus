@@ -46,7 +46,6 @@ import android.widget.BaseAdapter;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.TableRow;
 import android.widget.TextView;
 
 
@@ -164,7 +163,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
          */
         void updateProgressRow(ListItemViewHolder holder)
         {
-            TableRow view = holder.tableRowProgress; 
+            ViewGroup view = holder.tableRowProgress; 
             final int childCount = view.getChildCount();
             if (childCount == 0){
                 return ;
@@ -638,7 +637,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
         ImageButton btnDownloadItemReplay;
         ImageButton btnDownloadItemStop;
         ImageButton btnDownloadItemCancel;
-        TableRow tableRowProgress;
+        ViewGroup tableRowProgress;
         
         //BaseListItem ownerListItem;
         
@@ -654,7 +653,6 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             btnDownloadItemStop.setVisibility(View.GONE);
             btnDownloadItemCancel.setVisibility(View.GONE);
             markLayoutNeeded();
-            // XXX viewRoot.requestLayout();
         }
     }
 
@@ -848,7 +846,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
                         holder.btnDownloadItemReplay = (ImageButton)convertView.findViewById(R.id.btnDownloadItemReplay);
                         holder.btnDownloadItemStop = (ImageButton)convertView.findViewById(R.id.btnDownloadItemStop);
                         holder.btnDownloadItemCancel = (ImageButton)convertView.findViewById(R.id.btnDownloadItemCancel);
-                        holder.tableRowProgress = (TableRow)convertView.findViewById(R.id.tableRowProgress);
+                        holder.tableRowProgress = (ViewGroup)convertView.findViewById(R.id.tableRowProgress);
                         if (onSwipeTouchListener != null){
                             convertView.setOnTouchListener(onSwipeTouchListener);
                         }
@@ -875,7 +873,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
                         convertView = null;
                     }
                 }while(true);
-                listItem.updateProgressRow(holder);
+                //listItem.updateProgressRow(holder);
                 ListItemViewHolder lastHolder = null;
                 if (listItem.lastHolder != null){
                     lastHolder = listItem.lastHolder.get(); 
@@ -883,7 +881,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
                 if (lastHolder == null || lastHolder != holder){
                     listItem.lastHolder = new WeakReference<ListItemViewHolder>(holder);
                 }
-                holder.performLayoutIfNeeded();
+                // holder.performLayoutIfNeeded();
                 // holder.viewRoot.requestLayout();
                 //if (!isFresh){
                 //    convertView.setMinimumHeight(0);
