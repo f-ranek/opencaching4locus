@@ -1380,12 +1380,16 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         if (/*localResult || */dbResult){
             for (Pair<Handler, GpxDownloaderListener> client : listeners){
                 final GpxDownloaderListener listener = client.second;
-                client.first.post(new Runnable(){
-                    @Override
-                    public void run()
-                    {
-                        listener.onTaskRemoved(taskId);
-                    }});
+                if (client.first.getLooper() == Looper.getMainLooper()){
+                    listener.onTaskRemoved(taskId);
+                } else {
+                    client.first.post(new Runnable(){
+                        @Override
+                        public void run()
+                        {
+                            listener.onTaskRemoved(taskId);
+                        }});
+                }
             }
         }
         

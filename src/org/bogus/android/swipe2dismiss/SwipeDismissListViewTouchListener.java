@@ -1,12 +1,5 @@
 package org.bogus.android.swipe2dismiss;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.ValueAnimator;
 import android.annotation.TargetApi;
 import android.graphics.Rect;
 import android.os.Build;
@@ -14,7 +7,6 @@ import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
-import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.ListView;
 /**
@@ -68,8 +60,8 @@ public class SwipeDismissListViewTouchListener implements View.OnTouchListener
 
 
     // Transient properties
-    List<PendingDismissData> mPendingDismisses = new ArrayList<PendingDismissData>();
-    int mDismissAnimationRefCount = 0;
+    //List<PendingDismissData> mPendingDismisses = new ArrayList<PendingDismissData>();
+    //int mDismissAnimationRefCount = 0;
     private float mDownX;
     private boolean mSwiping;
     private VelocityTracker mVelocityTracker;
@@ -117,6 +109,13 @@ public class SwipeDismissListViewTouchListener implements View.OnTouchListener
                 android.R.integer.config_shortAnimTime);
         mListView = listView;
         mCallbacks = callbacks;
+        
+        /*
+        Does not work, but why?
+        Even if animateLayoutChanges is set to true
+        final LayoutTransition lt = new LayoutTransition();
+        listView.setLayoutTransition(lt);
+        */
     }
 
 
@@ -318,6 +317,16 @@ public class SwipeDismissListViewTouchListener implements View.OnTouchListener
 
 
     private void dismiss(final View view, final int position, boolean dismissRight) {
+        // do not perform this hidding animation, because it's messing something with view's height
+        mCallbacks.onDismiss(mListView, new int[] { position });
+        if (view != null){
+            // reset view properties
+            view.setAlpha(1f);
+            view.setTranslationX(0);
+        }
+    }
+    /*
+    private void dismiss(final View view, final int position, boolean dismissRight) {
         ++mDismissAnimationRefCount;
         if (view == null) {
             // No view, shortcut to calling onDismiss to let it deal with adapter
@@ -338,7 +347,7 @@ public class SwipeDismissListViewTouchListener implements View.OnTouchListener
                     }
                 });
     }
-
+    */
 
     private View getViewForPosition(int position) {
         int index = position
@@ -347,7 +356,7 @@ public class SwipeDismissListViewTouchListener implements View.OnTouchListener
                 ? mListView.getChildAt(index)
                 : null;
     }
-
+    /*
 
     class PendingDismissData implements Comparable<PendingDismissData> {
         public int position;
@@ -366,7 +375,6 @@ public class SwipeDismissListViewTouchListener implements View.OnTouchListener
             return other.position - position;
         }
     }
-
 
     void performDismiss(final View dismissView, final int dismissPosition) {
         // Animate the dismissed list item to zero-height and fire the dismiss callback when
@@ -426,5 +434,5 @@ public class SwipeDismissListViewTouchListener implements View.OnTouchListener
 
         mPendingDismisses.add(new PendingDismissData(dismissPosition, dismissView));
         animator.start();
-    }
+    }*/
 }

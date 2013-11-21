@@ -44,6 +44,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
@@ -1206,12 +1207,16 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                 }
                 for (final Pair<Handler, FilesDownloaderListener> listener : listeners){
                     final FilesDownloaderListener fdl = listener.second;
-                    listener.first.post(new Runnable(){
-                        @Override
-                        public void run(){
-                            fdl.onTaskRemoved(task);
-                        }
-                    });
+                    if (listener.first.getLooper() == Looper.getMainLooper()){
+                        fdl.onTaskRemoved(task);
+                    } else {
+                        listener.first.post(new Runnable(){
+                            @Override
+                            public void run(){
+                                fdl.onTaskRemoved(task);
+                            }
+                        });
+                    }
                 }                
                 return true;
             }
