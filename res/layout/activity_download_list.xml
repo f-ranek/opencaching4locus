@@ -12,9 +12,15 @@
         android:id="@+id/listViewOperations"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:scrollingCache="false"
+        
+        
+        
         tools:listitem="@layout/activity_download_list_item" >
-
+<!--
+    android:animationCache=""
+    android:scrollingCache="false" 
+    android:animateLayoutChanges="true"
+  -->
     </ListView>
 
 </LinearLayout>

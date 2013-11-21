@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.widget.AbsListView;
 import android.widget.ListView;
+
 /**
  * A {@link android.view.View.OnTouchListener} that makes the list items in a {@link ListView}
  * dismissable. {@link ListView} is given special treatment because by default it handles touches
@@ -110,12 +111,10 @@ public class SwipeDismissListViewTouchListener implements View.OnTouchListener
         mListView = listView;
         mCallbacks = callbacks;
         
-        /*
-        Does not work, but why?
-        Even if animateLayoutChanges is set to true
-        final LayoutTransition lt = new LayoutTransition();
-        listView.setLayoutTransition(lt);
-        */
+        //Does not work, but why?
+        //Even if animateLayoutChanges is set to true
+        //final LayoutTransition lt = new LayoutTransition();
+        //listView.setLayoutTransition(lt);
     }
 
 
