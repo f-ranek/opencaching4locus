@@ -207,6 +207,7 @@ public class ToStringBuilder
         return sb.append(i);
     }
     
+    @SuppressWarnings("deprecation")
     protected void appendDate(Date date)
     {
         sb.append(date.getYear() + 1900).append('-');

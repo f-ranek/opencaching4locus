@@ -89,14 +89,6 @@
                 android:contentDescription="@string/btnDownloadItemReplayDescription"
                 android:src="@drawable/ic_replay_3" />
             <ImageButton
-                android:id="@+id/btnDownloadItemStop"
-                style="?android:attr/buttonStyleSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:adjustViewBounds="true"
-                android:contentDescription="@string/btnDownloadItemStopDescription"
-                android:src="@drawable/ic_stop_2" />
-            <ImageButton
                 android:id="@+id/btnDownloadItemCancel"
                 style="?android:attr/buttonStyleSmall"
                 android:layout_width="wrap_content"

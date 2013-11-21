@@ -1,6 +1,5 @@
 package org.bogus.domowygpx.activities;
 
-import java.lang.ref.WeakReference;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -9,7 +8,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
-import org.bogus.android.swipe2dismiss.OnSwipeTouchListener;
 import org.bogus.android.swipe2dismiss.SwipeDismissListViewTouchListener;
 import org.bogus.domowygpx.services.FilesDownloaderApi;
 import org.bogus.domowygpx.services.FilesDownloaderListener;
@@ -55,8 +53,6 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
     
     private final static boolean FORCE_OLD_SWIPE_TO_REMOVE = false;
     
-    //final Handler handler = new Handler(Looper.getMainLooper());
-    
     GpxDownloaderApi gpxDownloader;
     private ServiceConnection gpxDownloaderServiceConnection = new ServiceConnection(){
         @Override
@@ -93,9 +89,6 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
     private int stableIdCounter;
     
     abstract class BaseListItem {
-        // do not keep strong referenct to view data structures
-        WeakReference<ListItemViewHolder> lastHolder;
-        
         int stableId;
         int taskId;
         String message;
@@ -236,23 +229,18 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             if (!super.applyToView(holder, isFresh)){
                 return false;
             }
-            boolean requiresLayout = false;
             switch(stateCode){
                 case GpxTask.STATE_RUNNING:
-                    requiresLayout |= setViewVisible(true, holder.btnDownloadItemCancel);
+                    holder.btnDownloadItemCancel.setVisibility(View.VISIBLE);
                     holder.btnDownloadItemCancel.setOnClickListener(onCancelListener);
                     setImageButtonEnabled(!cancelling, holder.btnDownloadItemCancel);
                     break;
                 case GpxTask.STATE_DONE:
                 case GpxTask.STATE_CANCELED:
                 case GpxTask.STATE_ERROR:
-                    requiresLayout |= setViewVisible(false, holder.btnDownloadItemCancel);
+                    holder.btnDownloadItemCancel.setVisibility(View.GONE);
                     holder.btnDownloadItemCancel.setOnClickListener(null);
                     break;
-            }
-            
-            if (requiresLayout){
-                holder.markLayoutNeeded();
             }
             
             return true;
@@ -418,7 +406,6 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             boolean canPlay = false;
             boolean canPause = false;
             boolean canReplay = false;
-            //boolean canStop = false;
             boolean canCancel = false;
             if (launching){
                 // no icons to display
@@ -449,11 +436,10 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             }            
             
             
-            boolean requiresLayout = false;
-            requiresLayout |= setViewVisible(canPlay, holder.btnDownloadItemPlay);
-            requiresLayout |= setViewVisible(canPause, holder.btnDownloadItemPause);
-            requiresLayout |= setViewVisible(canReplay, holder.btnDownloadItemReplay);
-            requiresLayout |= setViewVisible(canCancel, holder.btnDownloadItemCancel);
+            setViewVisible(canPlay, holder.btnDownloadItemPlay);
+            setViewVisible(canPause, holder.btnDownloadItemPause);
+            setViewVisible(canReplay, holder.btnDownloadItemReplay);
+            setViewVisible(canCancel, holder.btnDownloadItemCancel);
 
             holder.btnDownloadItemPlay.setOnClickListener(onPlayListener);
             holder.btnDownloadItemPause.setOnClickListener(onPauseListener);
@@ -472,9 +458,6 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
                 holder.btnDownloadItemCancel.setClickable(false);
             }
             
-            if (requiresLayout){
-                holder.markLayoutNeeded();
-            }
             return true;
         }
 
@@ -595,6 +578,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
     }
     
     static class ListItemViewHolder {
+        /*
         private int flags;
         
         private final static int FLAG_UNUSABLE = 1; 
@@ -602,7 +586,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
         
         void markUnusable()
         {
-            // XXX temporary flags |= FLAG_UNUSABLE;
+            temporary flags |= FLAG_UNUSABLE;
         }
         
         boolean isUnusable()
@@ -620,12 +604,12 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             boolean result = (flags&FLAG_NEEDS_LAYOUT) != 0;
             flags&=~FLAG_NEEDS_LAYOUT;
             if (result){
-                viewRoot.requestLayout(); // XXX still does not work as expected :/
+                viewRoot.requestLayout(); 
             }
             return result;
-        }
+        }*/
         
-        long stableId;
+        // long stableId;
         
         View viewRoot;
         TextView textViewMainInfo;
@@ -635,24 +619,34 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
         ImageButton btnDownloadItemPlay;
         ImageButton btnDownloadItemPause;
         ImageButton btnDownloadItemReplay;
-        ImageButton btnDownloadItemStop;
         ImageButton btnDownloadItemCancel;
         ViewGroup tableRowProgress;
         
-        //BaseListItem ownerListItem;
+        void initialSetup(View viewRoot)
+        {
+            this.viewRoot = viewRoot;
+            textViewMainInfo = (TextView)viewRoot.findViewById(R.id.textViewMainInfo);
+            textViewDetailsInfo = (TextView)viewRoot.findViewById(R.id.textViewDetailsInfo);
+            progressBar1 = (ProgressBar)viewRoot.findViewById(R.id.progressBar1);
+            textViewDateInfo = (TextView)viewRoot.findViewById(R.id.textViewDateInfo);
+            btnDownloadItemPlay = (ImageButton)viewRoot.findViewById(R.id.btnDownloadItemPlay);
+            btnDownloadItemPause = (ImageButton)viewRoot.findViewById(R.id.btnDownloadItemPause);
+            btnDownloadItemReplay = (ImageButton)viewRoot.findViewById(R.id.btnDownloadItemReplay);
+            btnDownloadItemCancel = (ImageButton)viewRoot.findViewById(R.id.btnDownloadItemCancel);
+            tableRowProgress = (ViewGroup)viewRoot.findViewById(R.id.tableRowProgress);
+            
+        }
         
         /**
          * Makes any required fix-ups in the newly created view
          */
-        void initialSetup()
+        void initialFixup()
         {
             progressBar1.setVisibility(View.GONE);
             btnDownloadItemPlay.setVisibility(View.GONE);
             btnDownloadItemPause.setVisibility(View.GONE);
             btnDownloadItemReplay.setVisibility(View.GONE);
-            btnDownloadItemStop.setVisibility(View.GONE);
             btnDownloadItemCancel.setVisibility(View.GONE);
-            markLayoutNeeded();
         }
     }
 
@@ -767,57 +761,10 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
         setContentView(R.layout.activity_download_list);
 
         listViewOperations = (ListView)findViewById(R.id.listViewOperations);
-        /*listViewOperations.setRecyclerListener(new RecyclerListener()
-        {
-            @Override
-            public void onMovedToScrapHeap(View view)
-            {
-                ListItemViewHolder holder = (ListItemViewHolder) view.getTag();
-                if (holder != null && holder.isUnusable()){
-                    // release all the resources
-                    if (view instanceof ViewGroup){
-                        ViewGroup vg = (ViewGroup)view;
-                        vg.removeAllViews();
-                    }
-                    view.setTag(null);
-                }
-                
-            }
-        });*/
         
         listViewAdapter = new BaseAdapter()
         {
-            LayoutInflater layoutInflater = LayoutInflater.from(DownloadListActivity.this);
-            private OnSwipeTouchListener onSwipeTouchListener;
-            {
-                // support for swipe-to-dismiss for older android devices
-                // TODO: fuck that compatibility, implement context menu for the item
-                if (android.os.Build.VERSION.SDK_INT < 12 || FORCE_OLD_SWIPE_TO_REMOVE){
-                    onSwipeTouchListener = new OnSwipeTouchListener(DownloadListActivity.this) {
-                        @Override
-                        public void onSwipeRight()
-                        {
-                            // this view may get recycled, and refreshed without background
-                            // but ignore the problem now
-                            final ListItemViewHolder holder = (ListItemViewHolder) view.getTag();
-                            final BaseListItem listItem = getItemById(holder.stableId);
-                            if (listItem.canBeRemoved()){
-                                final Drawable oldBackground = view.getBackground();
-                                view.setBackgroundColor(getResources().getColor(R.color.colorListItemBackgroundRemovalIndicator));
-                                view.postDelayed(new Runnable(){
-                                    @SuppressWarnings("synthetic-access")
-                                    @Override
-                                    public void run()
-                                    {
-                                        holder.markUnusable();
-                                        listItem.onItemRemoval();
-                                        view.setBackground(oldBackground);
-                                    }}, 250);
-                            }
-                        }
-                    };
-                }
-            };
+            private LayoutInflater layoutInflater = LayoutInflater.from(DownloadListActivity.this);
             
             @Override
             public boolean hasStableIds() {
@@ -827,7 +774,6 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             @Override
             public View getView(int position, View convertView, ViewGroup parent)
             {
-                // XXX todo: implement our own pool of views, based on SoftReference and stableId (can be int, too)
                 final BaseListItem listItem = (BaseListItem)getItem(position);
                 ListItemViewHolder holder;
                 boolean isFresh;
@@ -836,36 +782,23 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
                     if (convertView == null) {
                         convertView = layoutInflater.inflate(R.layout.activity_download_list_item, null);
                         holder = new ListItemViewHolder();
-                        holder.viewRoot = convertView;
-                        holder.textViewMainInfo = (TextView)convertView.findViewById(R.id.textViewMainInfo);
-                        holder.textViewDetailsInfo = (TextView)convertView.findViewById(R.id.textViewDetailsInfo);
-                        holder.progressBar1 = (ProgressBar)convertView.findViewById(R.id.progressBar1);
-                        holder.textViewDateInfo = (TextView)convertView.findViewById(R.id.textViewDateInfo);
-                        holder.btnDownloadItemPlay = (ImageButton)convertView.findViewById(R.id.btnDownloadItemPlay);
-                        holder.btnDownloadItemPause = (ImageButton)convertView.findViewById(R.id.btnDownloadItemPause);
-                        holder.btnDownloadItemReplay = (ImageButton)convertView.findViewById(R.id.btnDownloadItemReplay);
-                        holder.btnDownloadItemStop = (ImageButton)convertView.findViewById(R.id.btnDownloadItemStop);
-                        holder.btnDownloadItemCancel = (ImageButton)convertView.findViewById(R.id.btnDownloadItemCancel);
-                        holder.tableRowProgress = (ViewGroup)convertView.findViewById(R.id.tableRowProgress);
-                        if (onSwipeTouchListener != null){
-                            convertView.setOnTouchListener(onSwipeTouchListener);
-                        }
-                        holder.initialSetup();
-                        //listItem.initialSetup(holder);
+                        holder.initialSetup(convertView);
+                        holder.initialFixup();
                         convertView.setTag(holder);
                     } else {
                         holder = (ListItemViewHolder) convertView.getTag();
-                        //if (holder.ownerListItem != null && listItem.getClass() != holder.ownerListItem.getClass()){
-                        //    convertView = null;
-                        //    continue;
-                        //}
-                        
                     }
+                    /*
                     if (holder == null || holder.isUnusable()){
+                        if (convertView instanceof ViewGroup){
+                            ViewGroup vg = (ViewGroup)convertView;
+                            vg.removeAllViews();
+                        }
+                        convertView.setTag(null);
                         convertView = null;
                         continue;
                     }
-                    holder.stableId = listItem.stableId;
+                    */
     
                     if (listItem.applyToView(holder, isFresh) || isFresh){
                         break;
@@ -873,20 +806,8 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
                         convertView = null;
                     }
                 }while(true);
-                //listItem.updateProgressRow(holder);
-                ListItemViewHolder lastHolder = null;
-                if (listItem.lastHolder != null){
-                    lastHolder = listItem.lastHolder.get(); 
-                }
-                if (lastHolder == null || lastHolder != holder){
-                    listItem.lastHolder = new WeakReference<ListItemViewHolder>(holder);
-                }
+                listItem.updateProgressRow(holder);
                 // holder.performLayoutIfNeeded();
-                // holder.viewRoot.requestLayout();
-                //if (!isFresh){
-                //    convertView.setMinimumHeight(0);
-                //    convertView.setBottom(convertView.getTop());
-                //}
                 return convertView;
             }
             
@@ -900,16 +821,6 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             public Object getItem(final int position)
             {
                 return listItems.get(position);
-            }
-            
-            public BaseListItem getItemById(final long id)
-            {
-                for (BaseListItem li : listItems){
-                    if (li.stableId == id){
-                        return li;
-                    }
-                }
-                return null;
             }
             
             @Override
@@ -945,7 +856,6 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
                                         final BaseListItem listItem = (BaseListItem)listViewAdapter.getItem(position);
                                         listItem.onItemRemoval();
                                     }
-                                    // listViewAdapter.notifyDataSetChanged();
                                 }
 
                                 @Override
@@ -1010,8 +920,6 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
         res.setColorFilter(Color.GRAY, Mode.SRC_IN);
         return res;
     } 
-    //private SparseArray<Drawable> grayscaledImages = new SparseArray<Drawable>();      
-
     
     protected void bindDownloaderService()
     {
@@ -1190,32 +1098,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             BaseListItem listItem = liit.next();
             if (taskId == listItem.taskId && type.isInstance(listItem)){
                 liit.remove();
-                // XXX listViewOperations.requestLayout();
-                //listViewOperations.setAdapter(listViewAdapter);
-                // listViewOperations.smoothScrollToPosition(position)
-                // listViewOperations.invalidateViews();
-                
-                //final int scrollX = listViewOperations.getScrollX();
-                //final int scrollY = listViewOperations.getScrollY();
-
-                //listViewOperations.measure(
-                //    MeasureSpec.makeMeasureSpec(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED), 
-                //    MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
-                
-                // seting the adapter will do the trick of entire list refresh...
-                //listViewOperations.setAdapter(null);
-                //listViewOperations.setAdapter(listViewAdapter);
-                
-                // mark the view item as unusable any more, so it will not get recycled
-                ListItemViewHolder lastHolder = null;
-                if (listItem.lastHolder != null){
-                    lastHolder = listItem.lastHolder.get(); 
-                }
-                if (lastHolder != null){
-                    lastHolder.markUnusable();
-                }
                 listViewAdapter.notifyDataSetChanged();
-                //listViewOperations.scrollTo(scrollX, scrollY);
                 break;
             }
         }

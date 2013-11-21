@@ -309,8 +309,9 @@ public class GpxProcessor implements GpxState, Closeable
                 eventType = parser.getEventType();
                 if (eventType == XmlPullParser.START_TAG){
                     {
+                     // TODO: download progress should actually be pulled by the client from HTTP layer
                         final long now = System.currentTimeMillis();
-                        if (now > lastPeriodicUpdateCall + 1000L){
+                        if (now > lastPeriodicUpdateCall + 200L){ 
                             lastPeriodicUpdateCall = now;
                             if (currentCacheCode != null){
                                 for (GpxProcessMonitor gpm : observers){
