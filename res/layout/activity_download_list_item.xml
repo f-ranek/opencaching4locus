@@ -40,20 +40,29 @@
         android:id="@+id/tableRowProgress"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
+        android:baselineAligned="false"
         android:orientation="horizontal"
         android:weightSum="10" >
 
-        <ProgressBar
-            android:id="@+id/progressBar1"
+        <LinearLayout
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="0dp"
-            android:layout_height="23dp"
+            android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
-            android:layout_weight="10"
-            android:max="80"
-            android:minHeight="23dp"
-            android:paddingRight="4dp"
-            android:progress="12" />
+            android:layout_weight="10" >
+
+            <ProgressBar
+                android:id="@+id/progressBar1"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="fill_parent"
+                android:layout_height="23dp"
+                android:layout_gravity="center_vertical"
+                android:max="80"
+                android:minHeight="23dip"
+                android:paddingRight="4dp"
+                android:progress="12" />
+
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -62,7 +71,6 @@
             android:paddingTop="2dp" >
 
             <ImageButton
-                
                 android:id="@+id/btnDownloadItemPlay"
                 style="?android:attr/buttonStyleSmall"
                 android:layout_width="wrap_content"
@@ -88,6 +96,7 @@
                 android:adjustViewBounds="true"
                 android:contentDescription="@string/btnDownloadItemReplayDescription"
                 android:src="@drawable/ic_replay_3" />
+
             <ImageButton
                 android:id="@+id/btnDownloadItemCancel"
                 style="?android:attr/buttonStyleSmall"
@@ -96,7 +105,8 @@
                 android:adjustViewBounds="true"
                 android:contentDescription="@string/btnDownloadItemCancelDescription"
                 android:src="@drawable/ic_cancel_3" />
-            </LinearLayout>
+
+        </LinearLayout>
     </LinearLayout>
 
     <LinearLayout

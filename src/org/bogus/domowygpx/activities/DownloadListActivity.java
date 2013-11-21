@@ -136,7 +136,13 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
                     holder.progressBar1.setProgress(progressCurrent);
                 }
             } else {
-                holder.progressBar1.setVisibility(View.INVISIBLE);
+                // could also unwrap the progressBar from it's parent layout,
+                // and set GONE when no action buttons are to be displayed,
+                // and INVISIBLE when there are any
+                // that way we won't need updateProgressRow any more
+                // if we set it gone without parent wrapping layout, action buttons
+                // (actualy the view holding them) will move to the left
+                holder.progressBar1.setVisibility(View.GONE); 
             }
             return true;
         }
