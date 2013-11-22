@@ -62,6 +62,7 @@ import android.app.Service;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
@@ -648,6 +649,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                                 }
                             }
                         )));
+                        startService(intent);
                     }
                 }catch(Exception e){   
                     setErrorDescription("Błąd pobierania obrazów", e); 
@@ -1163,14 +1165,37 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
 
     private void cleanupDatabase()
     {
-        // set all tasks beeing processes as unknown
-        ContentValues updates = new ContentValues(1);
-        updates.put("state", GpxTask.STATE_UNKNOWN);
-        int rows = database.update("tasks", updates, "state=0", null);
-        if (rows > 0){
-            Log.e(LOG_TAG, "Found #" + rows + " abandoned tasks");
+        database.beginTransaction();
+        try{
+            // set all tasks beeing processes as unknown
+            ContentValues updates = new ContentValues(1);
+            updates.put("state", GpxTask.STATE_UNKNOWN);
+            int rows = database.update("tasks", updates, "state=0", null);
+            if (rows > 0){
+                Log.e(LOG_TAG, "Found #" + rows + " abandoned tasks");
+            }
+            database.setTransactionSuccessful();
+        }finally{
+            database.endTransaction();
         }
         
+        
+        final SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
+        final int removeGpxTasksDays = config.getInt("Application_removeGpxTasksDays", 14);
+        if (removeGpxTasksDays > 0){
+            database.beginTransaction();
+            try{
+                long ts = System.currentTimeMillis() - 24L*60L*60L*1000L*removeGpxTasksDays;
+                database.delete("events", "task_id in (select _id from tasks where created_date < " + ts + ")", null);
+                int rows = database.delete("tasks", "created_date < " + ts, null);
+                if (rows > 0){
+                    Log.i(LOG_TAG, "Deleted #" + rows + " old tasks");
+                }
+                database.setTransactionSuccessful();
+            }finally{
+                database.endTransaction();
+            }
+        }
     }
     
     void saveEventToDatabase(GpxTaskEvent event)
