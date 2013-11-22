@@ -146,8 +146,7 @@ public class FilesDownloader implements Closeable
                 }}); 
             
         executorService = new ThreadPoolExecutor(numOfWorkerThreads, numOfWorkerThreads,
-            0L, TimeUnit.MILLISECONDS, tasksQueue, 
-            tf);
+            0L, TimeUnit.MILLISECONDS, tasksQueue, tf);
         
         if (filesOnHold != null){
             this.filesOnHold = filesOnHold; 
@@ -175,7 +174,7 @@ public class FilesDownloader implements Closeable
             throw new NullPointerException("fileData");
         }
         DownloadTask task = new DownloadTask(fileData);
-        this.executorService.submit(task);
+        this.executorService.execute(task);
     }
     
     public synchronized void submit(FileData fileData)
