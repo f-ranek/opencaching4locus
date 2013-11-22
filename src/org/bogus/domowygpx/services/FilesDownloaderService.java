@@ -518,16 +518,17 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         }
     }
     
-    protected FilesDownloader createFilesDownloader()
+    protected synchronized FilesDownloader createFilesDownloader()
     {
         FilesDownloader fd = null;
-        synchronized(this){
-            if (freeFilesDownloader != null){
-                fd = freeFilesDownloader;
-                freeFilesDownloader = null;
-            }
+        if (freeFilesDownloader != null){
+            fd = freeFilesDownloader;
+            freeFilesDownloader = null;
         }
         if (fd == null || fd.isClosed()){
+            if (httpClient == null){
+                httpClient = HttpClientFactory.createHttpClient(true, this);
+            }
             fd = new FilesDownloader(httpClient, 1, filesOnHold);
         }
         return fd;
@@ -951,7 +952,6 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     public synchronized void onCreate()
     {
         super.onCreate();
-        httpClient = HttpClientFactory.createHttpClient(true, this);
         
         try{
             databaseHelper = new DatabaseHelper(this, "FilesDownloaderDatabase.db", null, 1);

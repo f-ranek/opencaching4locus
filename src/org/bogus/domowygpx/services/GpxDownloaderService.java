@@ -86,7 +86,20 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
     private static final int NOTIFICATION_ID_ONGOING = 0x10;
     private static final int NOTIFICATION_ID_FINISHED = NOTIFICATION_ID_ONGOING+1;
     
-    protected HttpClient httpClient;
+    private volatile HttpClient httpClient;
+    
+    HttpClient getHttpClient(){
+        if (httpClient == null){
+            synchronized(this){
+                if (httpClient == null){
+                    HttpClient aHttpClient = HttpClientFactory.createHttpClient(true, this);
+                    aHttpClient.getParams().setIntParameter(HttpClientFactory.RAW_SOCKET_RECEIVE_BUFFER_SIZE, 32*1024);
+                    httpClient = aHttpClient;
+                }
+            }
+        }
+        return httpClient;        
+    }
     
     final static AtomicInteger threadIndexCount = new AtomicInteger();
     
@@ -197,6 +210,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         private List<File> touchedFiles;
         volatile HttpUriRequest currentRequest;
         HttpResponse mainResponse;
+        HttpClient httpClient;
         
         public WorkerThread(TaskConfiguration taskConfiguration, GpxTask taskState)
         {
@@ -321,9 +335,14 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         public void run()
         {
             try{
+                this.httpClient = getHttpClient();
                 Log.i(LOG_TAG, "START");
                 run0();
             }finally{
+                httpClient = null;
+                touchedFiles = null;;
+                currentRequest = null;
+                mainResponse = null;
                 GpxDownloaderService.this.workFinished(WorkerThread.this);
                 Log.i(LOG_TAG, "END");
             }
@@ -1122,9 +1141,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
     {
         Log.i(LOG_TAG, "Called onCreate");
         super.onCreate();
-        
-        httpClient = HttpClientFactory.createHttpClient(true, this);
-        httpClient.getParams().setIntParameter(HttpClientFactory.RAW_SOCKET_RECEIVE_BUFFER_SIZE, 32*1024);
         
         try{
             databaseHelper = new DatabaseHelper(this, "GpxDownloaderDatabase.db", null, 2);
