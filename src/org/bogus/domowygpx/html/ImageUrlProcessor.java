@@ -159,7 +159,7 @@ public class ImageUrlProcessor implements ImageSourceResolver
     {
         StringBuilder sb;
         try{
-            final MessageDigest md = MessageDigest.getInstance("MD2");
+            final MessageDigest md = MessageDigest.getInstance("MD5");
             md.update(uri.toASCIIString().getBytes());
             final byte[] data = md.digest();
             sb = new StringBuilder(data.length*2 + 10);
@@ -236,7 +236,7 @@ public class ImageUrlProcessor implements ImageSourceResolver
                 }
             }
             
-            final MessageDigest md = MessageDigest.getInstance("MD2");
+            final MessageDigest md = MessageDigest.getInstance("MD5");
             final StringBuilder targetFileName = new StringBuilder(64);
             final String localPath = getPathForCacheCode(currentCacheCode);
             targetFileName.append(localPath);
