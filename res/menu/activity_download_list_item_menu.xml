@@ -1,0 +1,32 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <group android:orderInCategory="1">
+        <item
+            android:id="@+id/actionDownloadItemPlay"
+            android:orderInCategory="1"
+            android:title="@string/btnDownloadItemPlay" 
+            android:visible="false"/>
+        <item
+            android:id="@+id/actionDownloadItemPause"
+            android:orderInCategory="2"
+            android:title="@string/btnDownloadItemPause"
+            android:visible="false"/>
+        <item
+            android:id="@+id/actionDownloadItemReplay"
+            android:orderInCategory="3"
+            android:title="@string/btnDownloadItemReplay"
+            android:visible="false"/>
+        <item
+            android:id="@+id/actionDownloadItemCancel"
+            android:orderInCategory="4"
+            android:title="@string/btnDownloadItemCancel"
+            android:visible="false"/>
+    </group>
+    <group android:orderInCategory="2">
+        <item
+            android:id="@+id/actionDownloadItemRemove"
+            android:orderInCategory="5"
+            android:title="@string/btnDownloadItemRemove"/>
+    </group>
+
+</menu>

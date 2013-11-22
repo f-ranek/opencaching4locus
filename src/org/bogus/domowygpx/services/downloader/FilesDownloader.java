@@ -9,9 +9,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -37,6 +40,9 @@ import org.bogus.logging.LogFactory;
 public class FilesDownloader implements Closeable
 {
     final static AtomicInteger threadCount = new AtomicInteger();
+    
+    final static Set<String> ignoredHeaders = new HashSet<String>(Arrays.asList(
+        "keep-alive", "connection", "proxy-connection"));
     
     private final static Log logger = LogFactory.getLog(FilesDownloader.class);
     //private final ArrayList<DownloadedFileData> outputQueue = new ArrayList<DownloadedFileData>();
@@ -212,7 +218,6 @@ public class FilesDownloader implements Closeable
     /**
      * Finish tasks in progress, and shutdown when all the files being currently downloaded are done.
      * Files in a queue are not started
-     * TODO: return list of queued tasks
      */
     public synchronized void stopDownload()
     {
@@ -221,7 +226,6 @@ public class FilesDownloader implements Closeable
     
     /**
      * Abruptly aborts all tasks
-     * TODO: return list of queued tasks
      */
     public synchronized void abortDownload()
     {
@@ -350,6 +354,7 @@ public class FilesDownloader implements Closeable
             }
             HttpGet get = null; 
             if (acceptByteRanges){
+                // TODO: implement If-Range http header
                 get = new HttpGet(data.source);
                 if (eTag != null || lastModified != null){
                     if (eTag != null){
@@ -414,12 +419,18 @@ public class FilesDownloader implements Closeable
             @SuppressWarnings("null")
             final StatusLine statusLine = response.getStatusLine();
             data.statusLine  = statusLine.toString();
-            final Header[] allHeaders = response.getAllHeaders();
-            data.headers = new String[allHeaders.length][];
-            for (int i=0; i<allHeaders.length; i++){
-                final Header h = allHeaders[i];
-                final String[] h2 = new String[]{h.getName(), h.getValue()}; 
-                data.headers[i] = h2;
+            {
+                final Header[] allHeaders = response.getAllHeaders();
+                final List<String[]> allHeaders2 = new ArrayList<String[]>(allHeaders.length);
+                
+                for (int i=0; i<allHeaders.length; i++){
+                    final Header h = allHeaders[i];
+                    if (!ignoredHeaders.contains(h.getName().toLowerCase(Locale.US))){
+                        final String[] h2 = new String[]{h.getName(), h.getValue()}; 
+                        allHeaders2.add(h2);
+                    }
+                }
+                data.headers = allHeaders2.toArray(new String[allHeaders2.size()][]);
             }
             
             if (statusLine.getStatusCode() == 404){

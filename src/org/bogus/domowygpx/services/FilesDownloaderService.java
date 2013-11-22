@@ -238,8 +238,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                     Log.e(LOG_TAG, "Fuck, some state is wrong, taskId=" + taskId + ", currentState=" + currentState);
                     return ;
                 }
-                if (!updateTask(taskId, task, newTaskState, currentState)){
-                    Log.e(LOG_TAG, "Fuck, failed to update task, taskId=" + taskId + ", currentState=" + currentState + ", newTaskState=" + newTaskState);
+                if (!updateTask(task, newTaskState, currentState)){
                     return ;
                 }
                 
@@ -267,7 +266,6 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                         });
                     }
                 }                
-                //task.state = newTaskState;
                 if (task.continueFromPausing){
                     task.continueFromPausing = false;
                     
@@ -537,7 +535,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     
     /**
      * Reads files to be downloaded for a given task, and schedules them for download
-     * @param restartFailed reser retryCount
+     * @param restartFailed reset retryCount
      * @param includePermanentlyFailed includes files with state=FileData.FILE_STATE_PERMANENT_ERROR
      * @param task
      */
@@ -548,7 +546,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         Cursor cursor = database.query("files", 
             new String[]{"_id", "state", "cache_code", "source", "target", "virtual_target", "priority", "retry_count", "headers"}, 
             "task_id = " + task.taskId + 
-            (includeAll ? "" : " and state in (" + FileData.FILE_STATE_SCHEDULED + ", " + FileData.FILE_STATE_TRANSIENT_ERROR + ")"),  
+            (includeAll ? "" : " and state = " + FileData.FILE_STATE_SCHEDULED),  
             (String[])null, null, null, "_id");
         if (cursor.moveToFirst()){
             do{
@@ -702,15 +700,24 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             builder.setContentTitle("Pobieranie zakończone"); 
         }
         final StringBuilder sb = new StringBuilder();
+        boolean wasFirstTaskInfo = false;
         if (runningCount > 0){
-            sb.append(runningCount);
-            sb.append(" w trakcie"); 
-        }
-        if (finishedCount > 0){
-            if (sb.length() > 0){
+            if (wasFirstTaskInfo){
                 sb.append(", "); 
             }
-            sb.append(getResources().getQuantityString(R.plurals.finished, finishedCount, finishedCount));
+            sb.append(getResources().getQuantityString(
+                wasFirstTaskInfo ? R.plurals.running : R.plurals.taskRunning, 
+                        runningCount, runningCount));
+            wasFirstTaskInfo = true;
+        }
+        if (finishedCount > 0){
+            if (wasFirstTaskInfo){
+                sb.append(", "); 
+            }
+            sb.append(getResources().getQuantityString(
+                wasFirstTaskInfo ? R.plurals.finished : R.plurals.taskFinished, 
+                finishedCount, finishedCount));
+            wasFirstTaskInfo = true;
         }
         if (failedCount > 0){
             if (sb.length() > 0){
@@ -743,10 +750,17 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         task.taskId = taskId;
         return task;
     }
-    
-    protected boolean updateTask(int taskId, FilesDownloadTask newTask, int newState, int expectedState)
+    /**
+     * Updates task in database, if the update succeed, in-memory task state is also updated
+     * @param newTask New task data
+     * @param newState New task state
+     * @param expectedState Expected task state
+     * @return true, if task has been updated, false otherwise
+     */
+    private boolean updateTask(FilesDownloadTask newTask, int newState, int expectedState)
     {
-        ContentValues cv = new ContentValues(3);
+        final int taskId = newTask.taskId;
+        final ContentValues cv = new ContentValues(3);
         cv.put("state", newState);
         cv.put("total_files_size_kb", newTask.totalFilesSizeKB);
         cv.put("flags", newTask.flags);
@@ -754,6 +768,8 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         if (rows > 0){
             newTask.state = newState;
             Log.i(LOG_TAG, "Update taskId=" + taskId + ", newState=" + newState + ", oldState=" + expectedState);
+        } else {
+            Log.w(LOG_TAG, "Failed to update taskId=" + taskId + ", newState=" + newState + ", expectedState=" + expectedState);
         }
         return rows > 0;
     }
@@ -1057,16 +1073,16 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                             task.totalFiles += count;
                             switch(status){
                                 case FileData.FILE_STATE_FINISHED:
-                                    task.finishedFiles++;
+                                    task.finishedFiles += count;
                                     break;
                                 case FileData.FILE_STATE_SKIPPED:
-                                    task.skippedFiles++;
+                                    task.skippedFiles += count;
                                     break;
                                 case FileData.FILE_STATE_PERMANENT_ERROR:
-                                    task.permanentErrorFiles++;
+                                    task.permanentErrorFiles += count;
                                     break;
                                 case FileData.FILE_STATE_TRANSIENT_ERROR:
-                                    task.transientErrorFiles++;
+                                    task.transientErrorFiles += count;
                                     break;
                             }
                         }while(stats.moveToNext());
@@ -1092,6 +1108,24 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         return null;
     }
 
+    private void sendTaskStateChangedNotification(final FilesDownloadTask task, final int previousState)
+    {
+        final FilesDownloadTask clonedTask = task.clone();
+        for (final Pair<Handler, FilesDownloaderListener> listener : listeners){
+            final FilesDownloaderListener fdl = listener.second;
+            if (listener.first.getLooper() == Looper.getMainLooper()){
+                fdl.onTaskStateChanged(clonedTask, previousState);
+            } else {
+                listener.first.post(new Runnable(){
+                    @Override
+                    public void run(){
+                        fdl.onTaskStateChanged(clonedTask, previousState);
+                    }
+                });
+            }
+        }           
+    }
+    
     @Override
     public int scheduleFiles(final List<FileData> filesToDownload)
     throws IllegalArgumentException
@@ -1132,17 +1166,21 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         if (task == null){
             return false;
         }
+        boolean result = false; 
         synchronized(task){
             if (task.state == FilesDownloadTask.STATE_RUNNING){
-                boolean result = updateTask(task.taskId, task,  
+                result = updateTask(task,  
                     FilesDownloadTask.STATE_PAUSING, FilesDownloadTask.STATE_RUNNING);
-                if (result && task.filesDownloader != null){
-                    task.filesDownloader.stopDownload();
+                if (result){
+                    task.continueFromPausing = false;
+                    sendTaskStateChangedNotification(task, FilesDownloadTask.STATE_RUNNING);
+                    if (task.filesDownloader != null){
+                        task.filesDownloader.stopDownload();
+                    }
                 }
-                return result;
             }
         }
-        return false;
+        return result;
     }
 
     @Override
@@ -1152,6 +1190,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         if (task == null){
             return false;
         }
+        final boolean result; 
         synchronized(task){
             if (task.state == FilesDownloadTask.STATE_RUNNING || 
                 task.state == FilesDownloadTask.STATE_FINISHED || 
@@ -1164,15 +1203,17 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                 task.continueFromPausing = true;
                 return true;
             }
-            boolean result = updateTask(task.taskId, task,  
-                FilesDownloadTask.STATE_RUNNING, task.state);
+            final int currState = task.state;
+            result = updateTask(task,  
+                FilesDownloadTask.STATE_RUNNING, currState);
             if (result){
+                sendTaskStateChangedNotification(task, currState);
                 final Intent intent = new Intent(INTENT_ACTION_START_DOWNLOAD, null, this, FilesDownloaderService.class);
                 intent.putExtra(INTENT_EXTRA_TAKS_ID, task.taskId);
                 startService(intent);
             }
-            return result;
         }
+        return result;
     }
 
     @Override
@@ -1182,19 +1223,21 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         if (task == null){
             return false;
         }
+        final boolean result; 
         synchronized(task){
-            if (task.state != FilesDownloadTask.STATE_FINISHED){
+            if (task.state != FilesDownloadTask.STATE_FINISHED && task.state != FilesDownloadTask.STATE_CANCELLED){
                 return false;
             }
-            if (task.skippedFiles + task.finishedFiles >= task.totalFiles){
-                return false;
-            }
+            //if (task.skippedFiles + task.finishedFiles >= task.totalFiles){
+            //    return false;
+            //}
             int totalFilesSizeKB = task.totalFilesSizeKB;
             task.totalFilesSizeKB = 0;
-            boolean result = updateTask(task.taskId, task, 
-                FilesDownloadTask.STATE_RUNNING, task.state);
+            int currState = task.state;
+            result = updateTask(task, 
+                FilesDownloadTask.STATE_RUNNING, currState);
             if (result){
-                task.state = FilesDownloadTask.STATE_RUNNING;
+                sendTaskStateChangedNotification(task, currState);
                 final Intent intent = new Intent(INTENT_ACTION_START_DOWNLOAD, null, this, FilesDownloaderService.class);
                 intent.putExtra(INTENT_EXTRA_TAKS_ID, task.taskId);
                 intent.putExtra(INTENT_EXTRA_RESTART_FAILED, true);
@@ -1203,8 +1246,11 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             } else {
                 task.totalFilesSizeKB = totalFilesSizeKB;
             }
-            return result;
         }
+        if (result){
+            
+        }
+        return result;
     }
     
     
@@ -1215,20 +1261,25 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         if (task == null){
             return false;
         }
+        boolean result = false; 
         synchronized(task){
             if (task.state == FilesDownloadTask.STATE_RUNNING || 
                 task.state == FilesDownloadTask.STATE_PAUSING || 
                 task.state == FilesDownloadTask.STATE_PAUSED)
             {
-                boolean result = updateTask(task.taskId, task, 
-                    FilesDownloadTask.STATE_CANCELLING, task.state);
-                if (result && task.filesDownloader != null){
-                    task.filesDownloader.abortDownload();
+                int currState = task.state;
+                result = updateTask(task, 
+                    FilesDownloadTask.STATE_CANCELLING, currState);
+                if (result){
+                    task.continueFromPausing = false;
+                    sendTaskStateChangedNotification(task, currState);
+                    if (task.filesDownloader != null){
+                        task.filesDownloader.abortDownload();
+                    }
                 }
-                return result;
             }
-            return false;
         }
+        return result;
     }
 
     @Override

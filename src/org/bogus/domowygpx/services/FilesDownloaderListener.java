@@ -71,4 +71,15 @@ public interface FilesDownloaderListener
      * @param task Tasks, that has finished 
      */
     public void onTaskRemoved(FilesDownloadTask task);
+    
+    /**
+     * Fired after task state has changed to one of the: <ul>
+     * <li>{@link FilesDownloadTask#STATE_RUNNING}, before first file notification is sent
+     * <li>{@link FilesDownloadTask#STATE_PAUSING}, before {@link #onTaskPaused(FilesDownloadTask)} is fired 
+     * <li>{@link FilesDownloadTask#STATE_CANCELLING}, before {@link #onTaskCancelled(FilesDownloadTask)} is fired
+     * </ul>
+     * @param task
+     * @param previousState
+     */
+    public void onTaskStateChanged(FilesDownloadTask task, int previousState);
 }

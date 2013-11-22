@@ -148,7 +148,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         public static final int EVENT_TYPE_FINISHED_ERROR = 5;
         public static final int EVENT_TYPE_FINISHED_CANCEL = 6;
         public static final int EVENT_TYPE_CACHE_CODE = 7;
-        public static final int EVENT_TYPE_IMAGE_DOWNLOADS_TASK_ID = 8;
 
         GpxTaskEvent(int taskId, long createdDate)
         {
@@ -633,17 +632,12 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                                 @Override
                                 public boolean handleMessage(Message msg)
                                 {
-                                    final int downloaderTaskId = msg.arg1;
-                                    Log.i(LOG_TAG, "GPX taskId=" + taskState.taskId + " --> files taskId=" + downloaderTaskId);
+                                    taskState.downloaderTaskId = msg.arg1;
+                                    Log.i(LOG_TAG, "GPX taskId=" + taskState.taskId + " --> files taskId=" + msg.arg1);
 
-                                    final GpxTaskEvent event = taskState.createTaskEvent();
-                                    event.eventType = GpxTaskEvent.EVENT_TYPE_IMAGE_DOWNLOADS_TASK_ID;
-                                    taskState.downloaderTaskId = downloaderTaskId;
-
-                                    updateTaskInDatabase(taskState, event);
-                                    
-                                    // send notification
-                                    broadcastEvent(event, taskState);
+                                    final ContentValues updateValues = new ContentValues(1);
+                                    updateValues.put("downloader_task_id", taskState.downloaderTaskId);
+                                    database.update("tasks", updateValues, "_id=" + taskState.taskId, null);
                                     
                                     return true;
                                 }
@@ -1254,7 +1248,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         //Log.i(LOG_TAG, "setTaskState, taskId=" + taskId + ", newState=" + newState);
         database.beginTransaction();
         try{
-            ContentValues updateValues = new ContentValues();
+            final ContentValues updateValues = new ContentValues();
             updateValues.put("state", task.stateCode);
             updateValues.put("description", task.stateDescription);
             if (task.downloaderTaskId > 0){
@@ -1315,10 +1309,11 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         database.beginTransaction();
         try{
             final Cursor cursor1 = database.query("tasks", 
-                new String[]{"_id", "state", "created_date", "description", "total_kb", "total_cache_count"}, 
+                new String[]{"_id", "state", "created_date", "description", "total_kb", "total_cache_count", 
+                    "downloader_task_id"}, 
                     "state != " + GpxTask.STATE_UNKNOWN + 
                     (filterTaskId == -1 ? "" : " and _id=" + filterTaskId), 
-                null, null, null, "created_date");
+                null, null, null, null);
             
             result = new ArrayList<GpxTask>(cursor1.getCount());
             if (cursor1.moveToFirst()){
@@ -1328,7 +1323,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     task.stateDescription = cursor1.getString(3);
                     task.totalKB = cursor1.getInt(4);
                     task.totalCacheCount = cursor1.getInt(5);
-                    
+                    task.downloaderTaskId = cursor1.getInt(6);
                     result.add(task);
                 }while(cursor1.moveToNext());
             }

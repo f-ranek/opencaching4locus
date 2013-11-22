@@ -3,4 +3,7 @@
     <issue id="OldTargetApi">
         <ignore path="AndroidManifest.xml" />
     </issue>
+    <issue id="ProguardSplit">
+        <ignore path="proguard.cfg" />
+    </issue>
 </lint>

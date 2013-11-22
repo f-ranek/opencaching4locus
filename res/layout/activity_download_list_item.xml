@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+    android:longClickable="true"
     android:orientation="vertical"
     android:paddingLeft="6dp"
     android:paddingRight="6dp" >
@@ -10,6 +11,7 @@
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
+        android:longClickable="false"
         android:orientation="horizontal"
         android:weightSum="10" >
 
@@ -19,6 +21,7 @@
             android:layout_height="wrap_content"
             android:layout_marginRight="2dp"
             android:layout_weight="10"
+            android:longClickable="false"
             android:paddingRight="4dp"
             android:text="Tu będzie opis tego, co się właśnie dzieje"
             android:textAppearance="?android:attr/textAppearanceLarge"
@@ -30,10 +33,12 @@
             android:layout_height="wrap_content"
             android:layout_gravity="right|center_vertical"
             android:gravity="right"
+            android:longClickable="false"
             android:minWidth="30dp"
             android:text="Godzina\nData"
             android:textAppearance="?android:attr/textAppearanceSmall"
             tools:ignore="HardcodedText" />
+
     </LinearLayout>
 
     <LinearLayout
@@ -41,6 +46,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:baselineAligned="false"
+        android:longClickable="false"
         android:orientation="horizontal"
         android:weightSum="10" >
 
@@ -49,7 +55,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
-            android:layout_weight="10" >
+            android:layout_weight="10"
+            android:longClickable="false" >
 
             <ProgressBar
                 android:id="@+id/progressBar1"
@@ -57,9 +64,9 @@
                 android:layout_width="fill_parent"
                 android:layout_height="23dp"
                 android:layout_gravity="center_vertical"
+                android:longClickable="false"
                 android:max="80"
                 android:minHeight="23dip"
-                android:paddingRight="4dp"
                 android:progress="12" />
 
         </LinearLayout>
@@ -68,6 +75,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="right"
+            android:longClickable="false"
+            android:paddingLeft="4dp"
             android:paddingTop="2dp" >
 
             <ImageButton
@@ -77,6 +86,7 @@
                 android:layout_height="wrap_content"
                 android:adjustViewBounds="true"
                 android:contentDescription="@string/btnDownloadItemPlayDescription"
+                android:longClickable="false"
                 android:src="@drawable/ic_play_2" />
 
             <ImageButton
@@ -86,6 +96,7 @@
                 android:layout_height="wrap_content"
                 android:adjustViewBounds="true"
                 android:contentDescription="@string/btnDownloadItemPauseDescription"
+                android:longClickable="false"
                 android:src="@drawable/ic_pause_2" />
 
             <ImageButton
@@ -95,6 +106,7 @@
                 android:layout_height="wrap_content"
                 android:adjustViewBounds="true"
                 android:contentDescription="@string/btnDownloadItemReplayDescription"
+                android:longClickable="false"
                 android:src="@drawable/ic_replay_3" />
 
             <ImageButton
@@ -104,6 +116,7 @@
                 android:layout_height="wrap_content"
                 android:adjustViewBounds="true"
                 android:contentDescription="@string/btnDownloadItemCancelDescription"
+                android:longClickable="false"
                 android:src="@drawable/ic_cancel_3" />
 
         </LinearLayout>
@@ -111,15 +124,18 @@
 
     <LinearLayout
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content" >
+        android:layout_height="wrap_content"
+        android:longClickable="false" >
 
         <TextView
             android:id="@+id/textViewDetailsInfo"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:longClickable="false"
             android:text="A tu szczegóły"
             android:textAppearance="?android:attr/textAppearanceSmall"
             tools:ignore="HardcodedText" />
+
     </LinearLayout>
 
 </LinearLayout>

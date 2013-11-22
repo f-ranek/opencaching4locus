@@ -4,6 +4,8 @@ import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -35,11 +37,15 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.NavUtils;
 import android.util.Log;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.BaseAdapter;
 import android.widget.ImageButton;
 import android.widget.ListView;
@@ -96,6 +102,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
         boolean isError;
         boolean isDone;
         String createdDate; 
+        long createdDateVal;
         int progressCurrent = -1;
         int progressMax = -1;
         
@@ -156,6 +163,31 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
          * Notifies of the user removal action
          */
         abstract void onItemRemoval();
+        /**
+         * Setup context menu for this list item 
+         * @param menu
+         */
+        void setupContextMenu(ContextMenu menu)
+        {
+            final MenuItem mi = menu.findItem(R.id.actionDownloadItemRemove);
+            if (mi != null){
+                mi.setEnabled(canBeRemoved());
+            }
+        }
+        /**
+         * Invoked, when menu item is selected by user
+         * @param item Selected menu item
+         * @return true, if menu item has been processed in any way
+         */
+        boolean onContextMenuItemSelected(MenuItem item)
+        {
+            switch(item.getItemId()){
+                case R.id.actionDownloadItemRemove:
+                    onItemRemoval();
+                    return true;
+            }
+            return false;
+        }
         
         /**
          * Sets the visibility of a Row with progress bar 
@@ -212,7 +244,6 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
     }
     
     class GpxListItem extends BaseListItem {
-        int filesTaskIdFromGpx;
         int totalSize;
         int stateCode;
         boolean cancelling;
@@ -222,12 +253,17 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             @Override
             public void onClick(View v)
             {
-                if (gpxDownloader.cancelTask(taskId)){
-                    cancelling = true;
-                    listViewAdapter.notifyDataSetChanged();
-                }
+                cancel();
             }
         };
+        
+        void cancel()
+        {
+            if (gpxDownloader.cancelTask(taskId)){
+                cancelling = true;
+                listViewAdapter.notifyDataSetChanged();
+            }
+        }
         
         @Override
         boolean applyToView(ListItemViewHolder holder, boolean isFresh)
@@ -265,6 +301,25 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             gpxDownloader.removeTask(taskId);
         }
         
+        @Override
+        void setupContextMenu(ContextMenu menu)
+        {
+            super.setupContextMenu(menu);
+            final MenuItem mi = menu.findItem(R.id.actionDownloadItemCancel);
+            mi.setEnabled(stateCode == GpxTask.STATE_RUNNING);
+        }
+        
+        @Override
+        boolean onContextMenuItemSelected(MenuItem item)
+        {
+            switch(item.getItemId()){
+                case R.id.actionDownloadItemCancel:
+                    cancel();
+                    return true;
+            }
+            return super.onContextMenuItemSelected(item);
+        }
+        
         boolean onGpxEventInternal(GpxTask task)
         {
             boolean updateView = false;
@@ -272,12 +327,9 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             stateCode = task.stateCode;
             
             if (createdDate == null){
+                createdDateVal = task.createdDate;
                 createdDate = formatDate(task.createdDate);
                 updateView = true;
-            }
-            
-            if (task.downloaderTaskId > 0){
-                filesTaskIdFromGpx = task.downloaderTaskId; 
             }
             
             if (task.stateCode == GpxTask.STATE_ERROR  || 
@@ -343,10 +395,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
     }
     
     class FileListItem extends BaseListItem {
-        boolean isInStateTransition;
         private int oldTotalSize;
-        boolean launching;
-        
         FilesDownloadTask task;
         
         final View.OnClickListener onPlayListener = new View.OnClickListener()
@@ -354,14 +403,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             @Override
             public void onClick(View v)
             {
-                if (filesDownloader.resumeTask(taskId)){
-                    isInStateTransition = true;
-                    launching = true;
-                    FileListItem.this.message = "Uruchamiam";
-                    progressCurrent = 0;
-                    progressMax = -1; 
-                    listViewAdapter.notifyDataSetChanged();
-                }
+                playOrReplay();
             }
         };
         final View.OnClickListener onPauseListener = new View.OnClickListener()
@@ -369,78 +411,71 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             @Override
             public void onClick(View v)
             {
-                if (filesDownloader.pauseTask(taskId)){
-                    isInStateTransition = true;
-                    listViewAdapter.notifyDataSetChanged();
-                }
+                filesDownloader.pauseTask(taskId);
             }
         };
-        final View.OnClickListener onReplayListener = new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-               if (filesDownloader.restartTask(taskId)){
-                   isInStateTransition = true;
-                   launching = true;
-                   FileListItem.this.message = "Uruchamiam";
-                   progressCurrent = 0;
-                   progressMax = -1; 
-                   listViewAdapter.notifyDataSetChanged();
-               }
-            }
-        };
+
         final View.OnClickListener onCancelListener = new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
             {
-                if (filesDownloader.cancelTask(taskId)){
-                    isInStateTransition = true;
-                    listViewAdapter.notifyDataSetChanged();
-                }
+                filesDownloader.cancelTask(taskId);
             }
         };
         
+        void playOrReplay()
+        {
+            boolean result;
+            if (task.state == FilesDownloadTask.STATE_CANCELLED || task.state == FilesDownloadTask.STATE_FINISHED){
+                result = filesDownloader.restartTask(taskId);
+            } else {
+                result = filesDownloader.resumeTask(taskId);
+            }
+            if (result){
+                progressCurrent = 0;
+                progressMax = -1; 
+                listViewAdapter.notifyDataSetChanged();
+            }
+        }
         
         @Override
         boolean applyToView(ListItemViewHolder holder, boolean isFresh)
         {
+            if (this.createdDate == null){
+                this.createdDateVal = task.createdDate;
+                this.createdDate = formatDate(task.createdDate);
+            }
             if (!super.applyToView(holder, isFresh)){
                 return false;
             }
             boolean canPlay = false;
             boolean canPause = false;
+            boolean enablePause = true;
             boolean canReplay = false;
             boolean canCancel = false;
-            if (launching){
-                // no icons to display
-            } else {
-                switch(task.state){
-                    case FilesDownloadTask.STATE_RUNNING:
-                        isInStateTransition = false;
-                        canCancel = canPause = true;
-                        break;
-                    case FilesDownloadTask.STATE_FINISHED:
-                    case FilesDownloadTask.STATE_CANCELLED:
-                        isInStateTransition = false;
-                        canReplay = true;
-                        break;
-                    case FilesDownloadTask.STATE_CANCELLING:
-                        canCancel = true;
-                        break;
-                    case FilesDownloadTask.STATE_PAUSING:
-                        canReplay = canCancel = true;
-                        break;
-                    case FilesDownloadTask.STATE_PAUSED:
-                        isInStateTransition = false; 
-                        // this should be actually unnecessary, since call to onStateTransitionFinished
-                        // should reset flag
-                        canPlay = canCancel = true;
-                        break;
-                }
-            }            
-            
+            boolean enableCancel = true;
+            switch(task.state){
+                case FilesDownloadTask.STATE_RUNNING:
+                    canCancel = canPause = true;
+                    break;
+                case FilesDownloadTask.STATE_FINISHED:
+                    break;
+                case FilesDownloadTask.STATE_CANCELLED:
+                    canReplay = true;
+                    break;
+                case FilesDownloadTask.STATE_CANCELLING:
+                    canCancel = true;
+                    enableCancel = false;
+                    break;
+                case FilesDownloadTask.STATE_PAUSING:
+                    canPlay = canCancel = true;
+                    enablePause = false;
+                    break;
+                case FilesDownloadTask.STATE_PAUSED:
+                    canPlay = canCancel = true;
+                    break;
+            }
             
             setViewVisible(canPlay, holder.btnDownloadItemPlay);
             setViewVisible(canPause, holder.btnDownloadItemPause);
@@ -449,29 +484,111 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
 
             holder.btnDownloadItemPlay.setOnClickListener(onPlayListener);
             holder.btnDownloadItemPause.setOnClickListener(onPauseListener);
-            holder.btnDownloadItemReplay.setOnClickListener(onReplayListener);
+            holder.btnDownloadItemReplay.setOnClickListener(onPlayListener);
             holder.btnDownloadItemCancel.setOnClickListener(onCancelListener);
             
-            // Note: we can always play ;)
-            //setImageButtonEnabled(!isInStateTransition, holder.btnDownloadItemPlay);
-            setImageButtonEnabled(!isInStateTransition, holder.btnDownloadItemPause);
-            setImageButtonEnabled(!isInStateTransition, holder.btnDownloadItemReplay);
-            setImageButtonEnabled(!isInStateTransition, holder.btnDownloadItemCancel);
-            if (isInStateTransition){
-                //holder.btnDownloadItemPlay.setClickable(false);
-                holder.btnDownloadItemPause.setClickable(false);
-                holder.btnDownloadItemReplay.setClickable(false);
-                holder.btnDownloadItemCancel.setClickable(false);
-            }
-            
+            setImageButtonEnabled(enablePause, holder.btnDownloadItemPause);
+            setImageButtonEnabled(enableCancel, holder.btnDownloadItemCancel);
             return true;
         }
 
-        void generateDetails()
+        @Override
+        void setupContextMenu(ContextMenu menu)
+        {
+            super.setupContextMenu(menu);
+            
+            boolean canPlay = false;
+            boolean canPause = false;
+            boolean enablePause = true;
+            boolean canReplay = false;
+            boolean canCancel = false;
+            boolean enableCancel = true;
+            switch(task.state){
+                case FilesDownloadTask.STATE_RUNNING:
+                    canCancel = canPause = true;
+                    break;
+                case FilesDownloadTask.STATE_FINISHED:
+                    // fall-through, this differs from #applyToView
+                case FilesDownloadTask.STATE_CANCELLED:
+                    canReplay = true;
+                    break;
+                case FilesDownloadTask.STATE_CANCELLING:
+                    canCancel = true;
+                    enableCancel = false;
+                    break;
+                case FilesDownloadTask.STATE_PAUSING:
+                    canPlay = canCancel = true;
+                    enablePause = false;
+                    break;
+                case FilesDownloadTask.STATE_PAUSED:
+                    canPlay = canCancel = true;
+                    break;
+            }
+
+            menu.findItem(R.id.actionDownloadItemPlay).setVisible(canPlay);
+            menu.findItem(R.id.actionDownloadItemReplay).setVisible(canReplay);
+            MenuItem itemPause = menu.findItem(R.id.actionDownloadItemPause);
+            itemPause.setVisible(canPause);
+            itemPause.setEnabled(enablePause);
+            MenuItem itemCancel = menu.findItem(R.id.actionDownloadItemCancel);
+            itemCancel.setVisible(canCancel);
+            itemCancel.setEnabled(enableCancel);
+            
+        }
+        
+        @Override
+        boolean onContextMenuItemSelected(MenuItem item)
+        {
+            switch(item.getItemId()){
+                case R.id.actionDownloadItemPlay:
+                case R.id.actionDownloadItemReplay:
+                    playOrReplay();
+                    return true;
+                case R.id.actionDownloadItemPause:
+                    filesDownloader.pauseTask(taskId);
+                    return true;
+                case R.id.actionDownloadItemCancel:
+                    filesDownloader.cancelTask(taskId);
+                    return true;
+            }
+            return super.onContextMenuItemSelected(item);
+        }
+
+        private void generateMainInfo()
+        {
+            switch(task.state){
+                case FilesDownloadTask.STATE_CANCELLING:
+                    message = "Trwa anulowanie";
+                    break;
+                case FilesDownloadTask.STATE_PAUSING:
+                    message = "Wstrzymuję";
+                    break;
+                case FilesDownloadTask.STATE_RUNNING:
+                    message = "Pobieram";
+                    break;
+                case FilesDownloadTask.STATE_FINISHED:
+                    message = "Pobieranie zakończone";
+                    progressCurrent = progressMax = -1;
+                    isError = task.isFailed();
+                    isDone = !isError;
+                    break;
+                case FilesDownloadTask.STATE_CANCELLED:
+                    message = "Pobieranie zatrzymane";
+                    progressCurrent = progressMax = -1;
+                    break;
+                case FilesDownloadTask.STATE_PAUSED:
+                    message = "Pobieranie wstrzymane";
+                    break;
+            }
+            
+        }
+        
+        private void generateDetails()
         {
             StringBuilder msg = new StringBuilder(128);
             msg.append(DownloadListActivity.this.getResources().getQuantityString(
-                R.plurals.filesCountOverTotal, task.finishedFiles, task.finishedFiles, task.totalFiles));
+                task.finishedFiles == task.totalFiles ? R.plurals.filesCount : R.plurals.filesCountOverTotal, 
+                task.finishedFiles, task.finishedFiles, task.totalFiles));
             if (task.totalFilesSizeKB > 0){
                 msg.append(", ");
                 msg.append(formatFileSize(task.totalFilesSizeKB));
@@ -488,11 +605,17 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
                 msg.append(DownloadListActivity.this.getResources().getQuantityString(
                     R.plurals.skipped, skipped, skipped));
             }
+            if (msg.length() > 0){
+                details = msg.toString();
+            } else {
+                details = null;
+            }
         }
         
         boolean onFileProgress(FilesDownloadTask task, FileData fileData, int doneKB, int totalKB)
         {
-            int totalSize = task.totalFilesSizeKB;
+            int totalSize = this.task.totalFilesSizeKB;
+            this.task = task;
             if (totalSize >= 1024 && totalSize-oldTotalSize<10){
                 return false;
             }
@@ -503,16 +626,17 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
         
         void onFileStarted(FilesDownloadTask task, FileData fileData, boolean started)
         {
-            launching = false;
-            FileListItem.this.message = "Pobieram pliki";
-            progressMax = task.totalFiles;
+            this.task = task;
             if (started){
+                progressMax = task.totalFiles;
+                generateMainInfo();
                 generateDetails();
             }
         }
         
         void onFileSkipped(FilesDownloadTask task, FileData fileData)
         {
+            this.task = task;
             progressCurrent = task.finishedFiles + task.skippedFiles + task.permanentErrorFiles + task.transientErrorFiles; 
             progressMax = task.totalFiles;
             generateDetails();
@@ -521,6 +645,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
 
         void onFileFinished(FilesDownloadTask task, FileData fileData, Exception exception)
         {
+            this.task = task;
             progressCurrent = task.finishedFiles + task.skippedFiles + task.permanentErrorFiles + task.transientErrorFiles; 
             progressMax = task.totalFiles;
             generateDetails();
@@ -528,41 +653,25 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
         
         void onTaskFinished(FilesDownloadTask task)
         {
-            isError = task.isFailed();
-            isDone = !isError;
-            message = "Pobieranie zakończone";
+            this.task = task;
+            generateMainInfo();
             generateDetails();
         }
         
-        void onStateTransitionFinished(FilesDownloadTask task)
+        boolean onTaskStateChanged(FilesDownloadTask task)
         {
-            isInStateTransition = false;
-            if (task.state == FilesDownloadTask.STATE_CANCELLED){
-                message = "Pobieranie zatrzymane";
-            } else {
-                message = "Pobieranie wstrzymane";
-            }
+            this.task = task;
+            generateMainInfo();
+            generateDetails();
+            return true;
         }
         void initializeFileDownloadsInfo(FilesDownloadTask task)
         {
             this.task = task;
-            this.createdDate = formatDate(task.createdDate);
-            switch(task.state){
-                case FilesDownloadTask.STATE_CANCELLING:
-                case FilesDownloadTask.STATE_PAUSING:
-                case FilesDownloadTask.STATE_RUNNING:
-                    message = "Pobieram";
-                    break;
-                case FilesDownloadTask.STATE_FINISHED:
-                    message = "Pobieranie zakończone";
-                    break;
-                case FilesDownloadTask.STATE_CANCELLED:
-                    message = "Pobieranie zatrzymane";
-                    break;
-                case FilesDownloadTask.STATE_PAUSED:
-                    message = "Pobieranie wstrzymane";
-                    break;
-            }
+            this.createdDateVal = task.createdDate;
+            progressCurrent = task.finishedFiles + task.skippedFiles + task.permanentErrorFiles + task.transientErrorFiles; 
+            progressMax = task.totalFiles;
+            generateMainInfo();
             generateDetails();
         }
         
@@ -659,10 +768,95 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
     final List<BaseListItem> listItems = new ArrayList<BaseListItem>();
     
     private ListView listViewOperations;
-    BaseAdapter listViewAdapter;
+    OperationsListAdapter listViewAdapter;
 
-    private GpxListItem getGpxListItem(int taskId, GpxTask task)
+    class OperationsListAdapter extends BaseAdapter
     {
+        private LayoutInflater layoutInflater = LayoutInflater.from(DownloadListActivity.this);
+        
+        @Override
+        public boolean hasStableIds() {
+            return true;
+        }
+        
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent)
+        {
+            final BaseListItem listItem = getItem(position);
+            ListItemViewHolder holder;
+            boolean isFresh;
+            do{
+                isFresh = convertView == null;
+                if (convertView == null) {
+                    convertView = layoutInflater.inflate(R.layout.activity_download_list_item, null);
+                    holder = new ListItemViewHolder();
+                    holder.initialSetup(convertView);
+                    holder.initialFixup();
+                    convertView.setTag(holder);
+                } else {
+                    holder = (ListItemViewHolder) convertView.getTag();
+                }
+                /*
+                if (holder == null || holder.isUnusable()){
+                    if (convertView instanceof ViewGroup){
+                        ViewGroup vg = (ViewGroup)convertView;
+                        vg.removeAllViews();
+                    }
+                    convertView.setTag(null);
+                    convertView = null;
+                    continue;
+                }
+                */
+
+                if (listItem.applyToView(holder, isFresh) || isFresh){
+                    break;
+                } else {
+                    convertView = null;
+                }
+            }while(true);
+            listItem.updateProgressRow(holder);
+            // holder.performLayoutIfNeeded();
+            return convertView;
+        }
+        
+        @Override
+        public long getItemId(int position)
+        {
+            return getItem(position).stableId;
+        }
+        
+        @Override
+        public BaseListItem getItem(final int position)
+        {
+            return listItems.get(position);
+        }
+        
+        @Override
+        public int getCount()
+        {
+            return listItems.size();
+        }
+        
+        @Override
+        public int getItemViewType(int position) {
+            BaseListItem item = getItem(position);
+            // not so good design, but should work fast :-]
+            if (item instanceof GpxListItem){
+                return 0;
+            } else {
+                return 1;
+            }
+        }
+
+        @Override
+        public int getViewTypeCount() {
+            return 2;
+        }
+    }
+    
+    private GpxListItem getGpxListItem(GpxTask task, boolean bulkOperation)
+    {
+        final int taskId = task.taskId;
         for (BaseListItem listItem : listItems){
             if (taskId == listItem.taskId && listItem instanceof GpxListItem){
                 return (GpxListItem)listItem;
@@ -671,23 +865,16 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
         GpxListItem result = new GpxListItem();
         result.taskId = taskId;
         result.stableId = ++stableIdCounter;
-
-        // try to find files task associated with our gpx task
-        int idx = 0;
-        for (int i = 0; i<listItems.size(); i++){
-            BaseListItem listItem = listItems.get(i); 
-            if (listItem.taskId == task.downloaderTaskId && listItem instanceof FileListItem){
-                idx = i;
-                break;
-            }
+        listItems.add(result);
+        if (!bulkOperation){
+            sortListItems();
         }
-        listItems.add(idx, result);
-        
         return result;
     }
 
-    private FileListItem getFilesListItem(int taskId, FilesDownloadTask task)
+    private FileListItem getFilesListItem(FilesDownloadTask task, boolean bulkOperation)
     {
+        final int taskId = task.taskId;
         for (BaseListItem listItem : listItems){
             if (taskId == listItem.taskId && listItem instanceof FileListItem){
                 return (FileListItem)listItem;
@@ -696,16 +883,10 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
         FileListItem result = new FileListItem();
         result.taskId = taskId;
         result.stableId = ++stableIdCounter;
-        // try to find gpx task associated with our files task
-        int idx = -1;
-        for (int i = 0; i<listItems.size(); i++){
-            BaseListItem listItem = listItems.get(i); 
-            if (listItem instanceof GpxListItem && ((GpxListItem)listItem).filesTaskIdFromGpx == taskId){
-                idx = i;
-                break;
-            }
+        listItems.add(result); 
+        if (!bulkOperation){
+            sortListItems();
         }
-        listItems.add(idx+1, result);
         return result;
     }
     
@@ -722,9 +903,10 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
         final List<GpxTask> tasks = gpxDownloader.getTasks(-1, false);
         boolean updateView = false;
         for (GpxTask task : tasks){
-            updateView |= onGpxEventInternal(task);
+            updateView |= onGpxEventInternal(task, true);
         }
         if (updateView){
+            sortListItems();
             listViewAdapter.notifyDataSetChanged();
         }
     }
@@ -741,12 +923,31 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
         filesDownloader.registerEventListener(this);
         List<FilesDownloadTask> tasks = filesDownloader.getTasks();
         for (FilesDownloadTask task : tasks){
-            FileListItem listItem = getFilesListItem(task.taskId, task);
+            FileListItem listItem = getFilesListItem(task, true);
             listItem.initializeFileDownloadsInfo(task);
         }
+        sortListItems();
         listViewAdapter.notifyDataSetChanged();
     }
 
+    private void sortListItems()
+    {
+        Collections.sort(listItems, new Comparator<BaseListItem>(){
+
+            @Override
+            public int compare(BaseListItem lhs, BaseListItem rhs)
+            {
+                if (lhs.createdDateVal == rhs.createdDateVal){
+                    return 0;
+                } else 
+                if (lhs.createdDateVal > rhs.createdDateVal){
+                    return -1;
+                } else {
+                    return 1;
+                }
+            }});
+    }
+    
     /*
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     private void enableAcceleration()
@@ -768,89 +969,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
 
         listViewOperations = (ListView)findViewById(R.id.listViewOperations);
         
-        listViewAdapter = new BaseAdapter()
-        {
-            private LayoutInflater layoutInflater = LayoutInflater.from(DownloadListActivity.this);
-            
-            @Override
-            public boolean hasStableIds() {
-                return true;
-            }
-            
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent)
-            {
-                final BaseListItem listItem = (BaseListItem)getItem(position);
-                ListItemViewHolder holder;
-                boolean isFresh;
-                do{
-                    isFresh = convertView == null;
-                    if (convertView == null) {
-                        convertView = layoutInflater.inflate(R.layout.activity_download_list_item, null);
-                        holder = new ListItemViewHolder();
-                        holder.initialSetup(convertView);
-                        holder.initialFixup();
-                        convertView.setTag(holder);
-                    } else {
-                        holder = (ListItemViewHolder) convertView.getTag();
-                    }
-                    /*
-                    if (holder == null || holder.isUnusable()){
-                        if (convertView instanceof ViewGroup){
-                            ViewGroup vg = (ViewGroup)convertView;
-                            vg.removeAllViews();
-                        }
-                        convertView.setTag(null);
-                        convertView = null;
-                        continue;
-                    }
-                    */
-    
-                    if (listItem.applyToView(holder, isFresh) || isFresh){
-                        break;
-                    } else {
-                        convertView = null;
-                    }
-                }while(true);
-                listItem.updateProgressRow(holder);
-                // holder.performLayoutIfNeeded();
-                return convertView;
-            }
-            
-            @Override
-            public long getItemId(int position)
-            {
-                return ((BaseListItem)getItem(position)).stableId;
-            }
-            
-            @Override
-            public Object getItem(final int position)
-            {
-                return listItems.get(position);
-            }
-            
-            @Override
-            public int getCount()
-            {
-                return listItems.size();
-            }
-            
-            @Override
-            public int getItemViewType(int position) {
-                BaseListItem item = (BaseListItem)getItem(position);
-                // not so good design, but should work fast :-]
-                if (item instanceof GpxListItem){
-                    return 0;
-                } else {
-                    return 1;
-                }
-            }
-
-            @Override
-            public int getViewTypeCount() {
-                return 2;
-            }
-        };
+        listViewAdapter = new OperationsListAdapter();
         if (!FORCE_OLD_SWIPE_TO_REMOVE && android.os.Build.VERSION.SDK_INT >= 12){
             SwipeDismissListViewTouchListener touchListener =
                     new SwipeDismissListViewTouchListener(
@@ -859,7 +978,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
                                 @Override
                                 public void onDismiss(ListView listView, int[] reverseSortedPositions) {
                                     for (int position : reverseSortedPositions) {
-                                        final BaseListItem listItem = (BaseListItem)listViewAdapter.getItem(position);
+                                        final BaseListItem listItem = listViewAdapter.getItem(position);
                                         listItem.onItemRemoval();
                                     }
                                 }
@@ -867,7 +986,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
                                 @Override
                                 public boolean canDismiss(int position)
                                 {
-                                    final BaseListItem listItem = (BaseListItem)listViewAdapter.getItem(position);
+                                    final BaseListItem listItem = listViewAdapter.getItem(position);
                                     return listItem.canBeRemoved();
                                 }
                             });
@@ -877,7 +996,8 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
         }
         
         listViewOperations.setAdapter(listViewAdapter);
-        
+        registerForContextMenu(listViewOperations);
+        //setupActionBar();
         bindDownloaderService();
     }
 
@@ -908,6 +1028,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             item.setImageDrawable(grayed);
         }
         item.setEnabled(enabled);
+        item.setClickable(enabled);
     }
 
     static boolean setViewVisible(boolean visible, View view) {
@@ -964,9 +1085,9 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
         return sb.toString();
     }
     
-    protected boolean onGpxEventInternal(GpxTask task)
+    protected boolean onGpxEventInternal(GpxTask task, boolean bulkOperation)
     {
-        final GpxListItem listItem = getGpxListItem(task.taskId, task);
+        final GpxListItem listItem = getGpxListItem(task, bulkOperation);
         boolean updateView = listItem.onGpxEventInternal(task);
         return updateView;
     }
@@ -984,7 +1105,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             // simply ignore minor events
             return ;
         }
-        boolean updateView = onGpxEventInternal(task);
+        boolean updateView = onGpxEventInternal(task, false);
         if (updateView){
             listViewAdapter.notifyDataSetChanged();
         }
@@ -1004,7 +1125,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
     @Override
     public void onFileSkipped(FilesDownloadTask task, FileData fileData)
     {
-        final FileListItem listItem = getFilesListItem(task.taskId, task);
+        final FileListItem listItem = getFilesListItem(task, false);
         listItem.onFileSkipped(task, fileData);
         listViewAdapter.notifyDataSetChanged();
     }
@@ -1017,7 +1138,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
     @Override
     public void onFileStarting(FilesDownloadTask task, FileData fileData)
     {
-        final FileListItem listItem = getFilesListItem(task.taskId, task);
+        final FileListItem listItem = getFilesListItem(task, false);
         listItem.onFileStarted(task, fileData, false);
         listViewAdapter.notifyDataSetChanged();
     }
@@ -1030,7 +1151,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
     @Override
     public void onFileStarted(FilesDownloadTask task, FileData fileData)
     {
-        final FileListItem listItem = getFilesListItem(task.taskId, task);
+        final FileListItem listItem = getFilesListItem(task, false);
         listItem.onFileStarted(task, fileData, true);
         listViewAdapter.notifyDataSetChanged();
     }
@@ -1045,7 +1166,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
     @Override
     public void onFileProgress(FilesDownloadTask task, FileData fileData, int doneKB, int totalKB)
     {
-        final FileListItem listItem = getFilesListItem(task.taskId, task);
+        final FileListItem listItem = getFilesListItem(task, false);
         if (listItem.onFileProgress(task, fileData, doneKB, totalKB)){
             listViewAdapter.notifyDataSetChanged();
         }
@@ -1061,7 +1182,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
     @Override
     public void onFileFinished(FilesDownloadTask task, FileData fileData, Exception exception)
     {
-        final FileListItem listItem = getFilesListItem(task.taskId, task);
+        final FileListItem listItem = getFilesListItem(task, false);
         listItem.onFileFinished(task, fileData, exception);
         listViewAdapter.notifyDataSetChanged();
     }
@@ -1069,7 +1190,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
     @Override
     public void onTaskFinished(FilesDownloadTask task)
     {
-        final FileListItem listItem = getFilesListItem(task.taskId, task);
+        final FileListItem listItem = getFilesListItem(task, false);
         listItem.onTaskFinished(task);
         listViewAdapter.notifyDataSetChanged();
     }
@@ -1077,19 +1198,24 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
     @Override
     public void onTaskPaused(FilesDownloadTask task)
     {
-        final FileListItem listItem = getFilesListItem(task.taskId, task);
-        listItem.onStateTransitionFinished(task);
-        listViewAdapter.notifyDataSetChanged();
+        onTaskStateChanged(task, -1);
     }
     
     @Override
     public void onTaskCancelled(FilesDownloadTask task)
     {
-        final FileListItem listItem = getFilesListItem(task.taskId, task);
-        listItem.onStateTransitionFinished(task);
-        listViewAdapter.notifyDataSetChanged();
+        onTaskStateChanged(task, -1);
     }
     
+    @Override
+    public void onTaskStateChanged(FilesDownloadTask task, int prevoiusState)
+    {
+        final FileListItem listItem = getFilesListItem(task, false);
+        if (listItem.onTaskStateChanged(task)){
+            listViewAdapter.notifyDataSetChanged();
+        }
+    }
+
     @Override
     public void onTaskRemoved(FilesDownloadTask task)
     {
@@ -1172,4 +1298,24 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        final AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
+        final MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.activity_download_list_item_menu, menu);
+        final BaseListItem listItem = listViewAdapter.getItem(info.position);
+        listItem.setupContextMenu(menu);
+    }    
+    
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        final AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
+        final BaseListItem listItem = listViewAdapter.getItem(info.position);
+        if (!listItem.onContextMenuItemSelected(item)){
+            return super.onContextItemSelected(item);
+        } else {
+            return true;
+        }
+    }
 }

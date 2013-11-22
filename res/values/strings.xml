@@ -52,17 +52,21 @@
     <color name="colorError">#FF0000</color>
     <color name="colorWarning">#FF8000</color>
     <color name="colorDoneOk">#00B200</color>
-    <color name="colorListItemBackgroundRemovalIndicator">#6A6A6A</color>
     
     
     <string name="titleActivityDownloadList">Lista pobieranych plików</string>
     <string name="menuGoToDownloadsList">Pobieranie plików</string>
 
+    <string name="btnDownloadItemPlay">Uruchom</string>
+    <string name="btnDownloadItemPause">Wstrzymaj</string>
+    <string name="btnDownloadItemReplay">Uruchom ponownie</string>
+    <string name="btnDownloadItemCancel">Zatrzymaj</string>
+    <string name="btnDownloadItemRemove">Usuń</string>
+    
     <string name="btnDownloadItemPlayDescription">Uruchamia zadanie</string>
     <string name="btnDownloadItemPauseDescription">Wstrzymuje zadanie</string>
     <string name="btnDownloadItemReplayDescription">Ponawia zadanie</string>
-    <string name="btnDownloadItemStopDescription">Zatrzymuje zadanie</string>
-    <string name="btnDownloadItemCancelDescription">Usuwa zadanie</string>
+    <string name="btnDownloadItemCancelDescription">Zatrzymuje zadanie</string>
     
     
     <plurals name="cache">
@@ -80,14 +84,34 @@
         <item quantity="few">%d pominięte</item>
         <item quantity="other">%d pominiętych</item>
     </plurals>
+    <plurals name="running">
+        <item quantity="one">%d w trakcie</item>
+        <item quantity="few">%d w trakcie</item>
+        <item quantity="other">%d w trakcie</item>
+    </plurals>
+    <plurals name="taskRunning">
+        <item quantity="one">%d zadanie w trakcie</item>
+        <item quantity="few">%d zadania w trakcie</item>
+        <item quantity="other">%d zadań w trakcie</item>
+    </plurals>
     <plurals name="finished">
         <item quantity="one">%d zakończone</item>
         <item quantity="few">%d zakończone</item>
         <item quantity="other">%d zakończonych</item>
     </plurals>
+    <plurals name="taskFinished">
+        <item quantity="one">%d zadanie zakończone</item>
+        <item quantity="few">%d zadania zakończone</item>
+        <item quantity="other">%d zadań zakończonych</item>
+    </plurals>
     <plurals name="filesCountOverTotal">
         <item quantity="one">%1$d/%2$d plik</item>
         <item quantity="few">%1$d/%2$d pliki</item>
         <item quantity="other">%1$d/%2$d plików</item>
+    </plurals>
+    <plurals name="filesCount">
+        <item quantity="one">%d plik</item>
+        <item quantity="few">%d pliki</item>
+        <item quantity="other">%d plików</item>
     </plurals>
 </resources>
