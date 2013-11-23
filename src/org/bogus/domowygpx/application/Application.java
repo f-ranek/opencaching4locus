@@ -1,12 +1,5 @@
 package org.bogus.domowygpx.application;
 
-import org.bogus.domowygpx.services.FilesDownloaderService;
-
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.SystemClock;
 
 
 public class Application extends android.app.Application
@@ -23,7 +16,7 @@ public class Application extends android.app.Application
     {
         super.onCreate();
         okApi = new OKAPI(this);
-        
+        /* SENSELESS :/
         SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
         if (config.getBoolean("Application_restartDownloadOnApplicationStart", true)){
             Looper mainLooper = Looper.myLooper();
@@ -41,7 +34,7 @@ public class Application extends android.app.Application
                     startService(intent);
                 }
             }, SystemClock.uptimeMillis() + 15L*1000L);
-        }
+        }*/
     }
     
     @Override
