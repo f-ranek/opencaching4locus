@@ -45,7 +45,6 @@ public class FilesDownloader implements Closeable
         "keep-alive", "connection", "proxy-connection"));
     
     private final static Log logger = LogFactory.getLog(FilesDownloader.class);
-    //private final ArrayList<DownloadedFileData> outputQueue = new ArrayList<DownloadedFileData>();
     private final List<DownloadProgressMonitor> observers = new CopyOnWriteArrayList<DownloadProgressMonitor>();
     final Thread constructingThread;
     private volatile boolean abortFlag;
@@ -192,9 +191,6 @@ public class FilesDownloader implements Closeable
     public synchronized void submit(List<FileData> fileData)
     {
         checkState();
-        /*synchronized(outputQueue){
-            outputQueue.ensureCapacity(outputQueue.size() + fileData.size());
-        }*/
         for (FileData fd : fileData){
             submitInternal(fd);
         }
@@ -206,6 +202,11 @@ public class FilesDownloader implements Closeable
         executorService.getQueue().clear();
         setPaused(false);
         if (this.abortFlag){
+            synchronized(currentlyRunningTasks){
+                for (DownloadTask wt : currentlyRunningTasks){
+                    wt.abort();
+                }
+            }
             executorService.shutdownNow();
         } else {
             executorService.shutdown();
@@ -219,7 +220,7 @@ public class FilesDownloader implements Closeable
      * Finish tasks in progress, and shutdown when all the files being currently downloaded are done.
      * Files in a queue are not started
      */
-    public synchronized void stopDownload()
+    public void stopDownload()
     {
         stopDownload(false);
     }
@@ -227,20 +228,11 @@ public class FilesDownloader implements Closeable
     /**
      * Abruptly aborts all tasks
      */
-    public synchronized void abortDownload()
+    public void abortDownload()
     {
         stopDownload(true);
     }
 
-    protected void sendAbortSignalToWorkers()
-    {
-        synchronized(currentlyRunningTasks){
-            for (DownloadTask wt : currentlyRunningTasks){
-                wt.abort();
-            }
-        }
-    }
-        
     public void addObserver(DownloadProgressMonitor dpm)
     {
         observers.add(dpm);
@@ -317,6 +309,10 @@ public class FilesDownloader implements Closeable
         }            
         
         try{
+            data.sessionAmount = 0;
+            data.initialSize = 0;
+            data.expectedSize = -1;
+            
             for (DownloadProgressMonitor o : observers){
                 try{
                     o.notifyFileStarting(data);
@@ -329,10 +325,12 @@ public class FilesDownloader implements Closeable
             boolean tryReasume = false;
             boolean gotFullFile = false;
             boolean gotPartialFile = false;
-            
+            long currentFileSize = 0;
             final File tempFile = new File(data.target.getParent(), data.target.getName() + ".progress");
             String eTag = null;
             String lastModified = null;
+            
+            // TODO: implement config flag to disable this functionality :)
             if (tempFile.exists() && tempFile.canRead() && tempFile.canWrite()){
                 // try parse previous headers
                 if (data.headers != null){
@@ -354,7 +352,9 @@ public class FilesDownloader implements Closeable
             }
             HttpGet get = null; 
             if (acceptByteRanges){
-                // TODO: implement If-Range http header
+                // implement If-Range http header
+                // or maybe not... http://forums.iis.net/t/1201245.aspx 
+                // (Managed handler crashes on If-range request)
                 get = new HttpGet(data.source);
                 if (eTag != null || lastModified != null){
                     if (eTag != null){
@@ -381,7 +381,7 @@ public class FilesDownloader implements Closeable
                 } else 
                 if (httpCode == 204 || response.getEntity() == null){
                     // no content
-                    return ;
+                    throw new HttpException(httpCode, "No content");
                 } else {
                     logger.warn("Got unexpected response while checking if file has been modified: " + response.getStatusLine());
                     ResponseUtils.closeResponse(response);
@@ -390,21 +390,29 @@ public class FilesDownloader implements Closeable
             
             if (tryReasume){
                 get = new HttpGet(data.source);
-                get.addHeader("Range", "bytes=" + tempFile.length() + "-");
+                currentFileSize = tempFile.length();
+                get.addHeader("Range", "bytes=" + currentFileSize + "-");
                 downloadTask.currentRequest = get;
                 response = httpClient.execute(get);
                 final int httpCode = response.getStatusLine().getStatusCode(); 
                 if (httpCode == 200){
                     // This should not happen, but we got full file
                     gotFullFile = true;
+                    currentFileSize = 0;
                 } else 
                 if (httpCode == 206){
                     gotPartialFile = true;
-                }
+                } else
                 if (httpCode == 416){ 
                     // Requested range not satisfiable
                     // -> download full file
+                    currentFileSize = 0;
+                } else 
+                if (httpCode == 204 || response.getEntity() == null){
+                    // no content
+                    throw new HttpException(httpCode, "No content");
                 } else {
+                    currentFileSize = 0;
                     logger.warn("Got unexpected response while asking for partial file data: " + response.getStatusLine());
                     ResponseUtils.closeResponse(response);
                 }
@@ -433,23 +441,33 @@ public class FilesDownloader implements Closeable
                 data.headers = allHeaders2.toArray(new String[allHeaders2.size()][]);
             }
             
+            
             if (statusLine.getStatusCode() == 404){
                 throw new FileNotFoundException(data.source.toASCIIString());
             }
             if (statusLine.getStatusCode() == 204 || response.getEntity() == null){
                 // no content
-                return ;
+                throw new HttpException(statusLine.getStatusCode(), "No content");
             }
             
-            if (statusLine.getStatusCode() != 200){
+            if (!gotFullFile && !gotPartialFile && statusLine.getStatusCode() != 200){
                 throw HttpException.fromHttpResponse(response, get);
             }
             
-            for (DownloadProgressMonitor o : observers){
-                try{
-                    o.notifyFileStarted(data);
-                }catch(Exception e2){
-                    
+            {
+                long expectedFileSize = response.getEntity().getContentLength();
+                if (expectedFileSize < 0){
+                    expectedFileSize = -1;
+                }
+                data.initialSize = currentFileSize;
+                data.expectedSize = expectedFileSize;
+    
+                for (DownloadProgressMonitor o : observers){
+                    try{
+                        o.notifyFileStarted(data, currentFileSize, expectedFileSize);
+                    }catch(Exception e2){
+                        
+                    }
                 }
             }
             
@@ -457,66 +475,63 @@ public class FilesDownloader implements Closeable
                 throw new InterruptedException();
             }
             
-            long totalCount = 0;
-            final int fileSize;
-            {
-                long fileSize0 = response.getEntity().getContentLength();
-                if (gotPartialFile){
-                    totalCount = tempFile.length();
-                    fileSize0 += totalCount;
+            byte[] buffer = new byte[8192];
+            int loopAmount = 0;
+            long sessionDone = 0;
+            is = response.getEntity().getContent();
+            tempFile.getParentFile().mkdirs();
+            os = new FileOutputStream(tempFile, gotPartialFile);
+            os = new BufferedOutputStream(os, buffer.length);
+            
+            boolean breakRequest = false;;
+            
+            int count;
+            long lastProgressUpdateCall = System.currentTimeMillis();
+            while ((count = is.read(buffer)) != -1){
+                os.write(buffer, 0, count);
+                loopAmount += count;
+                sessionDone += count;
+                
+                final long now = System.currentTimeMillis();
+                if ((loopAmount > 1024) || (loopAmount > 0) && (lastProgressUpdateCall+1000L < now)){
+                    lastProgressUpdateCall = now;
+                    for (DownloadProgressMonitor o : observers){
+                        try{
+                            o.notifyFileProgress(data, loopAmount, sessionDone);
+                        }catch(Exception e2){
+                        }
+                    }
+                    loopAmount = 0;
                 }
-                if (fileSize0 < 0 || fileSize0 > Integer.MAX_VALUE){
-                    fileSize = -1;
-                } else {
-                    fileSize = (int)Math.ceil(fileSize0 / 1024.0);
+                breakRequest |= abortFlag || Thread.interrupted();
+                if (breakRequest){
+                    break;
                 }
             }
-            if (fileSize >= 1){
+
+            if (loopAmount > 0){
                 for (DownloadProgressMonitor o : observers){
                     try{
-                        o.notifyFileProgress(data, 0, fileSize);
+                        o.notifyFileProgress(data, loopAmount, sessionDone);
                     }catch(Exception e2){
                     }
                 }
             }
             
-            
-            byte[] buffer = new byte[16384];
-            int lastSizeNotification = 0;
-            is = response.getEntity().getContent();
-            tempFile.getParentFile().mkdirs();
-            os = new FileOutputStream(tempFile, gotPartialFile);
-            os = new BufferedOutputStream(os, buffer.length);
-            int count;
-            long lastProgressUpdateCall = System.currentTimeMillis();
-            while ((count = is.read(buffer)) != -1){
-                os.write(buffer, 0, count);
-                totalCount += count;
-                final int kbDone = (int)Math.round(totalCount / 1024.0);
-                if (kbDone > lastSizeNotification){
-                    final long now = System.currentTimeMillis();
-                    if (lastProgressUpdateCall+1000L < now){
-                        lastProgressUpdateCall = now;
-                        lastSizeNotification = kbDone;
-                        for (DownloadProgressMonitor o : observers){
-                            try{
-                                o.notifyFileProgress(data, kbDone, fileSize);
-                            }catch(Exception e2){
-                            }
-                        }
-                    }
-                }
-                if (abortFlag || Thread.interrupted()){
-                    throw new InterruptedException();
-                }
-            }
             buffer = null;
             os.flush();
             os.close();
             os = null;
+
+            if (breakRequest){
+                throw new InterruptedException();
+            }
+            
+            // we will abort request, don't close input stream, since it may drain it
             is.close();
             is = null;
-            data.size = totalCount;
+
+            // if we got to the end, we can report file finished ok :)
             if (!tempFile.renameTo(data.target)){
                 throw new IOException("Failed to rename temp file to " + data.target);
             }
@@ -535,6 +550,9 @@ public class FilesDownloader implements Closeable
             }
             isOk = true;
         }catch(Exception e){
+            // in case of any error, or user breaking the process - don't read the input stream to the end,
+            // since it may be in a corrupted state, or just be very long ;)
+            ResponseUtils.abortResponse(response);
             data.exception = e;
             for (DownloadProgressMonitor o : observers){
                 try{
@@ -545,9 +563,6 @@ public class FilesDownloader implements Closeable
             }
         }finally{
             filesOnHold.remove(data.target);
-            /*synchronized(outputQueue){
-                outputQueue.add(dfd);
-            }*/
             downloadTask.currentRequest = null;
             IOUtils.closeQuietly(os);
             IOUtils.closeQuietly(is);

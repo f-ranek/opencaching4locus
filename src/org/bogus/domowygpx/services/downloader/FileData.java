@@ -6,6 +6,7 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 
 import org.bogus.ToStringBuilder;
+import org.bogus.domowygpx.services.FilesDownloaderService;
 
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -26,20 +27,36 @@ public class FileData implements java.io.Serializable, Cloneable, Parcelable {
     public final static int FILE_STATE_PERMANENT_ERROR = 103;
     
     // INPUT VALUES
+    /** Source cache code */
     public String cacheCode;
+    /** Data URI */
     public URI source;
+    /** Target place to save file */
     public File target;
+    /** New file URI */
     public String virtualTarget;
+    /** File priority, less means download earlier */
     public int priority;
     
+    // OTHER STATE
+    /** Used by {@link FilesDownloaderService} */
     public int retryCount;
     
     // OUTPUT VALUES
+    /** HTTP response status line text */
     public String statusLine;
-    public Exception exception;
+    /** HTTP headers, array of [Header, Value]*/
     public String[][] headers;
-    
-    public long size;
+    /** Exception, if any was thrown during file download */
+    public Exception exception;
+
+    // TEMPORARY STATE
+    /** Number of bytes stored in a temp file (from previous session) */
+    public long initialSize;
+    /** Number of bytes read in this session */
+    public long sessionAmount;
+    /** Expected final file size */
+    public long expectedSize;
     
     @Override
     public FileData clone()
@@ -81,7 +98,7 @@ public class FileData implements java.io.Serializable, Cloneable, Parcelable {
         if (headers != null){
             builder.add("headers", Arrays.deepToString(headers));
         }
-        builder.add("size", size, 0);
+        //builder.add("size", size, 0);
         return builder.toString();
     }
 

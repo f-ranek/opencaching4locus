@@ -4,10 +4,15 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-// XXX find a better name for the class
-public class MarkingInputStream extends FilterInputStream
+/**
+ * A holder for an input stream. The underlying input stream
+ * can be set at any moment by calling {@link #setInputStream(InputStream)}
+ * 
+ * @author Boguś
+ */
+public class InputStreamHolder extends FilterInputStream
 {
-    public MarkingInputStream()
+    public InputStreamHolder()
     {
         super(null);
     }

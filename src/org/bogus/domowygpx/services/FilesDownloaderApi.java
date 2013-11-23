@@ -37,7 +37,7 @@ public interface FilesDownloaderApi
      * @return taskId of a new task
      * @throws IllegalArgumentException if the files list is empty
      */
-    int scheduleFiles(List<FileData> filesToDownload)
+    int createTaskForFiles(List<FileData> filesToDownload)
     throws IllegalArgumentException;
     
     /**

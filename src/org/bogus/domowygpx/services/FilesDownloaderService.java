@@ -56,7 +56,8 @@ import android.util.Pair;
 public class FilesDownloaderService extends Service implements FilesDownloaderApi
 {
     private final static String LOG_TAG = "FilesDownloaderSvc";  
-
+    //private static final List<FilesDownloadTask> EMPTY_LIST = Collections.emptyList();
+    
     private static final int NOTIFICATION_ID_ONGOING = 0x20;
     private static final int NOTIFICATION_ID_FINISHED = NOTIFICATION_ID_ONGOING+1;
 
@@ -71,7 +72,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     
     private ConcurrentMap<File, Boolean> filesOnHold = new ConcurrentHashMap<File, Boolean>(8);
     private FilesDownloader freeFilesDownloader;
-    private final List<FilesDownloadTask> downloadTasks = new ArrayList<FilesDownloadTask>();
+    private volatile List<FilesDownloadTask> downloadTasks;
     
     public static class FilesDownloadTask implements Cloneable {
         public int taskId;
@@ -114,7 +115,8 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         public final long createdDate;
         
         public int totalFiles;
-        public int totalFilesSizeKB;
+        /** Number of bytes downloaded for this task. This is never reset */
+        public long totalDownloadSize;
         public int finishedFiles; 
         public int skippedFiles;
         public int permanentErrorFiles;
@@ -163,7 +165,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         }
 
         @Override
-        public void notifyFileStarted(FileData fileData)
+        public void notifyFileStarted(FileData fileData, long done, long expectedFileSize)
         {
             FilesDownloaderService.this.onFileStarted(this, fileData);
         }
@@ -175,9 +177,9 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         }
         
         @Override
-        public void notifyFileProgress(FileData fileData, int doneKB, int totalKB)
+        public void notifyFileProgress(FileData fileData, int loopAmount, long sessionDone)
         {
-            FilesDownloaderService.this.onFileProgress(this, fileData, doneKB, totalKB);
+            FilesDownloaderService.this.onFileProgress(this, fileData, loopAmount, sessionDone);
         }
         
         @Override
@@ -271,7 +273,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                     
                     task.filesDownloader = createFilesDownloader();
                     task.filesDownloader.addObserver(caller);
-                    startTaskFromDatabase(task, false, false);
+                    startTaskFromDatabase(task, false, false, false);
                 }
             }
         }finally{
@@ -359,12 +361,12 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         }
     }
 
-    void onFileProgress(DownloadProgressMonitorImpl caller, FileData fileData, final int doneKB, final int totalKB)
+    void onFileProgress(DownloadProgressMonitorImpl caller, FileData fileData, int loopAmount, long sessionDone)
     {
         final FilesDownloadTask task = caller.downloadTask; 
         final FilesDownloadTask task2;
         synchronized(task){
-            task.totalFilesSizeKB += doneKB;
+            task.totalDownloadSize += loopAmount; 
             task2 = caller.downloadTask.clone();
         }
         task2.filesDownloader = null;
@@ -374,7 +376,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             listener.first.post(new Runnable(){
                 @Override
                 public void run(){
-                    fdl.onFileProgress(task2, fileData2, doneKB, totalKB);
+                    fdl.onFileProgress(task2, fileData2);
                 }
             });
         }
@@ -429,6 +431,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         } else
         if (isCancelled){
             fileData.state = FileData.FILE_STATE_ABORTED;
+            fileData.exception = null;
         } else
         if (isTransientError){
             if (fileData.retryCount++ >= 3){
@@ -440,9 +443,9 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             fileData.state = FileData.FILE_STATE_PERMANENT_ERROR;  
         }
         
-        Log.i(LOG_TAG, "onFileFinished, file=" + fileData);
+        Log.i(LOG_TAG, "onFileFinished, file=" + fileData.fileDataId + ", " + fileData.source);
         
-        updateFileInDatabase(fileData, true);
+        updateFileInDatabase(fileData, false);
         
         if (fileData.state == FileData.FILE_STATE_TRANSIENT_ERROR){
             //ConnectivityManager cm = (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
@@ -481,7 +484,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     {
         database.beginTransaction();
         try{
-            if(includeHeaders){
+            /*if(includeHeaders){
                 Cursor cursor = database.query("files", new String[]{"headers"}, "_id=" + fileData.fileDataId, null, null, null, null);
                 if (cursor.moveToFirst()){
                     if (!cursor.isNull(0)){
@@ -489,7 +492,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                     }
                 }
                 cursor.close();
-            }
+            }*/
             ContentValues cv = new ContentValues(5);
             if (includeHeaders){
                 if (fileData.headers != null){
@@ -540,20 +543,33 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
      * @param includePermanentlyFailed includes files with state=FileData.FILE_STATE_PERMANENT_ERROR
      * @param task
      */
-    protected void startTaskFromDatabase(FilesDownloadTask task, 
-        boolean restartFailed, 
-        boolean includeAll) 
+    protected void startTaskFromDatabase(
+        FilesDownloadTask task, 
+        boolean restartFailed,
+        boolean includeAll,
+        boolean includeAborted) 
     {
+        StringBuilder whereClause = new StringBuilder(32);
+        whereClause.append("task_id = ").append(task.taskId);
+        if (!includeAll){
+            whereClause.append(" and state in (");
+            whereClause.append(FileData.FILE_STATE_SCHEDULED);
+            if (includeAborted){
+                whereClause.append(", ").append(FileData.FILE_STATE_SCHEDULED);
+            }
+            whereClause.append(")");
+        }
+        
         Cursor cursor = database.query("files", 
             new String[]{"_id", "state", "cache_code", "source", "target", "virtual_target", "priority", "retry_count", "headers"}, 
-            "task_id = " + task.taskId + 
-            (includeAll ? "" : " and state = " + FileData.FILE_STATE_SCHEDULED),  
+            whereClause.toString(),  
             (String[])null, null, null, "_id");
         if (cursor.moveToFirst()){
             do{
                 final FileData file = new FileData();
                 file.fileDataId = cursor.getInt(0);
                 try {
+                    file.taskId = task.taskId; 
                     file.state = cursor.getInt(1);
                     file.cacheCode = cursor.getString(2);
                     file.source = new URI(cursor.getString(3));
@@ -575,7 +591,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                             String header = headers2[i];
                             int idx = header.indexOf(':');
                             String headerName = header.substring(0, idx);
-                            String headerValue = header.substring(idx+1);
+                            String headerValue = header.substring(idx+2);
                             file.headers[i] = new String[]{headerName, headerValue};
                         }
                     }
@@ -594,6 +610,9 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
      */
     protected synchronized void adjustDownloaderThreads()
     {
+        if (downloadTasks == null){
+            return ;
+        }
         int runningTasks = 0;
         for (FilesDownloadTask task : downloadTasks){
             synchronized(task){
@@ -632,7 +651,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     
     protected void showNotification(NotificationCompat.Builder builder, boolean foreground)
     {
-        builder.setSmallIcon(R.drawable.logo_straszne);
+        builder.setSmallIcon(R.drawable.ic_logo_czyste_8);
         
         final Context appContext = getApplicationContext();
      
@@ -658,6 +677,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     
     protected synchronized void updateNotification()
     {
+        loadDatabase(false);
         int runningCount = 0;
         int finishedCount = 0;
         int pausedCount = 0;
@@ -763,7 +783,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         final int taskId = newTask.taskId;
         final ContentValues cv = new ContentValues(3);
         cv.put("state", newState);
-        cv.put("total_files_size_kb", newTask.totalFilesSizeKB);
+        cv.put("total_download_size", newTask.totalDownloadSize);
         cv.put("flags", newTask.flags);
         int rows = database.update("tasks", cv, "_id=" + taskId + " and state=" + expectedState, null);
         if (rows > 0){
@@ -830,7 +850,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                     "created_date LONG NOT NULL, " +
                     "state INTEGER NOT NULL DEFAULT 0, " +
                     "flags INTEGER NOT NULL DEFAULT 0, " +
-                    "total_files_size_kb INTEGER " +
+                    "total_download_size INTEGER " +
                     ");"); 
             db.execSQL("CREATE TABLE files(" +
                     "_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
@@ -857,6 +877,10 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
      
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            if (newVersion == 2){
+                db.execSQL("ALTER TABLE tasks ADD COLUMN total_download_size INTEGER;");
+                db.execSQL("UPDATE tasks SET total_download_size = 1024*total_files_size_kb");
+            }
         }
     }
 
@@ -867,9 +891,14 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     public synchronized int onStartCommand(Intent intent, int flags, int startId) 
     {
         startIds.add(startId);
-        Log.i(LOG_TAG, "called onStartCommand for startId=" + startId);
+        if (intent == null){
+            Log.i(LOG_TAG, "called onStartCommand for startId=" + startId + ", system is restarting service");
+        } else {
+            Log.i(LOG_TAG, "called onStartCommand for startId=" + startId + ", action=" + intent.getAction());
+        }
 
         try{
+            loadDatabase(intent == null);
             if (intent == null || INTENT_ACTION_START_DOWNLOAD.equals(intent.getAction())){
                 // null intent = redelivered intent
                 int taskId = -1;
@@ -888,7 +917,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                                 intent.getBooleanExtra(INTENT_EXTRA_RESTART_FAILED, false); 
                             final boolean includeAll = intent == null ? false : 
                                 intent.getBooleanExtra(INTENT_EXTRA_INCLUDE_ALL, false);
-                            startTaskFromDatabase(task, restartFailed, includeAll);
+                            startTaskFromDatabase(task, restartFailed, includeAll, intent == null);
                         }
                     }
                 }
@@ -908,7 +937,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
 
                 // bad casting, but we do not need copying arrays
                 @SuppressWarnings("unchecked")
-                int taskId = scheduleFiles((List<FileData>)(Object)files2);
+                int taskId = createTaskForFiles((List<FileData>)(Object)files2);
                 
                 if (taskId >= 0){
                     final Messenger messenger = intent.getExtras().getParcelable(INTENT_EXTRA_MESSENGER);
@@ -926,6 +955,22 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         }
 
         return Service.START_STICKY;
+    }
+    
+    /**
+     * Loads tasks database
+     * @param systemRestart If out service is restarted by system?
+     */
+    private void loadDatabase(boolean systemRestart)
+    {
+        if (downloadTasks == null){
+            synchronized(this){
+                if (downloadTasks == null){
+                    cleanupDatabase(systemRestart);
+                    downloadTasks = loadTasks();
+                }
+            }
+        }
     }
     
     protected void pushFileToDatabase(FileData fileData)
@@ -954,18 +999,15 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         super.onCreate();
         
         try{
-            databaseHelper = new DatabaseHelper(this, "FilesDownloaderDatabase.db", null, 1);
+            databaseHelper = new DatabaseHelper(this, "FilesDownloaderDatabase.db", null, 2);
             database = databaseHelper.getWritableDatabase();
         }catch(SQLiteException sqle){
             Log.e(LOG_TAG, "Failed to create database", sqle);
             throw sqle;
         }   
-        
-        cleanupDatabase();
-        loadTasks();
     }
 
-    private void cleanupDatabase()
+    private void cleanupDatabase(boolean systemRestart)
     {
         database.beginTransaction();
         try{
@@ -982,7 +1024,9 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             database.execSQL("update tasks set state=case state when " + 
                     FilesDownloadTask.STATE_CANCELLING + " then " + FilesDownloadTask.STATE_CANCELLED + 
                     " when " + FilesDownloadTask.STATE_PAUSING + " then " + FilesDownloadTask.STATE_PAUSED +
-                    " when " + FilesDownloadTask.STATE_RUNNING + " then " + FilesDownloadTask.STATE_PAUSED +
+                    (systemRestart ? "" 
+                        : " when " + FilesDownloadTask.STATE_RUNNING + " then " + FilesDownloadTask.STATE_PAUSED
+                    ) + 
                     " end where state in (" + 
                         FilesDownloadTask.STATE_RUNNING + ", " + 
                         FilesDownloadTask.STATE_CANCELLING + ", " + 
@@ -996,7 +1040,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             }
             cursor.close();
             
-            database.execSQL("update tasks set state=" + 
+            /*database.execSQL("update tasks set state=" + 
                     FilesDownloadTask.STATE_FINISHED + 
                     " where state <> " + FilesDownloadTask.STATE_FINISHED +
                     " and not exists (" +
@@ -1009,9 +1053,9 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                     Log.w(LOG_TAG, "Updated #" + changes + " tasks with running state, but no files to download");
                 }
             }
-            cursor.close();
+            cursor.close();*/
             
-            database.execSQL("update tasks set state=" + 
+            /*database.execSQL("update tasks set state=" + // XXX WTF? why the hell this code was duplicated?
                     FilesDownloadTask.STATE_FINISHED + 
                     " where state <> " + FilesDownloadTask.STATE_FINISHED +
                     " and not exists (" +
@@ -1024,7 +1068,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                     Log.w(LOG_TAG, "Updated #" + changes + " tasks with running state, but no files to download");
                 }
             }
-            cursor.close();
+            cursor.close();*/
             
             database.setTransactionSuccessful();
         }finally{
@@ -1050,19 +1094,21 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         
     }
     
-    private void loadTasks()
+    private List<FilesDownloadTask> loadTasks()
     {
+        List<FilesDownloadTask> result;
         database.beginTransaction();
         try{
             Cursor tasks = database.query("tasks", 
-                new String[]{"_id", "created_date", "state", "total_files_size_kb", "flags"}, 
+                new String[]{"_id", "created_date", "state", "total_download_size", "flags"}, 
                 null, null, null, null, "created_date");
+            result = new ArrayList<FilesDownloadTask>(tasks.getCount());
             if (tasks.moveToFirst()){
                 do{
                     FilesDownloadTask task = new FilesDownloadTask(tasks.getLong(1));
                     task.taskId = tasks.getInt(0);
                     task.state = tasks.getInt(2);
-                    task.totalFilesSizeKB = tasks.getInt(3);
+                    task.totalDownloadSize = tasks.getLong(3);
                     task.flags = tasks.getInt(4);
                     
                     Cursor stats = database.rawQuery("select state, count(1) from files where task_id=" + task.taskId + " group by state", null);
@@ -1088,7 +1134,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                         }while(stats.moveToNext());
                     }
                     stats.close();
-                    downloadTasks.add(task);
+                    result.add(task);
                 }while(tasks.moveToNext());
             }
             tasks.close();
@@ -1096,10 +1142,12 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         }finally{
             database.endTransaction();
         }
+        return result;
     }
     
     protected synchronized FilesDownloadTask getTaskById(int taskId)
     {
+        loadDatabase(false);
         for (FilesDownloadTask task : downloadTasks){
             if (task.taskId == taskId){
                 return task;
@@ -1113,7 +1161,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         final FilesDownloadTask clonedTask = task.clone();
         for (final Pair<Handler, FilesDownloaderListener> listener : listeners){
             final FilesDownloaderListener fdl = listener.second;
-            if (listener.first.getLooper() == Looper.getMainLooper()){
+            if (listener.first.getLooper() == Looper.myLooper()){
                 fdl.onTaskStateChanged(clonedTask, previousState);
             } else {
                 listener.first.post(new Runnable(){
@@ -1127,7 +1175,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     }
     
     @Override
-    public int scheduleFiles(final List<FileData> filesToDownload)
+    public int createTaskForFiles(final List<FileData> filesToDownload)
     throws IllegalArgumentException
     {
         if (filesToDownload.isEmpty()){
@@ -1138,6 +1186,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         database.beginTransaction();
         try{
             task = createTask();
+            task.totalFiles = filesToDownload.size();
             for (FileData file : filesToDownload){
                 file.taskId = task.taskId;
                 pushFileToDatabase(file);
@@ -1147,6 +1196,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             database.endTransaction();
         }
         synchronized(this){
+            loadDatabase(false);
             downloadTasks.add(task);
         }
         
@@ -1176,6 +1226,29 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                     sendTaskStateChangedNotification(task, FilesDownloadTask.STATE_RUNNING);
                     if (task.filesDownloader != null){
                         task.filesDownloader.stopDownload();
+                    } else {
+                        if (!updateTask(task, FilesDownloadTask.STATE_PAUSED, task.state)){
+                            return false;
+                        }
+                        
+                        final FilesDownloadTask task2 = task.clone();
+                        task2.filesDownloader = null;
+                        for (final Pair<Handler, FilesDownloaderListener> listener : listeners) {
+                            final FilesDownloaderListener fdl = listener.second;
+                            if (listener.first.getLooper() == Looper.myLooper()){
+                                fdl.onTaskPaused(task2);
+                            } else {
+                                listener.first.post(new Runnable()
+                                {
+                                    @Override
+                                    public void run()
+                                    {
+                                        fdl.onTaskPaused(task2);
+                                    }
+                                });
+                            }
+                        }
+                        
                     }
                 }
             }
@@ -1228,15 +1301,13 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             if (task.state != FilesDownloadTask.STATE_FINISHED && task.state != FilesDownloadTask.STATE_CANCELLED){
                 return false;
             }
-            //if (task.skippedFiles + task.finishedFiles >= task.totalFiles){
-            //    return false;
-            //}
-            int totalFilesSizeKB = task.totalFilesSizeKB;
-            task.totalFilesSizeKB = 0;
+            
+            final FilesDownloadTask taskClone = task.clone(); 
             int currState = task.state;
-            result = updateTask(task, 
-                FilesDownloadTask.STATE_RUNNING, currState);
+            task.finishedFiles = task.skippedFiles = task.permanentErrorFiles = task.transientErrorFiles = 0;
+            result = updateTask(task, FilesDownloadTask.STATE_RUNNING, currState);
             if (result){
+                task.continueFromPausing = false;
                 sendTaskStateChangedNotification(task, currState);
                 final Intent intent = new Intent(INTENT_ACTION_START_DOWNLOAD, null, this, FilesDownloaderService.class);
                 intent.putExtra(INTENT_EXTRA_TAKS_ID, task.taskId);
@@ -1244,7 +1315,10 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                 intent.putExtra(INTENT_EXTRA_INCLUDE_ALL, true);
                 startService(intent);
             } else {
-                task.totalFilesSizeKB = totalFilesSizeKB;
+                task.finishedFiles = taskClone.finishedFiles;
+                task.skippedFiles = taskClone.skippedFiles;
+                task.permanentErrorFiles = taskClone.permanentErrorFiles;
+                task.transientErrorFiles = taskClone.transientErrorFiles;
             }
         }
         if (result){
@@ -1275,6 +1349,29 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                     sendTaskStateChangedNotification(task, currState);
                     if (task.filesDownloader != null){
                         task.filesDownloader.abortDownload();
+                    } else {
+                        // hmm, cancelling not-running task
+                        if (!updateTask(task, FilesDownloadTask.STATE_CANCELLED, task.state)){
+                            return false;
+                        }
+                        
+                        final FilesDownloadTask task2 = task.clone();
+                        task2.filesDownloader = null;
+                        for (final Pair<Handler, FilesDownloaderListener> listener : listeners) {
+                            final FilesDownloaderListener fdl = listener.second;
+                            if (listener.first.getLooper() == Looper.myLooper()){
+                                fdl.onTaskCancelled(task2);
+                            } else {
+                                listener.first.post(new Runnable()
+                                {
+                                    @Override
+                                    public void run()
+                                    {
+                                        fdl.onTaskCancelled(task2);
+                                    }
+                                });
+                            }
+                        }
                     }
                 }
             }
@@ -1308,7 +1405,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                 }
                 for (final Pair<Handler, FilesDownloaderListener> listener : listeners){
                     final FilesDownloaderListener fdl = listener.second;
-                    if (listener.first.getLooper() == Looper.getMainLooper()){
+                    if (listener.first.getLooper() == Looper.myLooper()){
                         fdl.onTaskRemoved(task);
                     } else {
                         listener.first.post(new Runnable(){
@@ -1329,6 +1426,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     @Override
     public List<FilesDownloadTask> getTasks()
     {
+        loadDatabase(false);
         List<FilesDownloadTask> result = new ArrayList<FilesDownloadTask>(downloadTasks.size());
         for (FilesDownloadTask task : downloadTasks){
             FilesDownloadTask task2 = task.clone();
@@ -1369,11 +1467,13 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     synchronized void shutdownSelf()
     {
         boolean allTasksFinished = true;
-        for (FilesDownloadTask task : downloadTasks){
-            synchronized(task){
-                if (task.filesDownloader != null){
-                    allTasksFinished = false;
-                    break;
+        if (downloadTasks != null){
+            for (FilesDownloadTask task : downloadTasks){
+                synchronized(task){
+                    if (task.filesDownloader != null){
+                        allTasksFinished = false;
+                        break;
+                    }
                 }
             }
         }
@@ -1395,50 +1495,51 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     {
         try{
             Log.i(LOG_TAG, "called onDestroy");
-            boolean anyTask = false;
-            synchronized(this){
-                for (FilesDownloadTask task : downloadTasks){
-                    synchronized(task){
-                        if (task.filesDownloader != null){
-                            anyTask = true;
-                            Log.e(LOG_TAG, "Task id=" + task.taskId + " is still in progress!");
-                            task.filesDownloader.abortDownload();
+            if (downloadTasks != null){
+                boolean anyTask = false;
+                synchronized(this){
+                    for (FilesDownloadTask task : downloadTasks){
+                        synchronized(task){
+                            if (task.filesDownloader != null){
+                                anyTask = true;
+                                Log.e(LOG_TAG, "Task id=" + task.taskId + " is still in progress!");
+                                task.filesDownloader.abortDownload();
+                            }
+                        }
+                    }
+                }
+                synchronized(this){
+                    for (FilesDownloadTask task : downloadTasks){
+                        final FilesDownloader fd;
+                        synchronized(task){
+                            fd = task.filesDownloader;
+                        }
+                        if (fd != null){
+                            try{
+                                fd.awaitTermination(60, TimeUnit.SECONDS);
+                            }catch(InterruptedException ie){
+                                
+                            }
+                        }
+                    }
+                }
+                if (anyTask){
+                    try{
+                        Thread.sleep(50);
+                    }catch(InterruptedException ie){
+                        
+                    }
+                }
+                synchronized(this){
+                    for (FilesDownloadTask task : downloadTasks){
+                        synchronized(task){
+                            if (task.filesDownloader != null){
+                                Log.e(LOG_TAG, "Task id=" + task.taskId + " did not respond to cancel signal!");
+                            }
                         }
                     }
                 }
             }
-            synchronized(this){
-                for (FilesDownloadTask task : downloadTasks){
-                    final FilesDownloader fd;
-                    synchronized(task){
-                        fd = task.filesDownloader;
-                    }
-                    if (fd != null){
-                        try{
-                            fd.awaitTermination(60, TimeUnit.SECONDS);
-                        }catch(InterruptedException ie){
-                            
-                        }
-                    }
-                }
-            }
-            if (anyTask){
-                try{
-                    Thread.sleep(50);
-                }catch(InterruptedException ie){
-                    
-                }
-            }
-            synchronized(this){
-                for (FilesDownloadTask task : downloadTasks){
-                    synchronized(task){
-                        if (task.filesDownloader != null){
-                            Log.e(LOG_TAG, "Task id=" + task.taskId + " did not respond to cancel signal!");
-                        }
-                    }
-                }
-            }
-
             HttpClientFactory.closeHttpClient(httpClient);
             httpClient = null;
             
@@ -1446,7 +1547,10 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                 freeFilesDownloader.abortDownload();
             }
     
-            downloadTasks.clear();
+            if (downloadTasks != null){
+                downloadTasks.clear();
+                downloadTasks = null;
+            }
             listeners.clear();
             filesOnHold.clear();
             

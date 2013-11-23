@@ -27,10 +27,8 @@ public interface FilesDownloaderListener
      * Fired periodically during file download
      * @param task
      * @param fileData
-     * @param doneKB
-     * @param totalKB Total file size, or -1 if unknown
      */
-    public void onFileProgress(FilesDownloadTask task, FileData fileData, int doneKB, int totalKB);
+    public void onFileProgress(FilesDownloadTask task, FileData fileData);
 
     /**
      * Fired when the file has finished, either successfully, or with an error

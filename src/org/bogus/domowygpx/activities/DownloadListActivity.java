@@ -395,7 +395,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
     }
     
     class FileListItem extends BaseListItem {
-        private int oldTotalSize;
+        private long oldTotalSize;
         FilesDownloadTask task;
         
         final View.OnClickListener onPlayListener = new View.OnClickListener()
@@ -589,9 +589,9 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             msg.append(DownloadListActivity.this.getResources().getQuantityString(
                 task.finishedFiles == task.totalFiles ? R.plurals.filesCount : R.plurals.filesCountOverTotal, 
                 task.finishedFiles, task.finishedFiles, task.totalFiles));
-            if (task.totalFilesSizeKB > 0){
+            if (task.totalDownloadSize > 1024){
                 msg.append(", ");
-                msg.append(formatFileSize(task.totalFilesSizeKB));
+                msg.append(formatFileSize((int)(task.totalDownloadSize/1024L)));
             }
             int errors = task.permanentErrorFiles + task.transientErrorFiles;
             if (errors > 0){
@@ -612,11 +612,11 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             }
         }
         
-        boolean onFileProgress(FilesDownloadTask task, FileData fileData, int doneKB, int totalKB)
+        boolean onFileProgress(FilesDownloadTask task, FileData fileData)
         {
-            int totalSize = this.task.totalFilesSizeKB;
             this.task = task;
-            if (totalSize >= 1024 && totalSize-oldTotalSize<10){
+            long totalSize = task.totalDownloadSize;
+            if (totalSize >= 1048576 && totalSize-oldTotalSize<1024){
                 return false;
             }
             oldTotalSize = totalSize;
@@ -629,8 +629,14 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             this.task = task;
             if (started){
                 progressMax = task.totalFiles;
+                progressCurrent = task.finishedFiles + task.skippedFiles + task.permanentErrorFiles + task.transientErrorFiles;
                 generateMainInfo();
                 generateDetails();
+            } else {
+                if (progressMax == -1){
+                    // show we don't know ;)
+                    progressMax = progressCurrent = 0;
+                }
             }
         }
         
@@ -863,6 +869,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             }
         }
         GpxListItem result = new GpxListItem();
+        result.createdDateVal = task.createdDate;
         result.taskId = taskId;
         result.stableId = ++stableIdCounter;
         listItems.add(result);
@@ -881,6 +888,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             }
         }
         FileListItem result = new FileListItem();
+        result.createdDateVal = task.createdDate;
         result.taskId = taskId;
         result.stableId = ++stableIdCounter;
         listItems.add(result); 
@@ -1160,14 +1168,12 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
      * Fired periodically during file download
      * @param task
      * @param fileData
-     * @param doneKB
-     * @param totalKB Total file size, or -1 if unknown
      */
     @Override
-    public void onFileProgress(FilesDownloadTask task, FileData fileData, int doneKB, int totalKB)
+    public void onFileProgress(FilesDownloadTask task, FileData fileData)
     {
         final FileListItem listItem = getFilesListItem(task, false);
-        if (listItem.onFileProgress(task, fileData, doneKB, totalKB)){
+        if (listItem.onFileProgress(task, fileData)){
             listViewAdapter.notifyDataSetChanged();
         }
 
