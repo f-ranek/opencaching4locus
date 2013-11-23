@@ -18,7 +18,7 @@ public class CountingEntity extends HttpEntityWrapper
     private CountingInputStream content;
 
     /**
-     * Creates a new {@link DecompressingEntity}.
+     * Wrappes given entity, so it can count bytes flowing through it
      *
      * @param wrapped
      *            the non-null {@link HttpEntity} to be wrapped

@@ -12,7 +12,7 @@ import org.apache.http.client.params.ClientPNames;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.ClientConnectionManagerFactory;
 import org.apache.http.conn.ConnectTimeoutException;
-import org.apache.http.conn.params.ConnManagerPNames;
+import org.apache.http.conn.params.ConnManagerParams;
 import org.apache.http.conn.params.ConnPerRoute;
 import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.conn.scheme.LayeredSocketFactory;
@@ -23,15 +23,26 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
-import org.bogus.domowygpx.apache.http.impl.client.DecompressingHttpClient;
+import org.apache.http.params.HttpProtocolParams;
+import org.bogus.domowygpx.apache.http.client.entity.CountingEntityInterceptor;
+import org.bogus.domowygpx.apache.http.client.protocol.RequestAcceptEncoding;
+import org.bogus.domowygpx.apache.http.client.protocol.ResponseContentEncoding;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.http.AndroidHttpClient;
 
 public class HttpClientFactory
 {
+    /**
+     * Size in bytes (integer), of the receive buffer size passed to the operating system
+     */
     public static final String RAW_SOCKET_RECEIVE_BUFFER_SIZE = "http.raw-socket.receive-buffer-size";
+    /**
+     * Size in bytes (integer), of the send buffer size passed to the operating system
+     */
     public static final String RAW_SOCKET_SEND_BUFFER_SIZE = "http.raw-socket.send-buffer-size";
 
     static class RawSocketBuffSizeFactoryDecorator implements SocketFactory
@@ -138,61 +149,75 @@ public class HttpClientFactory
     
     public static HttpClient createHttpClient(boolean shared, final Context context)
     {
+        final SharedPreferences config = context.getSharedPreferences("egpx", Context.MODE_PRIVATE);
         
-        final DefaultHttpClient httpClient = new DefaultHttpClient();
+        if (config.getBoolean("HttpClientFactory_enableHeadersLogging", false)){
+            java.util.logging.Logger.getLogger("org.apache.http.headers").setLevel(java.util.logging.Level.FINEST);
+        }
+        
+        DefaultHttpClient httpClient = new DefaultHttpClient();
 
         final HttpParams params = httpClient.getParams();
        
         if (shared){
-            // params.setLongParameter(ClientPNames.CONN_MANAGER_TIMEOUT, 5 * 60 * 1000);
+            // max connections per route
+            final int maxConnectionsPerHost = config.getInt("HttpClientFactory_maxConnectionsPerHost", 4);
+            // total max connections per HttpClient
+            final int maxTotalConnections = config.getInt("HttpClientFactory_maxTotalConnections", 16);
+            // timeout (in seconds) for a connection while blocking on HttpClientFactory_maxConnectionsPerHost
+            // or HttpClientFactory_maxTotalConnections limit
+            final long connectionTimeout = config.getInt("HttpClientFactory_waitForConnectionTimeout", 5*60);
+
+            ConnManagerParams.setTimeout(params, connectionTimeout * 1000L);
+            ConnManagerParams.setMaxTotalConnections(params, maxTotalConnections);
             
-            params.setParameter(ConnManagerPNames.MAX_CONNECTIONS_PER_ROUTE, new ConnPerRoute(){
+            ConnManagerParams.setMaxConnectionsPerRoute(params, new ConnPerRoute(){
                 @Override
                 public int getMaxForRoute(HttpRoute route)
                 {
-                    // should we cache it in any way?
-                    final SharedPreferences config = context.getSharedPreferences("egpx", Context.MODE_PRIVATE);
-                    return config.getInt("HttpClientFactory_maxConnectionsPerHost", 4);
+                    return maxConnectionsPerHost;
                 }});
-            
             params.setParameter(ClientPNames.CONNECTION_MANAGER_FACTORY, new ClientConnectionManagerFactory(){
             @Override
             public ClientConnectionManager newInstance(HttpParams params, SchemeRegistry schemeRegistry)
             {
-                return new ThreadSafeClientConnManager(params, schemeRegistry)/*{
-                    
-                }*/;
+                return new ThreadSafeClientConnManager(params, schemeRegistry);
             }});
         }
 
-        // TAKEN FROM ANDROID SOURCE CODE
-        // Default connection and socket timeout of 20 seconds.  Tweak to taste.
-        HttpConnectionParams.setConnectionTimeout(params, 20 * 1000);
-        HttpConnectionParams.setSoTimeout(params, 20 * 1000);
-        HttpConnectionParams.setSocketBufferSize(params, 8192);
-        // END
+        // timeout to wait for a connection establishment (in seconds)
+        final int connectionTimeout = config.getInt("HttpClientFactory_connectionTimeout", 20);
+        // timeout to wait for data (in seconds)
+        final int socketTimeout = config.getInt("HttpClientFactory_socketTimeout", 20);
+        // buffer size for recive and send data to sockets
+        // NOTE: internal operating system socket buffers can be set using RAW_SOCKET_RECEIVE_BUFFER_SIZE
+        // and RAW_SOCKET_SEND_BUFFER_SIZE parameter names (int)
+        final int socketBufferSize = config.getInt("HttpClientFactory_socketBufferSize", 8192);
+
+        HttpConnectionParams.setConnectionTimeout(params, connectionTimeout * 1000);
+        HttpConnectionParams.setSoTimeout(params, socketTimeout * 1000);
+        HttpConnectionParams.setSocketBufferSize(params, socketBufferSize);
         
+        try{
+            final String packageName = context.getPackageName();
+            final PackageInfo packageInfo = context.getPackageManager().getPackageInfo(packageName, 0);
+            String userAgent = "Apache-HttpClient/Opencaching " + packageInfo.versionName + " (" + packageInfo.versionCode + ")";
+            HttpProtocolParams.setUserAgent(params, userAgent);
+        }catch(NameNotFoundException nnfe){
+            // should not happen ;)
+        }
         RawSocketBuffSizeFactoryDecorator.decorateHttpClient(httpClient);
         
-        final SharedPreferences config = context.getSharedPreferences("egpx", Context.MODE_PRIVATE);
         boolean disableCompression = config.getBoolean("HttpClientFactory_disableCompression", false);
-        if (disableCompression){
-            return httpClient;
+        if (!disableCompression){
+            // setup compression
+            //httpClient = new DecompressingHttpClient(httpClient) ;
+            httpClient.addRequestInterceptor(new RequestAcceptEncoding());
+            httpClient.addResponseInterceptor(new ResponseContentEncoding());
         } 
-        // setup compression
-        final DecompressingHttpClient decompressingHttpClient = new DecompressingHttpClient(httpClient) ;
-        return decompressingHttpClient;
+        httpClient.addResponseInterceptor(new CountingEntityInterceptor());
+        return httpClient;
     }
-
-    /**
-     * Creates and returns individual (non-shared) {@link HttpClient}. The returned client must be 
-     * @return
-     */
-    /*public static HttpClient createIndividualHttpClient()
-    {
-        return createHttpClientImpl(false);
-    }*/
-
     
     public static void closeHttpClient(HttpClient httpClient)
     {

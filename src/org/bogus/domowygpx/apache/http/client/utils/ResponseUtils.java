@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.conn.ConnectionReleaseTrigger;
 import org.apache.http.entity.HttpEntityWrapper;
 import org.bogus.domowygpx.apache.http.client.entity.CountingEntity;
 
@@ -26,6 +27,20 @@ public class ResponseUtils
         }
     }
     
+    public static void abortResponse(HttpResponse response)
+    {
+        if (response != null){
+            try{
+                HttpEntity e = response.getEntity();
+                if (e instanceof ConnectionReleaseTrigger){
+                    ((ConnectionReleaseTrigger)e).abortConnection();
+                }
+            }catch(Exception e){
+                // ignore
+            }
+        }
+    }
+
     /**
      * Returns expected number of bytes to be read from the server (excluding headers), or -1 if it is unknown
      * @return
@@ -68,17 +83,9 @@ public class ResponseUtils
         return -1;
     }
     
-    /**
-     * Wraps the response, so future calls to {@link #getBytesRead(HttpResponse)} will succeed
-     * @param response
-     */
-    public static void wrapResponseToBeCountable(HttpResponse response)
+    public static boolean isCountingCapable(HttpEntity e)
     {
-        HttpEntity e = response.getEntity();
-        if (e == null || mineCountingEntity(e) != null){
-            return;
-        }
-        response.setEntity(new CountingEntity(e));
+        return mineCountingEntity(e) != null;
     }
     
     private final static Field wrappedEntity;
