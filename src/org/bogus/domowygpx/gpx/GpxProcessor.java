@@ -26,8 +26,6 @@ import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmlpull.v1.XmlSerializer;
 
-import android.annotation.SuppressLint;
-
 public class GpxProcessor implements GpxState, Closeable
 {
     private final static Log logger = LogFactory.getLog(GpxProcessor.class);
@@ -255,7 +253,6 @@ public class GpxProcessor implements GpxState, Closeable
         }
     }
     
-    @SuppressLint("SimpleDateFormat")
     public void processGpx()
     throws Exception
     {
