@@ -87,19 +87,21 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
     private static final int NOTIFICATION_ID_ONGOING = 0x10;
     private static final int NOTIFICATION_ID_FINISHED = NOTIFICATION_ID_ONGOING+1;
     
-    private volatile HttpClient httpClient;
+    private HttpClient httpClient;
     
-    HttpClient getHttpClient(){
+    synchronized HttpClient getHttpClient(){
         if (httpClient == null){
-            synchronized(this){
-                if (httpClient == null){
-                    HttpClient aHttpClient = HttpClientFactory.createHttpClient(true, this);
-                    aHttpClient.getParams().setIntParameter(HttpClientFactory.RAW_SOCKET_RECEIVE_BUFFER_SIZE, 32*1024);
-                    httpClient = aHttpClient;
-                }
-            }
+            HttpClient aHttpClient = HttpClientFactory.createHttpClient(true, this);
+            aHttpClient.getParams().setIntParameter(HttpClientFactory.RAW_SOCKET_RECEIVE_BUFFER_SIZE, 32*1024);
+            httpClient = aHttpClient;
         }
         return httpClient;        
+    }
+    
+    private synchronized void closeHttpClient()
+    {
+        HttpClientFactory.closeHttpClient(httpClient);
+        httpClient = null;
     }
     
     final static AtomicInteger threadIndexCount = new AtomicInteger();
@@ -970,37 +972,38 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
     public synchronized int onStartCommand(Intent intent, int flags, int startId) 
     {
         startIds.add(startId);
-        
-        if (intent == null){
-            Log.i(LOG_TAG, "onStartCommand, startId=" + startId + ", null intent");
-            shutdownSelf();
-            return START_NOT_STICKY;
-        }
-        
-        final String action = intent.getAction();
-        Log.i(LOG_TAG, "onStartCommand, startId=" + startId + ", action=" + action);
-        if (INTENT_ACTION_START_DOWNLOAD.equals(action)){
-            TaskConfiguration taskConfiguration = intent.getParcelableExtra(INTENT_EXTRA_TASK_CONFIGURATION);
-            if (taskConfiguration == null){
-                throw new NullPointerException("Missing " + INTENT_EXTRA_TASK_CONFIGURATION);
+        try{
+            if (intent == null){
+                Log.i(LOG_TAG, "onStartCommand, startId=" + startId + ", null intent");
+                return START_NOT_STICKY;
             }
-            final GpxTask gpxTask = createTask(taskConfiguration);
-            final WorkerThread thread = new WorkerThread(taskConfiguration, gpxTask);
-            threads.add(thread);
-            thread.start();
-        } else
-        //if (INTENT_ACTION_CANCEL_NOTIFICATION.equals(action)){
-        //    Log.d(LOG_TAG, "notificationStatus=" + notificationStatus);
-        //    if (notificationStatus == NOTIFICATION_STATUS_ONGOING){
-        //        notificationStatus = NOTIFICATION_STATUS_NONE;
-        //        notificationManager.cancel(NOTIFICATION_ID);
-        //    }
-        //    shutdownSelf();
-        //} else 
-        {
-            Log.w(LOG_TAG, "Got unknown action=" + action);
+            
+            final String action = intent.getAction();
+            Log.i(LOG_TAG, "onStartCommand, startId=" + startId + ", action=" + action);
+            if (INTENT_ACTION_START_DOWNLOAD.equals(action)){
+                TaskConfiguration taskConfiguration = intent.getParcelableExtra(INTENT_EXTRA_TASK_CONFIGURATION);
+                if (taskConfiguration == null){
+                    throw new NullPointerException("Missing " + INTENT_EXTRA_TASK_CONFIGURATION);
+                }
+                final GpxTask gpxTask = createTask(taskConfiguration);
+                final WorkerThread thread = new WorkerThread(taskConfiguration, gpxTask);
+                threads.add(thread);
+                thread.start();
+            } else
+            //if (INTENT_ACTION_CANCEL_NOTIFICATION.equals(action)){
+            //    Log.d(LOG_TAG, "notificationStatus=" + notificationStatus);
+            //    if (notificationStatus == NOTIFICATION_STATUS_ONGOING){
+            //        notificationStatus = NOTIFICATION_STATUS_NONE;
+            //        notificationManager.cancel(NOTIFICATION_ID);
+            //    }
+            //    shutdownSelf();
+            //} else 
+            {
+                Log.w(LOG_TAG, "Got unknown action=" + action);
+            }
+        }finally{
+            shutdownSelf();
         }
-
         return Service.START_NOT_STICKY;
     }
     
@@ -1135,8 +1138,9 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
     {
         if (threads.isEmpty()){
             super.stopForeground(false);
-        }
-        if (threads.isEmpty() /*&& boundClientsCount == 0*/ /*&& notificationStatus == NOTIFICATION_STATUS_NONE*/){
+            
+            closeHttpClient();
+
             boolean willBeStopped = false;
             for (Integer startId : startIds){
                 willBeStopped = super.stopSelfResult(startId);
@@ -1565,8 +1569,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         //finishedTasks.clear();        
         listeners.clear();
         
-        HttpClientFactory.closeHttpClient(httpClient);
-        httpClient = null;
+        closeHttpClient();
         
         databaseHelper.close();
         databaseHelper = null;

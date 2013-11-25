@@ -1512,8 +1512,11 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         }
         if (allTasksFinished){
             super.stopForeground(false);
-        }
-        if (allTasksFinished /*&& boundClientsCount == 0*/){
+
+            // early recycle
+            HttpClientFactory.closeHttpClient(httpClient);
+            httpClient = null;
+            
             boolean willBeStopped = false;
             for (Integer startId : startIds){
                 willBeStopped = super.stopSelfResult(startId);
