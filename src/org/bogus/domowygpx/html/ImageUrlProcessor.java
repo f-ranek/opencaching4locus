@@ -25,14 +25,15 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.codec.binary.Base64InputStream;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.AutoCloseInputStream;
 import org.apache.commons.logging.Log;
 import org.bogus.domowygpx.gpx.GpxState;
 import org.bogus.domowygpx.services.downloader.FileData;
+import org.bogus.domowygpx.utils.Hex;
 import org.bogus.logging.LogFactory;
+
+import android.util.Base64InputStream;
 
 
 public class ImageUrlProcessor implements ImageSourceResolver
@@ -279,7 +280,7 @@ public class ImageUrlProcessor implements ImageSourceResolver
                             }
                         }
                     };
-                    is = new Base64InputStream(is, false);
+                    is = new Base64InputStream(is, 0);
                     os = new FileOutputStream(tempFile);
                     os = new BufferedOutputStream(os, 8192);
                     DigestOutputStream dos = new DigestOutputStream(os, md);
@@ -325,7 +326,7 @@ public class ImageUrlProcessor implements ImageSourceResolver
             logger.warn(currentCacheCode + ": got IO Exception", ioe);
             return src;
         }catch(NoSuchAlgorithmException nsae){
-            logger.warn(currentCacheCode + ": got MD5 Exception", nsae); // TODO: use MD2 for speed
+            logger.warn(currentCacheCode + ": got MD5 Exception", nsae);
             return src;
         }
     }
@@ -333,23 +334,24 @@ public class ImageUrlProcessor implements ImageSourceResolver
     @Override
     public String processImgSrc(String src, int sourcePlaceCode)
     {
-        final String currentCacheCode = gpxState.getCurrentCacheCode(); // TODO: move to subdirectories
+        final String currentCacheCode = gpxState.getCurrentCacheCode(); 
         try{
             //logger.debug(currentCacheCode + ": found img src=" + src);
             {
                 final URI uri;
                 if (src.startsWith("\"") && src.endsWith("\"")){
                     uri = new URI(src.substring(1, src.length()-2));
-                } else {
-                    uri = new URI(src);
-                }
-                if ("data".equals(uri.getScheme())){
+                } else
+                if (src.startsWith("data:")){
                     if (extractDataImages){
                         String res = extractDataImage(src, currentCacheCode);
                         return res;
                     } else {
                         return src;
                     }
+                } else 
+                {
+                    uri = new URI(src);
                 }
                 if (uri.getPath() == null || uri.getPath().equals("/")){
                     logger.warn(currentCacheCode + ": no path specified: " + src);
