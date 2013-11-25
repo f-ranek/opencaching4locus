@@ -41,30 +41,24 @@ public interface FilesDownloaderApi
     throws IllegalArgumentException;
     
     /**
-     * Pauses current activity, allowing files being currently downloaded to 
-     * finish. 
+     * Stops current activity, allowing files being currently downloaded to finish. This call is similar
+     * to {@link #cancelTask(int)}, but do not abruptly stops current activity.
      * 
      * @param taskId task to pause
-     * @return true, if tasks has been signaled to pause, false otherwise
+     * @return true, if tasks has been signaled to stop, false otherwise
      * 
-     * @see #resumeTask()
+     * @see #restartTask()
      */
-    boolean pauseTask(int taskId);
+    boolean stopTask(int taskId);
 
     /**
-     * Reasumes selected task
-     * @param taskId task to resume
-     * @return true, if tasks has been reasumed, false otherwise
-     * Restarts previously paused downloads.
-     */
-    boolean resumeTask(int taskId);
-
-    /**
-     * Restarts finished tasks, trying to download files, that have previously failed
+     * Restarts task, downloading scheduled files
      * @param taskId
+     * @param restartFromScratch Tries to download all files, including that already marked as downloaded,
+     *      as well as prviously failed
      * @return
      */
-    boolean restartTask(int taskId);
+    boolean restartTask(int taskId, boolean restartFromScratch);
     
     /**
      * Cancels all downloads, both currently being processes, as well as

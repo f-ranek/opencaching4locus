@@ -189,7 +189,6 @@ public class LocationUtils
      * @throws IllegalArgumentException if outputType is not one of
      * FORMAT_DEGREES, FORMAT_MINUTES, or FORMAT_SECONDS.
      */
-    @SuppressWarnings("null")
     public static String format(double coordinate, int outputType) {
         if (coordinate < -180.0 || coordinate > 180.0 ||
             Double.isNaN(coordinate)) {

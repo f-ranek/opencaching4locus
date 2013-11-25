@@ -282,14 +282,17 @@ public class MainActivity extends Activity
         }
         
         errorControl.setVisibility(TextView.VISIBLE);
-        errorControl.setTextColor(getResources().getColor(isWarning ? R.color.colorWarning : R.color.colorError));
+        errorControl.setTextAppearance(this, 
+            isWarning ? R.style.TextAppearance_Small_Warning 
+                    : R.style.TextAppearance_Small_Error);
     }
     
     protected void resetViewError(int viewId)
     {
         TextView v = (TextView)findViewById(viewId);
-        v.setText("");
+        v.setText(null);
         v.setVisibility(TextView.GONE);
+        v.setTextAppearance(this, android.R.style.TextAppearance_Small);
     }
     
     protected void resetViewErrors()
@@ -303,7 +306,6 @@ public class MainActivity extends Activity
     public void onBtnStartClicked(final View btn)
 	{
         resetViewErrors();
-        //Toast.makeText(this, "Aaaaa, zaczynam robić", Toast.LENGTH_SHORT).show();
         
 	    TaskConfiguration taskConfiguration = new TaskConfiguration();
 	    taskConfiguration.setLatitude(editLat.getText().toString());

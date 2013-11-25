@@ -24,7 +24,7 @@
             android:longClickable="false"
             android:paddingRight="4dp"
             android:text="Tu będzie opis tego, co się właśnie dzieje"
-            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textAppearance="?style/TextAppearance.Large"
             tools:ignore="HardcodedText" />
 
         <TextView
@@ -80,6 +80,16 @@
             android:paddingTop="2dp" >
 
             <ImageButton
+                android:id="@+id/btnDownloadItemStop"
+                style="?android:attr/buttonStyleSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:contentDescription="@string/btnDownloadItemStopDescription"
+                android:longClickable="false"
+                android:src="@drawable/ic_stop_2" />
+
+            <ImageButton
                 android:id="@+id/btnDownloadItemPlay"
                 style="?android:attr/buttonStyleSmall"
                 android:layout_width="wrap_content"
@@ -88,26 +98,6 @@
                 android:contentDescription="@string/btnDownloadItemPlayDescription"
                 android:longClickable="false"
                 android:src="@drawable/ic_play_2" />
-
-            <ImageButton
-                android:id="@+id/btnDownloadItemPause"
-                style="?android:attr/buttonStyleSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:adjustViewBounds="true"
-                android:contentDescription="@string/btnDownloadItemPauseDescription"
-                android:longClickable="false"
-                android:src="@drawable/ic_pause_2" />
-
-            <ImageButton
-                android:id="@+id/btnDownloadItemReplay"
-                style="?android:attr/buttonStyleSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:adjustViewBounds="true"
-                android:contentDescription="@string/btnDownloadItemReplayDescription"
-                android:longClickable="false"
-                android:src="@drawable/ic_replay_3" />
 
             <ImageButton
                 android:id="@+id/btnDownloadItemCancel"

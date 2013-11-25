@@ -49,23 +49,17 @@
     <string name="filesDownloaderServiceName">Usługa pobierania plików</string>
     <string name="filesDownloaderServiceDescription">Usługa realizuje pobranie plików zasobów</string>
     
-    <color name="colorError">#FF0000</color>
-    <color name="colorWarning">#FF8000</color>
-    <color name="colorDoneOk">#00B200</color>
-    
-    
     <string name="titleActivityDownloadList">Lista pobieranych plików</string>
     <string name="menuGoToDownloadsList">Pobieranie plików</string>
 
-    <string name="btnDownloadItemPlay">Uruchom</string>
-    <string name="btnDownloadItemPause">Wstrzymaj</string>
-    <string name="btnDownloadItemReplay">Uruchom ponownie</string>
+    <string name="btnDownloadItemStop">Wstrzymaj</string>
+    <string name="btnDownloadItemPlay">Wznów</string>
+    <string name="btnDownloadItemRestart">Uruchom ponownie</string>
     <string name="btnDownloadItemCancel">Zatrzymaj</string>
     <string name="btnDownloadItemRemove">Usuń</string>
     
-    <string name="btnDownloadItemPlayDescription">Uruchamia zadanie</string>
-    <string name="btnDownloadItemPauseDescription">Wstrzymuje zadanie</string>
-    <string name="btnDownloadItemReplayDescription">Ponawia zadanie</string>
+    <string name="btnDownloadItemStopDescription">Wstrzymuje zadanie</string>
+    <string name="btnDownloadItemPlayDescription">Wznawia zadanie</string>
     <string name="btnDownloadItemCancelDescription">Zatrzymuje zadanie</string>
     
     
@@ -105,8 +99,8 @@
         <item quantity="other">%d zadań zakończonych</item>
     </plurals>
     <plurals name="filesCountOverTotal">
-        <item quantity="one">%1$d/%2$d plik</item>
-        <item quantity="few">%1$d/%2$d pliki</item>
+        <item quantity="one">%1$d plik z %2$d</item>
+        <item quantity="few">%1$d pliki z %2$d</item>
         <item quantity="other">%1$d/%2$d plików</item>
     </plurals>
     <plurals name="filesCount">

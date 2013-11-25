@@ -1,7 +1,5 @@
 package org.bogus.domowygpx.application;
 
-
-
 public class Application extends android.app.Application
 {
     private OKAPI okApi;
@@ -35,6 +33,33 @@ public class Application extends android.app.Application
                 }
             }, SystemClock.uptimeMillis() + 15L*1000L);
         }*/
+        /*
+        locus.api.utils.Logger.registerLogger(new locus.api.utils.Logger.ILogger(){
+
+            @Override
+            public void logI(String tag, String msg)
+            {
+                android.util.Log.i(tag, msg);
+            }
+
+            @Override
+            public void logD(String tag, String msg)
+            {
+                android.util.Log.d(tag, msg);
+            }
+
+            @Override
+            public void logW(String tag, String msg)
+            {
+                android.util.Log.w(tag, msg);
+            }
+
+            @Override
+            public void logE(String tag, String msg, Exception e)
+            {
+                android.util.Log.e(tag, msg, e);
+            }});
+        */    
     }
     
     @Override

@@ -424,7 +424,6 @@ public class FilesDownloader implements Closeable
                 response = httpClient.execute(get);
             }
             
-            @SuppressWarnings("null")
             final StatusLine statusLine = response.getStatusLine();
             data.statusLine  = statusLine.toString();
             {

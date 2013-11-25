@@ -2,19 +2,19 @@
 
     <group android:orderInCategory="1">
         <item
-            android:id="@+id/actionDownloadItemPlay"
-            android:orderInCategory="1"
-            android:title="@string/btnDownloadItemPlay" 
-            android:visible="false"/>
-        <item
-            android:id="@+id/actionDownloadItemPause"
+            android:id="@+id/actionDownloadItemStop"
             android:orderInCategory="2"
-            android:title="@string/btnDownloadItemPause"
+            android:title="@string/btnDownloadItemStop"
             android:visible="false"/>
         <item
-            android:id="@+id/actionDownloadItemReplay"
+            android:id="@+id/actionDownloadItemPlay"
+            android:orderInCategory="2"
+            android:title="@string/btnDownloadItemPlay"
+            android:visible="false"/>
+        <item
+            android:id="@+id/actionDownloadItemRestart"
             android:orderInCategory="3"
-            android:title="@string/btnDownloadItemReplay"
+            android:title="@string/btnDownloadItemRestart"
             android:visible="false"/>
         <item
             android:id="@+id/actionDownloadItemCancel"

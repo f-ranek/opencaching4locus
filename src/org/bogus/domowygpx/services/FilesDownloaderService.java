@@ -28,6 +28,7 @@ import org.bogus.domowygpx.utils.HttpClientFactory;
 import org.bogus.domowygpx.utils.HttpException;
 import org.bogus.geocaching.egpx.R;
 
+import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -42,6 +43,7 @@ import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -67,8 +69,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     public static final String INTENT_ACTION_START_DOWNLOAD = "org.bogus.domowygpx.FilesDownloaderService.START_DOWNLOAD_FILES";
     
     private static final String INTENT_EXTRA_TAKS_ID = "org.bogus.domowygpx.FilesDownloaderService.taskId";
-    private static final String INTENT_EXTRA_RESTART_FAILED = "org.bogus.domowygpx.FilesDownloaderService.restartFailed";
-    private static final String INTENT_EXTRA_INCLUDE_ALL = "org.bogus.domowygpx.FilesDownloaderService.includeAll";
+    private static final String INTENT_EXTRA_RESTART_FROM_SCRATCH = "org.bogus.domowygpx.FilesDownloaderService.restartFromScratch";
     
     private ConcurrentMap<File, Boolean> filesOnHold = new ConcurrentHashMap<File, Boolean>(8);
     private FilesDownloader freeFilesDownloader;
@@ -81,9 +82,8 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         public final static int STATE_RUNNING = 0;
         public final static int STATE_FINISHED = 1;
         public final static int STATE_CANCELLING = 2;
-        public final static int STATE_CANCELLED = 3;
         public final static int STATE_PAUSING = 4;
-        public final static int STATE_PAUSED = 5;
+        public final static int STATE_STOPPED = 7;
         
         /**
          * Returns true, if no files were successfully downloaded. If all the files 
@@ -121,9 +121,6 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         public int skippedFiles;
         public int permanentErrorFiles;
         public int transientErrorFiles;
-        
-        /** Flag indicating, that before task has paused, reasume operation was requested */
-        boolean continueFromPausing;
         
         FilesDownloader filesDownloader;
         
@@ -212,31 +209,23 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                 final int currentState = task.state;
                 final int newTaskState;
                 switch(currentState){
-                    case FilesDownloadTask.STATE_CANCELLED:
                     case FilesDownloadTask.STATE_FINISHED:
-                    case FilesDownloadTask.STATE_PAUSED:
+                    case FilesDownloadTask.STATE_STOPPED:
                         // something is terribly wrong
                         newTaskState = -1;
                         break;
                     case FilesDownloadTask.STATE_PAUSING:
-                        if (task.continueFromPausing){
-                            newTaskState = FilesDownloadTask.STATE_RUNNING;
-                            break;
-                        } else {
-                            // fall-through
-                        }
                     case FilesDownloadTask.STATE_CANCELLING:
+                        newTaskState = FilesDownloadTask.STATE_STOPPED;
+                        break;
                     case FilesDownloadTask.STATE_RUNNING:
-                        newTaskState = currentState+1;
+                        newTaskState = FilesDownloadTask.STATE_FINISHED;
                         break;
                     default:
                         newTaskState = -2;
                 }
-                if (currentState != FilesDownloadTask.STATE_PAUSING && task.continueFromPausing){
-                    task.continueFromPausing = false;
-                }
         
-                if (newTaskState <= 0){
+                if (newTaskState < 0){
                     Log.e(LOG_TAG, "Fuck, some state is wrong, taskId=" + taskId + ", currentState=" + currentState);
                     return ;
                 }
@@ -244,36 +233,16 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                     return ;
                 }
                 
-                if (newTaskState != FilesDownloadTask.STATE_RUNNING){
-                    final FilesDownloadTask task2 = task.clone();
-                    task2.filesDownloader = null;
-                    for (final Pair<Handler, FilesDownloaderListener> listener : listeners){
-                        final FilesDownloaderListener fdl = listener.second;
-                        listener.first.post(new Runnable(){
-                            @Override
-                            public void run(){
-                                switch(newTaskState){
-                                    case FilesDownloadTask.STATE_PAUSED:
-                                        fdl.onTaskPaused(task2);
-                                        break;
-                                    case FilesDownloadTask.STATE_CANCELLED:
-                                        fdl.onTaskCancelled(task2);
-                                        break;
-                                    case FilesDownloadTask.STATE_FINISHED:
-                                        fdl.onTaskFinished(task2);
-                                        break;
-                                }
-                                
-                            }
-                        });
-                    }
-                }                
-                if (task.continueFromPausing){
-                    task.continueFromPausing = false;
-                    
-                    task.filesDownloader = createFilesDownloader();
-                    task.filesDownloader.addObserver(caller);
-                    startTaskFromDatabase(task, false, false, false);
+                final FilesDownloadTask task2 = task.clone();
+                task2.filesDownloader = null;
+                for (final Pair<Handler, FilesDownloaderListener> listener : listeners){
+                    final FilesDownloaderListener fdl = listener.second;
+                    listener.first.post(new Runnable(){
+                        @Override
+                        public void run(){
+                            fdl.onTaskFinished(task2);
+                        }
+                    });
                 }
             }
         }finally{
@@ -422,8 +391,8 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     {
         final FilesDownloadTask downloadTask = caller.downloadTask;
         final int taskState = downloadTask.state;
-        final boolean isCancelled = taskState == FilesDownloadTask.STATE_CANCELLED || 
-                taskState == FilesDownloadTask.STATE_CANCELLING;
+        final boolean isCancelled = (taskState == FilesDownloadTask.STATE_CANCELLING) || 
+                (exception instanceof InterruptedException);
         final boolean isOk = exception == null;
         final boolean isTransientError = !isCancelled && !isOk && isTransientError(exception);
         if (isOk){
@@ -539,70 +508,89 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     
     /**
      * Reads files to be downloaded for a given task, and schedules them for download
-     * @param restartFailed reset retryCount
-     * @param includePermanentlyFailed includes files with state=FileData.FILE_STATE_PERMANENT_ERROR
      * @param task
+     * @param restartFromScratch
+     * @return false, if no files have been scheduled for a download (this should not happen)
      */
-    protected void startTaskFromDatabase(
+    protected boolean startTaskFromDatabase(
         FilesDownloadTask task, 
-        boolean restartFailed,
-        boolean includeAll,
-        boolean includeAborted) 
+        boolean restartFromScratch) 
     {
-        StringBuilder whereClause = new StringBuilder(32);
-        whereClause.append("task_id = ").append(task.taskId);
-        if (!includeAll){
-            whereClause.append(" and state in (");
-            whereClause.append(FileData.FILE_STATE_SCHEDULED);
-            if (includeAborted){
-                whereClause.append(", ").append(FileData.FILE_STATE_SCHEDULED);
-            }
-            whereClause.append(")");
-        }
-        
-        Cursor cursor = database.query("files", 
-            new String[]{"_id", "state", "cache_code", "source", "target", "virtual_target", "priority", "retry_count", "headers"}, 
-            whereClause.toString(),  
-            (String[])null, null, null, "_id");
-        if (cursor.moveToFirst()){
-            do{
-                final FileData file = new FileData();
-                file.fileDataId = cursor.getInt(0);
-                try {
-                    file.taskId = task.taskId; 
-                    file.state = cursor.getInt(1);
-                    file.cacheCode = cursor.getString(2);
-                    file.source = new URI(cursor.getString(3));
-                    file.target = new File(cursor.getString(4));
-                    file.virtualTarget = cursor.getString(5);
-                    if (cursor.isNull(6)){
-                        file.priority = Integer.MAX_VALUE;
-                    } else {
-                        file.priority = cursor.getInt(6);
-                    }
-                    if (!restartFailed){
-                        file.retryCount = cursor.getInt(7);
-                    }
-                    String headers = cursor.getString(8);
-                    if (headers != null){
-                        String[] headers2 = headers.split("[\n\r]+");
-                        file.headers = new String[headers2.length][];
-                        for (int i=0; i<headers2.length; i++){
-                            String header = headers2[i];
-                            int idx = header.indexOf(':');
-                            String headerName = header.substring(0, idx);
-                            String headerValue = header.substring(idx+2);
-                            file.headers[i] = new String[]{headerName, headerValue};
-                        }
-                    }
-                } catch (URISyntaxException e) {
-                    Log.e(LOG_TAG, "Failed to read file, _id=" + file.fileDataId, e);
+        int count = 0;
+        database.beginTransaction();
+        try{
+            synchronized(task){
+                if (restartFromScratch){
+                    ContentValues cv = new ContentValues(2);
+                    cv.put("state", FileData.FILE_STATE_SCHEDULED);
+                    cv.put("retry_count", 0);
+                    int rows = database.update("files", cv, "(state <> " + FileData.FILE_STATE_SCHEDULED + " or retry_count <> 0)", null);
+                    Log.i(LOG_TAG, "Restarting task, updated #" + rows + " rows");
                 }
-                task.filesDownloader.submit(file);
-            }while(cursor.moveToNext());
-            
+                
+                loadTaskStats(task);
+                // reset those, since we will process them again
+                task.skippedFiles = task.transientErrorFiles = 0;
+                
+                StringBuilder whereClause = new StringBuilder(32);
+                whereClause.append("task_id = ").append(task.taskId);
+                whereClause.append(" and state in (");
+                whereClause.append(FileData.FILE_STATE_SCHEDULED).append(", ");
+                whereClause.append(FileData.FILE_STATE_RUNNING).append(", "); // there should be no such files
+                whereClause.append(FileData.FILE_STATE_SKIPPED).append(", ");
+                whereClause.append(FileData.FILE_STATE_ABORTED).append(", ");
+                whereClause.append(FileData.FILE_STATE_TRANSIENT_ERROR).append(")");
+                
+                Cursor cursor = database.query("files", 
+                    new String[]{"_id", "state", "cache_code", "source", "target", "virtual_target", "priority", "retry_count", "headers"}, 
+                    whereClause.toString(),  
+                    (String[])null, null, null, "_id");
+                if (cursor.moveToFirst()){
+                    do{
+                        final FileData file = new FileData();
+                        file.fileDataId = cursor.getInt(0);
+                        try {
+                            file.taskId = task.taskId; 
+                            file.state = cursor.getInt(1);
+                            file.cacheCode = cursor.getString(2);
+                            file.source = new URI(cursor.getString(3));
+                            file.target = new File(cursor.getString(4));
+                            file.virtualTarget = cursor.getString(5);
+                            if (cursor.isNull(6)){
+                                file.priority = Integer.MAX_VALUE;
+                            } else {
+                                file.priority = cursor.getInt(6);
+                            }
+                            file.retryCount = cursor.getInt(7);
+                            String headers = cursor.getString(8);
+                            if (headers != null){
+                                String[] headers2 = headers.split("[\n\r]+");
+                                file.headers = new String[headers2.length][];
+                                for (int i=0; i<headers2.length; i++){
+                                    String header = headers2[i];
+                                    int idx = header.indexOf(':');
+                                    String headerName = header.substring(0, idx);
+                                    String headerValue = header.substring(idx+2);
+                                    file.headers[i] = new String[]{headerName, headerValue};
+                                }
+                            }
+                        } catch (URISyntaxException e) {
+                            Log.e(LOG_TAG, "Failed to read file, _id=" + file.fileDataId, e);
+                            continue;
+                        }
+                        count++;
+                        task.filesDownloader.submit(file);
+                    }while(cursor.moveToNext());
+                    
+                }
+                cursor.close();
+                
+                database.setTransactionSuccessful();
+            }
+        }finally{
+            database.endTransaction();
         }
-        cursor.close();
+        return count > 0;
     }
     
     /**
@@ -680,7 +668,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         loadDatabase(false);
         int runningCount = 0;
         int finishedCount = 0;
-        int pausedCount = 0;
+        int stoppedCount = 0;
         int failedCount = 0;
         int withFailuresCount = 0;
         for (FilesDownloadTask task : downloadTasks){
@@ -700,8 +688,8 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                             withFailuresCount++;
                         }
                         break;
-                    case FilesDownloadTask.STATE_PAUSED:
-                        pausedCount++;
+                    case FilesDownloadTask.STATE_STOPPED:
+                        stoppedCount++;
                         break;
                 }
             }
@@ -712,7 +700,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         if (runningCount > 0){
             builder.setContentTitle("Pobieram pliki"); 
         } else
-        if (pausedCount > 0){
+        if (stoppedCount > 0){
             builder.setContentTitle("Pobieranie wstrzymane"); 
         } else
         if (failedCount == finishedCount) {
@@ -882,6 +870,15 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                 db.execSQL("UPDATE tasks SET total_download_size = 1024*total_files_size_kb");
             }
         }
+        
+        @Override
+        @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+        public void onConfigure(SQLiteDatabase db)
+        {
+            if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
+                db.enableWriteAheadLogging();
+            }
+        }
     }
 
     protected DatabaseHelper databaseHelper;
@@ -912,12 +909,14 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                             task.flags &= ~FilesDownloadTask.FLAG_FIRST_FILE_STARTED;
                             final FilesDownloader filesDownloader = createFilesDownloader();
                             task.filesDownloader = filesDownloader;
-                            filesDownloader.addObserver(new DownloadProgressMonitorImpl(task));
-                            final boolean restartFailed = intent == null ? false : 
-                                intent.getBooleanExtra(INTENT_EXTRA_RESTART_FAILED, false); 
-                            final boolean includeAll = intent == null ? false : 
-                                intent.getBooleanExtra(INTENT_EXTRA_INCLUDE_ALL, false);
-                            startTaskFromDatabase(task, restartFailed, includeAll, intent == null);
+                            final DownloadProgressMonitorImpl dpm = new DownloadProgressMonitorImpl(task); 
+                            filesDownloader.addObserver(dpm);
+                            final boolean restartFromScratch = intent == null ? false : 
+                                intent.getBooleanExtra(INTENT_EXTRA_RESTART_FROM_SCRATCH, false); 
+                            boolean started = startTaskFromDatabase(task, restartFromScratch);
+                            if (!started){
+                                onTaskFinished(dpm, false);
+                            }
                         }
                     }
                 }
@@ -1011,7 +1010,8 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     {
         database.beginTransaction();
         try{
-            database.execSQL("update files set retry_count=retry_count+1, state=0 where state=" + FileData.FILE_STATE_RUNNING);
+            database.execSQL("update files set retry_count=retry_count+1, state=" + FileData.FILE_STATE_SCHEDULED + 
+                " where state=" + FileData.FILE_STATE_RUNNING);
             Cursor cursor = database.rawQuery("select changes()", null);
             if (cursor.moveToFirst()){
                 int changes = cursor.getInt(0);
@@ -1022,12 +1022,13 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             cursor.close();
 
             database.execSQL("update tasks set state=case state when " + 
-                    FilesDownloadTask.STATE_CANCELLING + " then " + FilesDownloadTask.STATE_CANCELLED + 
-                    " when " + FilesDownloadTask.STATE_PAUSING + " then " + FilesDownloadTask.STATE_PAUSED +
+                    FilesDownloadTask.STATE_CANCELLING + " then " + FilesDownloadTask.STATE_STOPPED + 
+                    " when " + FilesDownloadTask.STATE_PAUSING + " then " + FilesDownloadTask.STATE_STOPPED +
                     (systemRestart ? "" 
-                        : " when " + FilesDownloadTask.STATE_RUNNING + " then " + FilesDownloadTask.STATE_PAUSED
+                        : " when " + FilesDownloadTask.STATE_RUNNING + " then " + FilesDownloadTask.STATE_STOPPED
                     ) + 
-                    " end where state in (" + 
+                    " else state " +
+                    "end where state in (" + 
                         FilesDownloadTask.STATE_RUNNING + ", " + 
                         FilesDownloadTask.STATE_CANCELLING + ", " + 
                         FilesDownloadTask.STATE_PAUSING+ ")");
@@ -1094,6 +1095,34 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         
     }
     
+    private void loadTaskStats(FilesDownloadTask task)
+    {
+        task.totalFiles = task.finishedFiles = task.permanentErrorFiles = task.skippedFiles = task.transientErrorFiles = 0;
+        Cursor stats = database.rawQuery("select state, count(1) from files where task_id=" + task.taskId + " group by state", null);
+        if (stats.moveToFirst()){
+            do{
+                int state = stats.getInt(0);
+                int count = stats.getInt(1);
+                task.totalFiles += count;
+                switch(state){
+                    case FileData.FILE_STATE_FINISHED:
+                        task.finishedFiles += count;
+                        break;
+                    case FileData.FILE_STATE_SKIPPED:
+                        task.skippedFiles += count;
+                        break;
+                    case FileData.FILE_STATE_PERMANENT_ERROR:
+                        task.permanentErrorFiles += count;
+                        break;
+                    case FileData.FILE_STATE_TRANSIENT_ERROR:
+                        task.transientErrorFiles += count;
+                        break;
+                }
+            }while(stats.moveToNext());
+        }
+        stats.close();
+    }
+    
     private List<FilesDownloadTask> loadTasks()
     {
         List<FilesDownloadTask> result;
@@ -1110,30 +1139,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                     task.state = tasks.getInt(2);
                     task.totalDownloadSize = tasks.getLong(3);
                     task.flags = tasks.getInt(4);
-                    
-                    Cursor stats = database.rawQuery("select state, count(1) from files where task_id=" + task.taskId + " group by state", null);
-                    if (stats.moveToFirst()){
-                        do{
-                            int status = stats.getInt(0);
-                            int count = stats.getInt(1);
-                            task.totalFiles += count;
-                            switch(status){
-                                case FileData.FILE_STATE_FINISHED:
-                                    task.finishedFiles += count;
-                                    break;
-                                case FileData.FILE_STATE_SKIPPED:
-                                    task.skippedFiles += count;
-                                    break;
-                                case FileData.FILE_STATE_PERMANENT_ERROR:
-                                    task.permanentErrorFiles += count;
-                                    break;
-                                case FileData.FILE_STATE_TRANSIENT_ERROR:
-                                    task.transientErrorFiles += count;
-                                    break;
-                            }
-                        }while(stats.moveToNext());
-                    }
-                    stats.close();
+                    loadTaskStats(task);
                     result.add(task);
                 }while(tasks.moveToNext());
             }
@@ -1210,7 +1216,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     }
     
     @Override
-    public boolean pauseTask(int taskId)
+    public boolean stopTask(int taskId)
     {
         final FilesDownloadTask task = getTaskById(taskId);
         if (task == null){
@@ -1222,12 +1228,11 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                 result = updateTask(task,  
                     FilesDownloadTask.STATE_PAUSING, FilesDownloadTask.STATE_RUNNING);
                 if (result){
-                    task.continueFromPausing = false;
                     sendTaskStateChangedNotification(task, FilesDownloadTask.STATE_RUNNING);
                     if (task.filesDownloader != null){
                         task.filesDownloader.stopDownload();
                     } else {
-                        if (!updateTask(task, FilesDownloadTask.STATE_PAUSED, task.state)){
+                        if (!updateTask(task, FilesDownloadTask.STATE_STOPPED, task.state)){
                             return false;
                         }
                         
@@ -1236,14 +1241,14 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                         for (final Pair<Handler, FilesDownloaderListener> listener : listeners) {
                             final FilesDownloaderListener fdl = listener.second;
                             if (listener.first.getLooper() == Looper.myLooper()){
-                                fdl.onTaskPaused(task2);
+                                fdl.onTaskFinished(task2);
                             } else {
                                 listener.first.post(new Runnable()
                                 {
                                     @Override
                                     public void run()
                                     {
-                                        fdl.onTaskPaused(task2);
+                                        fdl.onTaskFinished(task2);
                                     }
                                 });
                             }
@@ -1256,6 +1261,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         return result;
     }
 
+    /*
     @Override
     public boolean resumeTask(int taskId)
     {
@@ -1287,10 +1293,10 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             }
         }
         return result;
-    }
+    }*/
 
     @Override
-    public boolean restartTask(int taskId)
+    public boolean restartTask(int taskId, boolean restartFromScratch)
     {
         final FilesDownloadTask task = getTaskById(taskId);
         if (task == null){
@@ -1298,21 +1304,24 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         }
         final boolean result; 
         synchronized(task){
-            if (task.state != FilesDownloadTask.STATE_FINISHED && task.state != FilesDownloadTask.STATE_CANCELLED){
+            final int oldTaskState = task.state; 
+            if (oldTaskState != FilesDownloadTask.STATE_FINISHED && oldTaskState != FilesDownloadTask.STATE_STOPPED){
                 return false;
             }
             
             final FilesDownloadTask taskClone = task.clone(); 
             int currState = task.state;
-            task.finishedFiles = task.skippedFiles = task.permanentErrorFiles = task.transientErrorFiles = 0;
+            // the stats will get updated in #startTaskFromDatabase
+            if (restartFromScratch){
+                task.finishedFiles = task.permanentErrorFiles = 0;
+            }
+            task.skippedFiles = task.transientErrorFiles = 0;
             result = updateTask(task, FilesDownloadTask.STATE_RUNNING, currState);
             if (result){
-                task.continueFromPausing = false;
                 sendTaskStateChangedNotification(task, currState);
                 final Intent intent = new Intent(INTENT_ACTION_START_DOWNLOAD, null, this, FilesDownloaderService.class);
                 intent.putExtra(INTENT_EXTRA_TAKS_ID, task.taskId);
-                intent.putExtra(INTENT_EXTRA_RESTART_FAILED, true);
-                intent.putExtra(INTENT_EXTRA_INCLUDE_ALL, true);
+                intent.putExtra(INTENT_EXTRA_RESTART_FROM_SCRATCH, restartFromScratch);
                 startService(intent);
             } else {
                 task.finishedFiles = taskClone.finishedFiles;
@@ -1320,9 +1329,6 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                 task.permanentErrorFiles = taskClone.permanentErrorFiles;
                 task.transientErrorFiles = taskClone.transientErrorFiles;
             }
-        }
-        if (result){
-            
         }
         return result;
     }
@@ -1338,20 +1344,18 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         boolean result = false; 
         synchronized(task){
             if (task.state == FilesDownloadTask.STATE_RUNNING || 
-                task.state == FilesDownloadTask.STATE_PAUSING || 
-                task.state == FilesDownloadTask.STATE_PAUSED)
+                task.state == FilesDownloadTask.STATE_PAUSING)
             {
                 int currState = task.state;
                 result = updateTask(task, 
                     FilesDownloadTask.STATE_CANCELLING, currState);
                 if (result){
-                    task.continueFromPausing = false;
                     sendTaskStateChangedNotification(task, currState);
                     if (task.filesDownloader != null){
                         task.filesDownloader.abortDownload();
                     } else {
                         // hmm, cancelling not-running task
-                        if (!updateTask(task, FilesDownloadTask.STATE_CANCELLED, task.state)){
+                        if (!updateTask(task, FilesDownloadTask.STATE_STOPPED, task.state)){
                             return false;
                         }
                         
@@ -1360,14 +1364,14 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                         for (final Pair<Handler, FilesDownloaderListener> listener : listeners) {
                             final FilesDownloaderListener fdl = listener.second;
                             if (listener.first.getLooper() == Looper.myLooper()){
-                                fdl.onTaskCancelled(task2);
+                                fdl.onTaskFinished(task2);
                             } else {
                                 listener.first.post(new Runnable()
                                 {
                                     @Override
                                     public void run()
                                     {
-                                        fdl.onTaskCancelled(task2);
+                                        fdl.onTaskFinished(task2);
                                     }
                                 });
                             }
@@ -1391,8 +1395,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                 return false;
             }
             if (task.state == FilesDownloadTask.STATE_FINISHED || 
-                task.state == FilesDownloadTask.STATE_CANCELLED || 
-                task.state == FilesDownloadTask.STATE_PAUSED)
+                task.state == FilesDownloadTask.STATE_STOPPED)
             {
                 database.beginTransaction();
                 try{

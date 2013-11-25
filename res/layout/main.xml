@@ -376,7 +376,8 @@
             <TableRow
                 android:id="@+id/tableRowSourceCachesList"
                 android:layout_width="fill_parent"
-                android:layout_height="wrap_content" >
+                android:layout_height="wrap_content" 
+                android:visibility="gone">
 
                 <TextView
                     android:id="@+id/textViewSourceCachesList"
@@ -417,17 +418,11 @@
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content" >
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingRight="10dp"
-                    android:textAppearance="?android:attr/textAppearanceMedium" >
-                </TextView>
-
                 <LinearLayout
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical" >
+                    android:orientation="vertical" 
+                    android:layout_span="2">
 
                     <Button
                         android:id="@+id/btnStart"

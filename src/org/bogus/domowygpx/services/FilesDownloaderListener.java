@@ -39,27 +39,14 @@ public interface FilesDownloaderListener
     public void onFileFinished(FilesDownloadTask task, FileData fileData, Exception exception);
 
     /**
-     * Fired when all tasks are done, and the tasks queue is empty
-     *  
+     * Fired when all tasks are done, in any of the following situations <ul>
+     * <li>All tasks are done
+     * <li>Request to stop task has been fulfilled
+     * <li>Request to cancel task has been fulfilled
+     * </li>
      * @param task Tasks, that has finished 
      */
     public void onTaskFinished(FilesDownloadTask task);
-
-    /**
-     * Fired when all tasks are done because of pause request via a call to
-     * {@link FilesDownloaderApi#pauseTask(int)}
-     *  
-     * @param task Tasks, that has finished 
-     */
-    public void onTaskPaused(FilesDownloadTask task);
-    
-    /**
-     * Fired when all tasks are done because of cancellation request via a call to
-     * {@link FilesDownloaderApi#cancelTask(int)}
-     *  
-     * @param task Tasks, that has finished 
-     */
-    public void onTaskCancelled(FilesDownloadTask task);
 
     /**
      * Fired when task is removed from the database via call to
