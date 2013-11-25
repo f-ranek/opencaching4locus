@@ -643,6 +643,8 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 checkInterrupted();
                 
                 try{
+                    setPriority(Thread.MIN_PRIORITY+1);
+                    
                     gpxProcessor.processGpx();
                     
                     onStartedCacheCode(null);
@@ -652,6 +654,8 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                         setErrorDescription("Błąd przetwarzania GPXa", e); 
                     }
                     throw e;
+                }finally{
+                    setPriority(Thread.NORM_PRIORITY);
                 }
                 
                 IOUtils.closeQuietly(is);
@@ -758,6 +762,13 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             }
             
             broadcastEvent(event, taskState);
+            try{
+                // not so good practice, but UI must run smooth, 
+                // but GPX processing is really CPU and memory-intensive
+                Thread.sleep(20);
+            }catch(InterruptedException ie){
+                interrupt();
+            }
         }
 
         @Override

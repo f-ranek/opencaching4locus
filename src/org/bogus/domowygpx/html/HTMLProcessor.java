@@ -34,7 +34,10 @@ public class HTMLProcessor
         StringBuilder result, int sourcePlaceCode)
     {
         final int resultLen = result.length();
-        result.ensureCapacity(estimatedSourceLengthMayBeZero + result.length());
+        if (estimatedSourceLengthMayBeZero < 8192){
+            // otherwise, we are dealing with an image - don't grow buffer unnecessary
+            result.ensureCapacity(estimatedSourceLengthMayBeZero + result.length());
+        }
         final Page page = new Page(source);
         final Lexer lexer = new Lexer(page);
         try{

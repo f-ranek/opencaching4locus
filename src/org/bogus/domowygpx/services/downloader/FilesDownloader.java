@@ -126,9 +126,7 @@ public class FilesDownloader implements Closeable
                 if (t.isDaemon()){
                     t.setDaemon(false);
                 }
-                if (t.getPriority() > Thread.MIN_PRIORITY+1){
-                    t.setPriority(Thread.MIN_PRIORITY+1);
-                }
+                t.setPriority(Thread.NORM_PRIORITY-1);
                 return t;
             }};
 
