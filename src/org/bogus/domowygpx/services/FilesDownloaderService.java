@@ -12,6 +12,7 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -20,12 +21,14 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.http.ConnectionClosedException;
 import org.apache.http.client.HttpClient;
+import org.bogus.ToStringBuilder;
 import org.bogus.domowygpx.activities.DownloadListActivity;
 import org.bogus.domowygpx.services.downloader.DownloadProgressMonitor;
 import org.bogus.domowygpx.services.downloader.FileData;
 import org.bogus.domowygpx.services.downloader.FilesDownloader;
 import org.bogus.domowygpx.utils.HttpClientFactory;
 import org.bogus.domowygpx.utils.HttpException;
+import org.bogus.geocaching.egpx.BuildConfig;
 import org.bogus.geocaching.egpx.R;
 
 import android.annotation.TargetApi;
@@ -136,6 +139,33 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                 return (FilesDownloadTask)super.clone();
             }catch(CloneNotSupportedException cnse){
                 throw new IllegalStateException(cnse);
+            }
+        }
+
+        @Override
+        public String toString()
+        {
+            if (BuildConfig.DEBUG){
+                ToStringBuilder builder = new ToStringBuilder(this);
+                builder.add("taskId", taskId);
+                switch(state){
+                    case STATE_RUNNING: builder.add("state", "STATE_RUNNING"); break; 
+                    case STATE_FINISHED: builder.add("state", "STATE_FINISHED"); break;
+                    case STATE_CANCELLING: builder.add("state", "STATE_CANCELLING"); break;
+                    case STATE_PAUSING: builder.add("state", "STATE_PAUSING"); break;
+                    case STATE_STOPPED: builder.add("state", "STATE_STOPPED"); break;
+                    default: builder.add("state", state); break;
+                }
+                builder.add("createdDate", new Date(createdDate));
+                builder.add("totalFiles", totalFiles);
+                builder.add("totalDownloadSize", totalDownloadSize);
+                builder.add("finishedFiles", finishedFiles, 0);
+                builder.add("skippedFiles", skippedFiles, 0);
+                builder.add("transientErrorFiles", transientErrorFiles, 0);
+                builder.add("permanentErrorFiles", permanentErrorFiles, 0);
+                return builder.toString();
+            } else {
+                return super.toString();
             }
         }
     }

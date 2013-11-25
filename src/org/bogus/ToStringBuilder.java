@@ -87,7 +87,7 @@ public class ToStringBuilder
             if (append){
                 processState();
                 if (name != null){
-                    sb.append(name).append("=");
+                    sb.append(name).append('=');
                 }
                 if (value instanceof Date){
                     appendDate((Date)value);
@@ -110,7 +110,7 @@ public class ToStringBuilder
     {
         if (value != null){
             processState();
-            sb.append(name).append("=");
+            sb.append(name).append('=');
             appendDate(value);
         }
         return this;
@@ -119,28 +119,28 @@ public class ToStringBuilder
     public ToStringBuilder add(String name, boolean value)
     {
         processState();
-        sb.append(name).append("=").append(value);
+        sb.append(name).append('=').append(value);
         return this;
     }
 
     public ToStringBuilder add(String name, byte value)
     {
         processState();
-        sb.append(name).append("=").append(value);
+        sb.append(name).append('=').append(value);
         return this;
     }
     
     public ToStringBuilder add(String name, short value)
     {
         processState();
-        sb.append(name).append("=").append(value);
+        sb.append(name).append('=').append(value);
         return this;
     }
 
     public ToStringBuilder add(String name, int value)
     {
         processState();
-        sb.append(name).append("=").append(value);
+        sb.append(name).append('=').append(value);
         return this;
     }
 
@@ -148,7 +148,7 @@ public class ToStringBuilder
     {
         if (value != defValue){
             processState();
-            sb.append(name).append("=").append(value);
+            sb.append(name).append('=').append(value);
         }
         return this;
     }
@@ -156,7 +156,7 @@ public class ToStringBuilder
     public ToStringBuilder add(String name, long value)
     {
         processState();
-        sb.append(name).append("=").append(value);
+        sb.append(name).append('=').append(value);
         return this;
     }
 
@@ -164,7 +164,7 @@ public class ToStringBuilder
     {
         if (value != defValue){
             processState();
-            sb.append(name).append("=").append(value);
+            sb.append(name).append('=').append(value);
         }
         return this;
     }
@@ -172,7 +172,7 @@ public class ToStringBuilder
     public ToStringBuilder add(String name, double value)
     {
         processState();
-        sb.append(name).append("=").append(value);
+        sb.append(name).append('=').append(value);
         return this;
     }
 
@@ -180,7 +180,7 @@ public class ToStringBuilder
     {
         if (Math.abs(value - defValue) < 1e-10){
             processState();
-            sb.append(name).append("=").append(value);
+            sb.append(name).append('=').append(value);
         }
         return this;
     }
@@ -188,14 +188,14 @@ public class ToStringBuilder
     public ToStringBuilder add(String name, float value)
     {
         processState();
-        sb.append(name).append("=").append(value);
+        sb.append(name).append('=').append(value);
         return this;
     }
 
     public ToStringBuilder add(String name, char value)
     {
         processState();
-        sb.append(name).append("=").append(value);
+        sb.append(name).append('=').append(value);
         return this;
     }
 

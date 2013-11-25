@@ -3,6 +3,7 @@ package org.bogus.domowygpx.gpx;
 import java.io.IOException;
 
 import org.bogus.ToStringBuilder;
+import org.bogus.geocaching.egpx.BuildConfig;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlSerializer;
@@ -186,20 +187,24 @@ public class XMLEvent {
     @Override
     public String toString()
     {
-        ToStringBuilder builder = new ToStringBuilder(this);
-        if (eventType >= XMLEvent.NAMESPACE_PREFIX){
-            builder.add("eventType", XMLEvent.TYPES[eventType-XMLEvent.NAMESPACE_PREFIX]);
+        if (BuildConfig.DEBUG){
+            ToStringBuilder builder = new ToStringBuilder(this);
+            if (eventType >= XMLEvent.NAMESPACE_PREFIX){
+                builder.add("eventType", XMLEvent.TYPES[eventType-XMLEvent.NAMESPACE_PREFIX]);
+            } else {
+                builder.add("eventType", XmlPullParser.TYPES[eventType]);
+            }
+            builder.add("eventType", eventType);
+            builder.add("text", text);
+            builder.add("name", name);
+            builder.add("prefix", prefix);
+            builder.add("namespace", namespace);
+            builder.add("namespaceEvents", namespaceEvents);
+            builder.add("attributeEvents", attributeEvents);
+            return builder.toString();
         } else {
-            builder.add("eventType", XmlPullParser.TYPES[eventType]);
+            return super.toString();
         }
-        builder.add("eventType", eventType);
-        builder.add("text", text);
-        builder.add("name", name);
-        builder.add("prefix", prefix);
-        builder.add("namespace", namespace);
-        builder.add("namespaceEvents", namespaceEvents);
-        builder.add("attributeEvents", attributeEvents);
-        return builder.toString();
     }
     
     public static String trimText(String text)

@@ -7,6 +7,7 @@ import java.util.Arrays;
 
 import org.bogus.ToStringBuilder;
 import org.bogus.domowygpx.services.FilesDownloaderService;
+import org.bogus.geocaching.egpx.BuildConfig;
 
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -73,33 +74,37 @@ public class FileData implements java.io.Serializable, Cloneable, Parcelable {
     @Override
     public String toString()
     {
-        ToStringBuilder builder = new ToStringBuilder(this);
-        builder.add("fileDataId", fileDataId);
-        builder.add("taskId", taskId);
-        switch(state){
-            case FILE_STATE_SCHEDULED: builder.add("state", "SCHEDULED"); break;
-            case FILE_STATE_RUNNING: builder.add("state", "RUNNING"); break;
-            case FILE_STATE_FINISHED: builder.add("state", "FINISHED"); break;
-            case FILE_STATE_SKIPPED: builder.add("state", "SKIPPED"); break;
-            //case FILE_STATE_ABORTED: builder.add("state", "ABORTED"); break;
-            case FILE_STATE_TRANSIENT_ERROR: builder.add("state", "TRANSIENT_ERROR"); break;
-            case FILE_STATE_PERMANENT_ERROR: builder.add("state", "PERMANENT_ERROR"); break;
-            default: builder.add("state", state); break;
+        if (BuildConfig.DEBUG){
+            ToStringBuilder builder = new ToStringBuilder(this);
+            builder.add("fileDataId", fileDataId);
+            builder.add("taskId", taskId);
+            switch(state){
+                case FILE_STATE_SCHEDULED: builder.add("state", "SCHEDULED"); break;
+                case FILE_STATE_RUNNING: builder.add("state", "RUNNING"); break;
+                case FILE_STATE_FINISHED: builder.add("state", "FINISHED"); break;
+                case FILE_STATE_SKIPPED: builder.add("state", "SKIPPED"); break;
+                //case FILE_STATE_ABORTED: builder.add("state", "ABORTED"); break;
+                case FILE_STATE_TRANSIENT_ERROR: builder.add("state", "TRANSIENT_ERROR"); break;
+                case FILE_STATE_PERMANENT_ERROR: builder.add("state", "PERMANENT_ERROR"); break;
+                default: builder.add("state", state); break;
+            }
+            
+            builder.add("cacheCode", cacheCode);
+            builder.add("source", source);
+            builder.add("target", target);
+            builder.add("virtualTarget", virtualTarget);
+            builder.add("priority", priority);
+            builder.add("retryCount", retryCount, 0); 
+            builder.add("statusLine", statusLine);
+            builder.add("exception", exception);
+            if (headers != null){
+                builder.add("headers", Arrays.deepToString(headers));
+            }
+            //builder.add("size", size, 0);
+            return builder.toString();
+        } else {
+            return super.toString();
         }
-        
-        builder.add("cacheCode", cacheCode);
-        builder.add("source", source);
-        builder.add("target", target);
-        builder.add("virtualTarget", virtualTarget);
-        builder.add("priority", priority);
-        builder.add("retryCount", retryCount, 0); 
-        builder.add("statusLine", statusLine);
-        builder.add("exception", exception);
-        if (headers != null){
-            builder.add("headers", Arrays.deepToString(headers));
-        }
-        //builder.add("size", size, 0);
-        return builder.toString();
     }
 
     @Override

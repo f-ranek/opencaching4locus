@@ -17,6 +17,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -151,6 +152,35 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         {
             return new GpxTaskEvent(taskId, System.currentTimeMillis());
         }
+
+        @Override
+        public String toString()
+        {
+            if (BuildConfig.DEBUG){
+                ToStringBuilder builder = new ToStringBuilder(this);
+                builder.add("taskId", taskId);
+                builder.add("createdDate", new Date(createdDate));
+                switch(stateCode){
+                    case STATE_RUNNING: builder.add("stateCode", "STATE_RUNNING"); break; 
+                    case STATE_DONE: builder.add("stateCode", "STATE_DONE"); break;
+                    case STATE_CANCELED: builder.add("stateCode", "STATE_CANCELED"); break;
+                    case STATE_ERROR: builder.add("stateCode", "STATE_ERROR"); break;
+                    case STATE_UNKNOWN: builder.add("stateCode", "STATE_UNKNOWN"); break;
+                    default: builder.add("stateCode", stateCode); break;
+                }
+    
+                builder.add("stateDescription", stateDescription);
+                builder.add("currentCacheCode", currentCacheCode);
+                builder.add("totalKB", totalKB);
+                builder.add("expectedTotalKB", expectedTotalKB);
+                builder.add("totalCacheCount", totalCacheCount);
+                builder.add("downloaderTaskId", downloaderTaskId, 0);
+                builder.add("exception", exception);
+                return builder.toString();
+            } else {
+                return super.toString();
+            }
+        }
     }
     
     public static class GpxTaskEvent {
@@ -180,23 +210,27 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         @Override
         public String toString()
         {
-            ToStringBuilder builder = new ToStringBuilder(this);
-            builder.add("eventId", eventId);
-            builder.add("taskId", taskId);
-            switch(eventType){
-                case EVENT_TYPE_LOG : builder.add("eventType", "LOG"); break;
-                case EVENT_TYPE_WARN : builder.add("eventType", "WARN"); break;
-                case EVENT_TYPE_ERROR : builder.add("eventType", "ERROR"); break;
-                case EVENT_TYPE_FINISHED_OK : builder.add("eventType", "FINISHED_OK"); break;
-                case EVENT_TYPE_FINISHED_ERROR : builder.add("eventType", "FINISHED_ERROR"); break;
-                case EVENT_TYPE_FINISHED_CANCEL : builder.add("eventType", "FINISHED_CANCEL"); break;
-                case EVENT_TYPE_CACHE_CODE : builder.add("eventType", "CACHE_CODE"); break;
-                default: builder.add("eventType", eventType); break;
-            }            
-            builder.add("description", description);
-            builder.add("currentCacheCode", currentCacheCode);
-            builder.add("totalKB", totalKB);
-            return builder.toString();
+            if (BuildConfig.DEBUG){
+                ToStringBuilder builder = new ToStringBuilder(this);
+                builder.add("eventId", eventId);
+                builder.add("taskId", taskId);
+                switch(eventType){
+                    case EVENT_TYPE_LOG : builder.add("eventType", "LOG"); break;
+                    case EVENT_TYPE_WARN : builder.add("eventType", "WARN"); break;
+                    case EVENT_TYPE_ERROR : builder.add("eventType", "ERROR"); break;
+                    case EVENT_TYPE_FINISHED_OK : builder.add("eventType", "FINISHED_OK"); break;
+                    case EVENT_TYPE_FINISHED_ERROR : builder.add("eventType", "FINISHED_ERROR"); break;
+                    case EVENT_TYPE_FINISHED_CANCEL : builder.add("eventType", "FINISHED_CANCEL"); break;
+                    case EVENT_TYPE_CACHE_CODE : builder.add("eventType", "CACHE_CODE"); break;
+                    default: builder.add("eventType", eventType); break;
+                }            
+                builder.add("description", description);
+                builder.add("currentCacheCode", currentCacheCode);
+                builder.add("totalKB", totalKB);
+                return builder.toString();
+            } else {
+                return super.toString();
+            }
         }
     }
     
