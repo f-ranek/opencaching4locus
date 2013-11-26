@@ -12,8 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.CountingOutputStream;
@@ -29,16 +27,13 @@ import org.xmlpull.v1.XmlSerializer;
 public class GpxProcessor implements GpxState, Closeable
 {
     private final static Log logger = LogFactory.getLog(GpxProcessor.class);
-    private static final Pattern whitespacePattern1 = Pattern.compile("[\t ]{2,}");
-    private static final Pattern whitespacePattern2 = Pattern.compile("(([\t ]*)[\n\r]+([\t ]*))+");
     
     private final static String NS_GROUNDSPEAK = "http://www.groundspeak.com/cache/1/0/1";
     private final static String NS_OPENCACHING = "http://www.opencaching.com/xmlschemas/opencaching/1/0";
     
     private File lastCreatedFile;
     private String currentCacheCode;
-    //private double currentLatitude;
-    //private double currentLongitude;
+    private String currentCacheName;
     private String gpxUrl;
     
     private HTMLProcessor htmlProcessor;
@@ -102,7 +97,7 @@ public class GpxProcessor implements GpxState, Closeable
         return fileName;
     }
     
-    boolean replaceAll(Matcher matcher, CharSequence source, char replacement, StringBuilder result) {
+    /*boolean replaceAll(Matcher matcher, CharSequence source, char replacement, StringBuilder result) {
         matcher.reset();
         boolean result0 = matcher.find();
         int start = 0;
@@ -118,7 +113,7 @@ public class GpxProcessor implements GpxState, Closeable
             return true;
         }
         return false;
-    }
+    }*/
     
     protected int shouldProcessHtml(XmlPullParser parser) throws XmlPullParserException
     {
@@ -287,16 +282,11 @@ public class GpxProcessor implements GpxState, Closeable
             int wptDepth = 0;
             int imageSourceCode = 0;
             
-            
-            //currentLatitude = currentLongitude = Double.NaN;
-            
             StringBuilder textBuffer1 = new StringBuilder(4096);
-            StringBuilder textBuffer2 = new StringBuilder(4096);
             
             parser.setInput(is, null); // TODO: get charset from HTTP headers
             fileCount = 1;
             
-            long lastPeriodicUpdateCall = System.currentTimeMillis();
             int eventType;
             do{
                 if (Thread.interrupted()){
@@ -305,24 +295,8 @@ public class GpxProcessor implements GpxState, Closeable
                 
                 eventType = parser.getEventType();
                 if (eventType == XmlPullParser.START_TAG){
-                    {
-                     // TODO: download progress should actually be pulled by the client from HTTP layer
-                        final long now = System.currentTimeMillis();
-                        if (now > lastPeriodicUpdateCall + 200L){ 
-                            lastPeriodicUpdateCall = now;
-                            if (currentCacheCode != null){
-                                for (GpxProcessMonitor gpm : observers){
-                                    try{
-                                        gpm.onPeriodicUpdate(currentCacheCode);
-                                    }catch(Exception e){
-                                        
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
                     final String localName = parser.getName(); 
+                    final String currentNamespace = parser.getNamespace();
                     final int parserDepth = parser.getDepth();
                     if ("wpt".equals(localName)){
                         if (saveEventStream){
@@ -336,15 +310,7 @@ public class GpxProcessor implements GpxState, Closeable
                                 
                             saveEventStream = false;
                         }
-                        
-                        /*try{
-                            currentLatitude = Double.parseDouble(parser.getAttributeValue(null, "lat"));
-                            currentLongitude = Double.parseDouble(parser.getAttributeValue(null, "lon"));
-                        }catch(NumberFormatException nfe){
-                            currentLatitude = currentLongitude = Double.NaN;
-                        }catch(NullPointerException npe){
-                            currentLatitude = currentLongitude = Double.NaN;
-                        }*/
+
                         hasAnyWpt = true;
                         wptDepth = parserDepth;
                     } else 
@@ -360,10 +326,24 @@ public class GpxProcessor implements GpxState, Closeable
                         currentCacheCode = parser.nextText();
                         serializeText(currentCacheCode);
                                       
-                        lastPeriodicUpdateCall = System.currentTimeMillis();
+                        /*for (GpxProcessMonitor gpm : observers){
+                            try{
+                                gpm.onStartedCacheCode(currentCacheCode);
+                            }catch(Exception e){
+                                
+                            }
+                        }*/
+                        continue;
+                    } else
+                    if (wptDepth == parserDepth-2 && "name".equals(localName) && 
+                            NS_GROUNDSPEAK.equals(currentNamespace))
+                    {
+                        writeCurrentEvent();
+                        currentCacheName = parser.nextText();
+                        serializeText(currentCacheName);
                         for (GpxProcessMonitor gpm : observers){
                             try{
-                                gpm.onStartedCacheCode(currentCacheCode/*, currentLatitude, currentLongitude*/);
+                                gpm.onStartedCacheCode(currentCacheCode, currentCacheName);
                             }catch(Exception e){
                                 
                             }
@@ -382,31 +362,16 @@ public class GpxProcessor implements GpxState, Closeable
                     if (imageSourceCode > 0){
                         writeCurrentEvent();
                         textBuffer1.setLength(0);
-                        textBuffer2.setLength(0);
-                        final String htmlData = parser.nextText();
+                        final String htmlData = parser.nextText().trim();
                         
-                        htmlProcessor.processHtml(htmlData.trim(), textBuffer1, imageSourceCode);
+                        boolean anyChange = htmlProcessor.processHtml(
+                            htmlData, textBuffer1, imageSourceCode);
 
-                        if (replaceAll(whitespacePattern1.matcher(textBuffer1), 
-                            textBuffer1, ' ', textBuffer2))
-                        {
-                            final StringBuilder temp = textBuffer1;
-                            textBuffer1 = textBuffer2;
-                            textBuffer2 = temp;
-                            textBuffer2.setLength(0);
+                        if (anyChange){
+                            serializeText(textBuffer1.toString());
+                        } else {
+                            serializeText(htmlData);
                         }
-                        
-                        if (replaceAll(whitespacePattern2.matcher(textBuffer1), 
-                            textBuffer1, '\n', textBuffer2))
-                        {
-                            final StringBuilder temp = textBuffer1;
-                            textBuffer1 = textBuffer2;
-                            textBuffer2 = temp;
-                            textBuffer2.setLength(0);
-                        }
-                        
-                        serializeText(textBuffer1.toString());
-                        
                         continue;
                     }
                 }
@@ -426,8 +391,7 @@ public class GpxProcessor implements GpxState, Closeable
                                 
                             }
                         }
-                        currentCacheCode = null;
-                        //currentLatitude = currentLongitude = Double.NaN;
+                        currentCacheName = currentCacheCode = null;
                         wptDepth = -1;
                         
                         if (maxFileSize != 0 && outputStream.getByteCount() > maxFileSize){

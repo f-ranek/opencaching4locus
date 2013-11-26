@@ -40,7 +40,9 @@ import android.graphics.PorterDuff.Mode;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.provider.Settings.Secure;
 import android.support.v4.app.NavUtils;
 import android.util.Log;
@@ -64,6 +66,8 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
     private final static String LOG_TAG = "DownloadListActivity";
     
     private final static boolean FORCE_OLD_SWIPE_TO_REMOVE = false;
+    
+    Handler handler;
     
     GpxDownloaderApi gpxDownloader;
     private ServiceConnection gpxDownloaderServiceConnection = new ServiceConnection(){
@@ -259,12 +263,14 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
         int stateCode;
         boolean cancelling;
         
+        Runnable statusUpdater;
+        
         final View.OnClickListener onCancelListener = new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
             {
-                cancel();
+                GpxListItem.this.cancel();
             }
         };
         
@@ -335,7 +341,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             return super.onContextMenuItemSelected(item);
         }
         
-        boolean onGpxEventInternal(GpxTask task)
+        boolean onGpxEventInternal(GpxTask task, GpxTaskEvent event)
         {
             boolean updateView = false;
             updateView |= stateCode != task.stateCode;
@@ -347,6 +353,50 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
                 updateView = true;
             }
             
+            if (event != null && event.eventType == GpxTaskEvent.EVENT_TYPE_CACHE_CODE && 
+                    task.stateCode == GpxTask.STATE_RUNNING && statusUpdater == null) 
+            {
+                statusUpdater = new Runnable()
+                {
+                    GpxDownloaderListener statusUpdaterListener = new GpxDownloaderListener()
+                    {
+                        @Override
+                        public void onTaskRemoved(int taskId)
+                        {
+                        }
+                        
+                        @Override
+                        public void onTaskEvent(GpxTaskEvent event, GpxTask task)
+                        {
+                            if (GpxListItem.this.onGpxEventInternal(task, event)){
+                                DownloadListActivity.this.listViewAdapter.notifyDataSetChanged();
+                            }
+                        }
+                        
+                        @Override
+                        public void onTaskCreated(int taskId)
+                        {
+                        }
+                    };
+
+                    @Override
+                    public void run()
+                    {
+                        GpxDownloaderApi gpxDownloader = DownloadListActivity.this.gpxDownloader; 
+                        boolean updated = false;
+                        if (gpxDownloader != null){
+                            updated = gpxDownloader.updateCurrentCacheStatus(taskId, statusUpdaterListener);
+                        }
+                        if (!updated || statusUpdater == null){
+                            statusUpdater = null;
+                        } else {
+                            handler.postDelayed(statusUpdater, 1000);
+                        }
+                    }
+                };
+                handler.postDelayed(statusUpdater, 1000);
+            }
+            
             if (task.stateCode == GpxTask.STATE_ERROR  || 
                     task.stateCode == GpxTask.STATE_CANCELED)
             {
@@ -355,6 +405,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
                 progressMax = -1;
                 progressCurrent = -1;
                 cancelling = false;
+                statusUpdater = null;
             }
             if (task.stateCode == GpxTaskEvent.EVENT_TYPE_FINISHED_OK){
                 updateView = true;
@@ -362,6 +413,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
                 progressMax = -1;
                 progressCurrent = -1;
                 cancelling = false;
+                statusUpdater = null;
             }
             if (task.stateDescription != null){
                 updateView = true;
@@ -383,29 +435,37 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             }
             
             if (updateView || cancelling){
-                StringBuilder msg = new StringBuilder(64);
-                if (cancelling){
-                    msg.append("Przerywam");
-                }
-                if (task.currentCacheCode != null){
-                    if (msg.length() > 0){
-                        msg.append(", ");
-                    }
-                    msg.append(task.currentCacheCode);
-                    msg.append(", ");
-                }
-                if (task.totalCacheCount > 0){
-                    msg.append(DownloadListActivity.this.getResources().getQuantityString(R.plurals.cache, task.totalCacheCount, task.totalCacheCount));
-                }
-                if (totalSize > 0){
-                    msg.append(", ");
-                    msg.append(formatFileSize(totalSize));
-                }
-                details = msg.toString();
+                generateDetails(task);
             }
             
             return updateView;
             
+        }
+        
+        private void generateDetails(GpxTask task)
+        {
+            StringBuilder msg = new StringBuilder(64);
+            if (cancelling){
+                msg.append("Przerywam");
+            }
+            if (task.currentCacheCode != null){
+                if (msg.length() > 0){
+                    msg.append(", ");
+                }
+                msg.append(task.currentCacheCode);
+                if (task.currentCacheName != null){
+                    msg.append(" - ").append(task.currentCacheName);
+                }
+                msg.append(", ");
+            }
+            if (task.totalCacheCount > 0){
+                msg.append(DownloadListActivity.this.getResources().getQuantityString(R.plurals.cache, task.totalCacheCount, task.totalCacheCount));
+            }
+            if (totalSize > 0){
+                msg.append(", ");
+                msg.append(formatFileSize(totalSize));
+            }
+            details = msg.toString();
         }
     }
     
@@ -913,7 +973,11 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
         final List<GpxTask> tasks = gpxDownloader.getTasks(-1, false);
         boolean updateView = false;
         for (GpxTask task : tasks){
-            updateView |= onGpxEventInternal(task, true);
+            GpxTaskEvent event = null; 
+            if (task.events != null && task.events.size() > 0){
+                event = task.events.get(task.events.size()-1);
+            }
+            updateView |= onGpxEventInternal(task, event, true);
         }
         if (updateView){
             sortListItems();
@@ -974,6 +1038,8 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
     {
         // enableAcceleration();
         super.onCreate(savedInstanceState);
+        
+        handler = new Handler(Looper.myLooper());
         
         setContentView(R.layout.activity_download_list);
 
@@ -1095,10 +1161,10 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
         return sb.toString();
     }
     
-    protected boolean onGpxEventInternal(GpxTask task, boolean bulkOperation)
+    protected boolean onGpxEventInternal(GpxTask task, final GpxTaskEvent event, boolean bulkOperation)
     {
         final GpxListItem listItem = getGpxListItem(task, bulkOperation);
-        boolean updateView = listItem.onGpxEventInternal(task);
+        boolean updateView = listItem.onGpxEventInternal(task, event);
         return updateView;
     }
     
@@ -1115,7 +1181,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             // simply ignore minor events
             return ;
         }
-        boolean updateView = onGpxEventInternal(task, false);
+        boolean updateView = onGpxEventInternal(task, event, false);
         if (updateView){
             listViewAdapter.notifyDataSetChanged();
         }

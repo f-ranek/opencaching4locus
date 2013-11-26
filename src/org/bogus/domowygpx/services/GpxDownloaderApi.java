@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.bogus.domowygpx.activities.TaskConfiguration;
 import org.bogus.domowygpx.services.GpxDownloaderService.GpxTask;
+import org.bogus.domowygpx.services.GpxDownloaderService.GpxTaskEvent;
 
 /**
  * Interface to interact with GpxDownloader service 
@@ -53,6 +54,19 @@ public interface GpxDownloaderApi
      * @return
      */
     public String taskToDeveloperDebugString(int taskId);
+    
+    /**
+     * Gets current GPX processing status (cache code, cache name, total kb, etc),
+     * packs them into <ul>
+     * <li>{@link GpxTaskEvent} with {@link GpxTaskEvent#eventType eventType} of <code>EVENT_TYPE_CACHE_CODE</code>,
+     * <li>{@link GpxTask},
+     * </ul>
+     * and fires {@link GpxDownloaderListener#onTaskEvent(GpxTaskEvent, GpxTask)}  
+     * @param taskId
+     * @param listener
+     * @return true, if task is processing
+     */
+    public boolean updateCurrentCacheStatus(int taskId, GpxDownloaderListener listener);
     
     /**
      * Registers client listener, events will be queued to the calling thread

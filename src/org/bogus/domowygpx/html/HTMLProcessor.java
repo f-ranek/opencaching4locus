@@ -1,5 +1,6 @@
 package org.bogus.domowygpx.html;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -25,21 +26,36 @@ public class HTMLProcessor
         this.imageSourceResolver = imageSourceResolver;
     }
 
-    public void processHtml(String source, StringBuilder result, int sourcePlaceCode)
+    /**
+     * Processes source data into <var>result</var>. If there was no changes, <var>result</var>
+     * is untouched, and method returns <code>false</code>. If there was any change, processed
+     * HTML is appended to <var>result</var>, and method returns <code>true</code>. 
+     * @param source
+     * @param result
+     * @param sourcePlaceCode Tag to pass to {@link ImageSourceResolver}
+     * @return true, it there were any changes, false otherwise
+     */
+    public boolean processHtml(String source, StringBuilder result, int sourcePlaceCode)
     {
-        processHtml(new StringSource(source), source.length(), result, sourcePlaceCode);
+        return processHtml(new StringSource(source), source.length(), result, sourcePlaceCode);
     }
     
-    public void processHtml(Source source, int estimatedSourceLengthMayBeZero, 
+    /**
+     * See {@link #processHtml(String, StringBuilder, int)}
+     * @param source
+     * @param estimatedSourceLengthMayBeZero
+     * @param result
+     * @param sourcePlaceCode
+     * @return
+     */
+    public boolean processHtml(Source source, int estimatedSourceLengthMayBeZero, 
         StringBuilder result, int sourcePlaceCode)
     {
         final int resultLen = result.length();
-        if (estimatedSourceLengthMayBeZero < 8192){
-            // otherwise, we are dealing with an image - don't grow buffer unnecessary
-            result.ensureCapacity(estimatedSourceLengthMayBeZero + result.length());
-        }
         final Page page = new Page(source);
         final Lexer lexer = new Lexer(page);
+        List<Node> nodes = new ArrayList<Node>();
+        boolean hasAnyChange = false;
         try{
             for (Node node = lexer.nextNode(); node != null; node = lexer.nextNode()){
                 if (node instanceof TagNode){
@@ -59,19 +75,42 @@ public class HTMLProcessor
                                     String value = attr.getValue();
                                     if (value != null && value.length() > 0){
                                         String value2 = imageSourceResolver.processImgSrc(value, sourcePlaceCode);
-                                        attr.setValue(value2);
+                                        if (value2 != null){
+                                            if (!value2.equals(value)){
+                                                attr.setValue(value2);
+                                                hasAnyChange = true;
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
-                node.toHtml(result);
+                if (hasAnyChange && estimatedSourceLengthMayBeZero > 0 && estimatedSourceLengthMayBeZero < 8192){
+                    // huge estimatedSourceLengthMayBeZero means, that we are dealing with an image 
+                    // - don't grow buffer unnecessary
+                    result.ensureCapacity(estimatedSourceLengthMayBeZero + result.length());
+                    estimatedSourceLengthMayBeZero = 0;
+                }
+
+                if (hasAnyChange){
+                    if (nodes != null){
+                        for (Node savedNode : nodes){
+                            savedNode.toHtml(result);
+                        }
+                        nodes = null;
+                    }
+                    node.toHtml(result);
+                } else {
+                    nodes.add(node);
+                }
             }
+            return hasAnyChange;
         }catch(ParserException pe){
             logger.error("Failed to process HTML, returning source data", pe);
             result.setLength(resultLen);
-            result.append(source);
+            return false; 
         }
     }
 }

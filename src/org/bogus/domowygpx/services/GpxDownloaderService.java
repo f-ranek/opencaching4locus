@@ -61,6 +61,7 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -76,6 +77,7 @@ import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -134,6 +136,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         public int stateCode;
         public String stateDescription;
         public String currentCacheCode;
+        public String currentCacheName;
         public int totalKB;
         public int expectedTotalKB;
         public int totalCacheCount;
@@ -246,6 +249,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         public int eventType;
         public String description;
         public String currentCacheCode;
+        public String currentCacheName;
         public int totalKB;
 
         @Override
@@ -253,7 +257,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         {
             if (BuildConfig.DEBUG){
                 ToStringBuilder builder = new ToStringBuilder(this);
-                builder.add("eventId", eventId);
+                builder.add("eventId", eventId, 0);
                 builder.add("taskId", taskId);
                 switch(eventType){
                     case EVENT_TYPE_LOG : builder.add("eventType", "LOG"); break;
@@ -321,7 +325,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         private List<File> touchedFiles;
         volatile HttpUriRequest currentRequest;
         volatile boolean interruptionFlag;
-        HttpResponse mainResponse;
+        volatile HttpResponse mainResponse;
         HttpClient httpClient;
         
         public WorkerThread(TaskConfiguration taskConfiguration, GpxTask taskState)
@@ -647,7 +651,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                             //isQueryForFinalData = false;
                             
                             // execute query to get caches list
-                            sendProgressInfo("Wyszukuję"); 
+                            sendProgressInfo("Szukam keszy"); 
                             final String url = requestURL.toString();
                             final HttpGet get = new HttpGet(url);
                             requestURL.setLength(0);
@@ -692,7 +696,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     }
                     
                     // execute requestURL and process response
-                    sendProgressInfo("Wyszukuję"); 
+                    sendProgressInfo("Szukam keszy"); 
                     final String url = requestURL.toString();
                     Log.v(LOG_TAG, okApi.maskObject(url));
                     final HttpGet get = new HttpGet(url);
@@ -743,7 +747,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     sendProgressInfo("Pobieram GPXa");
                     gpxProcessor.processGpx();
                     
-                    onStartedCacheCode(null);
+                    onStartedCacheCode(null, null);
                     
                 }catch(Exception e){   
                     if (!processDefaultException(e)) {
@@ -843,13 +847,15 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         }
         
         @Override
-        public void onStartedCacheCode(String cacheCode)
+        public void onStartedCacheCode(String cacheCode, String cacheName)
         {
             final GpxTaskEvent event = taskState.createTaskEvent();
             event.currentCacheCode = cacheCode;
+            event.currentCacheName = cacheName;
             event.eventType = GpxTaskEvent.EVENT_TYPE_CACHE_CODE;
             event.totalKB = (int)(ResponseUtils.getBytesRead(mainResponse) / 1024L);
             taskState.currentCacheCode = cacheCode;
+            taskState.currentCacheName = cacheName;
             taskState.totalKB = event.totalKB;
 
             if (cacheCode != null){
@@ -868,19 +874,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             }
         }
 
-        @Override
-        public void onPeriodicUpdate(String cacheCode)
-        {
-            // XXX: METHOD TO BE REMOVED!!!
-            final GpxTaskEvent event = taskState.createTaskEvent();
-            event.currentCacheCode = cacheCode;
-            event.eventType = GpxTaskEvent.EVENT_TYPE_CACHE_CODE;
-            event.totalKB = (int)(ResponseUtils.getBytesRead(mainResponse) / 1024L);
-            taskState.currentCacheCode = cacheCode;
-            taskState.totalKB = event.totalKB;
-            broadcastEvent(event, taskState); 
-        }
-        
         @Override
         public void onEndedCacheCode(String cacheCode)
         {
@@ -1087,14 +1080,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 threads.add(thread);
                 thread.start();
             } else
-            //if (INTENT_ACTION_CANCEL_NOTIFICATION.equals(action)){
-            //    Log.d(LOG_TAG, "notificationStatus=" + notificationStatus);
-            //    if (notificationStatus == NOTIFICATION_STATUS_ONGOING){
-            //        notificationStatus = NOTIFICATION_STATUS_NONE;
-            //        notificationManager.cancel(NOTIFICATION_ID);
-            //    }
-            //    shutdownSelf();
-            //} else 
             {
                 Log.w(LOG_TAG, "Got unknown action=" + action);
             }
@@ -1282,6 +1267,15 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 
             }
         }
+        
+        @Override
+        @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+        public void onConfigure(SQLiteDatabase db)
+        {
+            if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
+                db.enableWriteAheadLogging();
+            }
+        }        
     }
     
     @Override
@@ -1446,11 +1440,11 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
      */
     void broadcastEvent(final GpxTaskEvent event, final GpxTask task)
     {
+        // clone to save current task state, and prevent malicious clients 
+        // from modifying it
+        final GpxTask task2 = task == null ? null : task.clone();
         for (Pair<Handler, GpxDownloaderListener> client : listeners){
             final GpxDownloaderListener listener = client.second;
-            // clone to save current task state, and prevent malicious clients 
-            // from modifying it
-            final GpxTask task2 = task == null ? null : task.clone();
             client.first.post(new Runnable(){
                 @Override
                 public void run()
@@ -1536,9 +1530,15 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 GpxTask threadTask = thread.taskState;
                 for (GpxTask task : result){
                     if (task.taskId == threadTask.taskId){
-                        task.totalKB = threadTask.totalKB; // this may actually return stale data
-                        task.expectedTotalKB = threadTask.expectedTotalKB;
+                        task.totalKB = threadTask.totalKB;
+                        final HttpResponse mainResponse = thread.mainResponse;
+                        if (mainResponse != null){
+                            task.totalKB = (int)(ResponseUtils.getBytesRead(mainResponse) / 1024L);
+                        }
+                        
+                        task.expectedTotalKB = threadTask.expectedTotalKB; // this may actually return stale data
                         task.currentCacheCode = threadTask.currentCacheCode;
+                        task.currentCacheName = threadTask.currentCacheName;
                         task.totalCacheCount = threadTask.totalCacheCount;
                         GpxTaskEvent event = thread.taskState.lastTaskEvent;
                         if (event != null && event.eventId == 0){
@@ -1556,6 +1556,42 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         
         Log.i(LOG_TAG, "getTaskEvents, taskId=" + filterTaskId + ", attachEvents=" + attachEvents + " END, count=" + result.size());
         return result;
+    }
+    
+    @Override
+    public boolean updateCurrentCacheStatus(int taskId, GpxDownloaderListener listener)
+    {
+        GpxTask task = null;
+        GpxTaskEvent event = null;
+        HttpResponse mainResponse = null;
+        try{
+            synchronized(this){
+                for (WorkerThread t : threads){
+                    if (t.taskState.taskId == taskId){
+                        task = t.taskState.clone();
+                        mainResponse = t.mainResponse;
+                        break;
+                    }
+                }
+                
+            }
+            if (task == null || mainResponse == null){
+                return false;
+            }
+            
+            event = task.createTaskEvent();
+            event.currentCacheCode = task.currentCacheCode;
+            event.currentCacheName = task.currentCacheName;
+            event.eventType = GpxTaskEvent.EVENT_TYPE_CACHE_CODE;
+            event.totalKB = (int)(ResponseUtils.getBytesRead(mainResponse) / 1024L);
+            task.totalKB = event.totalKB;
+            
+        }catch(Exception e){
+            Log.e(LOG_TAG, "updateCurrentCacheStatus, taskId=" + taskId, e);
+            return false;
+        }
+        listener.onTaskEvent(event, task);
+        return true;
     }
     
     @Override
