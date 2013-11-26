@@ -23,6 +23,7 @@ import org.apache.http.ConnectionClosedException;
 import org.apache.http.client.HttpClient;
 import org.bogus.ToStringBuilder;
 import org.bogus.domowygpx.activities.DownloadListActivity;
+import org.bogus.domowygpx.application.Application;
 import org.bogus.domowygpx.services.downloader.DownloadProgressMonitor;
 import org.bogus.domowygpx.services.downloader.FileData;
 import org.bogus.domowygpx.services.downloader.FilesDownloader;
@@ -669,7 +670,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     
     protected void showNotification(NotificationCompat.Builder builder, boolean foreground)
     {
-        builder.setSmallIcon(R.drawable.ic_logo_czyste_8);
+        builder.setSmallIcon(Application.getInstance(this).getNotificationIconResid());
         
         final Context appContext = getApplicationContext();
      

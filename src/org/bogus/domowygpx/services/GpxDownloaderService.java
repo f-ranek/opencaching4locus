@@ -40,6 +40,7 @@ import org.bogus.ToStringBuilder;
 import org.bogus.domowygpx.activities.DownloadListActivity;
 import org.bogus.domowygpx.activities.TaskConfiguration;
 import org.bogus.domowygpx.apache.http.client.utils.ResponseUtils;
+import org.bogus.domowygpx.application.Application;
 import org.bogus.domowygpx.application.OKAPI;
 import org.bogus.domowygpx.gpx.GpxProcessMonitor;
 import org.bogus.domowygpx.gpx.GpxProcessor;
@@ -1009,7 +1010,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
     
     protected void showNotification(NotificationCompat.Builder builder, boolean foreground)
     {
-        builder.setSmallIcon(R.drawable.ic_logo_czyste_8);
+        builder.setSmallIcon(Application.getInstance(this).getNotificationIconResid());
         // builder.setLargeIcon(getResources().getDrawable(777));
         
         final Context appContext = getApplicationContext();
