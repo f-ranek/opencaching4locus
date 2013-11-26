@@ -12,7 +12,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.SocketException;
 import java.net.URLEncoder;
+import java.net.UnknownHostException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
@@ -246,6 +248,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         private boolean hasErrorDescription;
         private List<File> touchedFiles;
         volatile HttpUriRequest currentRequest;
+        volatile boolean interruptionFlag;
         HttpResponse mainResponse;
         HttpClient httpClient;
         
@@ -445,16 +448,34 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         private void checkInterrupted()
         throws InterruptedException
         {
-            if (Thread.interrupted()){
+            if (interruptionFlag || Thread.interrupted()){
                 throw new InterruptedException();
             }
         }
         
         private boolean processDefaultException(Exception e)
         {
-            if (e instanceof IOException && !(e instanceof FileNotFoundException || e instanceof HttpException)
+            /*if (e instanceof IOException && !(e instanceof FileNotFoundException || e instanceof HttpException)
             ){
                 setErrorDescription("Błąd komunikacji sieciowej", e); 
+                return true;
+            }*/
+            if (e instanceof SocketException || 
+                    e instanceof UnknownHostException ||
+                    e instanceof org.apache.http.client.ClientProtocolException ||
+                    e instanceof org.apache.http.ConnectionClosedException)
+            {
+                setErrorDescription("Błąd komunikacji sieciowej", e); 
+                return true;
+            }
+            if (e instanceof javax.net.ssl.SSLException){
+                setErrorDescription("Błąd SSL", e); 
+                return true;
+            }
+            if (e instanceof HttpException || 
+                    e instanceof FileNotFoundException)
+            {
+                setErrorDescription("Błąd serwera", e); 
                 return true;
             }
             return false;
@@ -719,7 +740,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     + ", dir=" + taskConfig.getOutTargetDirName()
                     , exception);
                 
-                finishTaskWithError(exception);
+                finishTaskWithError(exception, interruptionFlag);
             }finally{
                 currentRequest = null;
                 IOUtils.closeQuietly(gpxProcessor);
@@ -817,17 +838,17 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             broadcastEvent(event, taskState);
         }
         
-        protected final void finishTaskWithError(Exception exception)
+        protected final void finishTaskWithError(Exception exception, boolean cancelledByUser)
         {
             final boolean canceled = (exception instanceof InterruptedException); 
 
-            if (taskState.exception instanceof InterruptedException){
+            if (canceled){
                 taskState.exception = null;
             }
             
             final GpxTaskEvent event = taskState.createTaskEvent();
             event.totalKB = (int)(ResponseUtils.getBytesRead(mainResponse) / 1024L);
-            if (canceled){
+            if (canceled || cancelledByUser){
                 taskState.stateCode = event.eventType = GpxTaskEvent.EVENT_TYPE_FINISHED_CANCEL;
                 taskState.stateDescription = event.description = "Przerwano"; 
             } else {
@@ -1491,6 +1512,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
     {
         for (WorkerThread t : threads){
             if (t.taskState.taskId == taskId){
+                t.interruptionFlag = true;
                 t.interrupt();
                 final HttpUriRequest request = t.currentRequest;
                 if (request != null){
