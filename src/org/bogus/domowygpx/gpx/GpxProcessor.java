@@ -97,24 +97,6 @@ public class GpxProcessor implements GpxState, Closeable
         return fileName;
     }
     
-    /*boolean replaceAll(Matcher matcher, CharSequence source, char replacement, StringBuilder result) {
-        matcher.reset();
-        boolean result0 = matcher.find();
-        int start = 0;
-        if (result0) {
-            do {
-                int end = matcher.start();
-                result.append(source.subSequence(start, end));
-                result.append(replacement);
-                start = matcher.end();
-                result0 = matcher.find();
-            } while (result0);
-            result.append(source.subSequence(start, source.length()));
-            return true;
-        }
-        return false;
-    }*/
-    
     protected int shouldProcessHtml(XmlPullParser parser) throws XmlPullParserException
     {
         if (parser.getEventType() != XmlPullParser.START_TAG){

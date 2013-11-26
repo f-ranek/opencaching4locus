@@ -17,11 +17,15 @@ import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,8 +47,13 @@ public class ImageUrlProcessor implements ImageSourceResolver
     private final static List<Pattern> pathCleanupPatterns = new ArrayList<Pattern>(); 
     private final static List<Pattern> internalPathPatterns = new ArrayList<Pattern>();
     private final static Pattern doubleSlashRemovalPattern = Pattern.compile("/{2,}");
-    private final static Pattern extensionPattern = Pattern.compile("\\.[A-Z0-9]{1,6}$", Pattern.CASE_INSENSITIVE);
+    private final static Pattern extensionPattern = Pattern.compile("\\.([A-Z0-9]{1,6})$", Pattern.CASE_INSENSITIVE);
 
+    private final static Set<String> allowedImageExtensions = Collections.unmodifiableSet(
+        new HashSet<String>(Arrays.asList(
+            "png", "bmp", "jpg", "jpeg", "gif"
+        )));
+    
     private final static List<String> opencachingDomains = new ArrayList<String>(); 
     
     static void loadPathPatterns(String fileName, List<Pattern> target)
@@ -173,7 +182,10 @@ public class ImageUrlProcessor implements ImageSourceResolver
         }
         final Matcher m = extensionPattern.matcher(uri.getPath());
         if (m.find()){
-            sb.append(m.group());
+            String ext = m.group(1).toLowerCase(Locale.US);
+            if (allowedImageExtensions.contains(ext)){
+                sb.append('.').append(ext);
+            }
         }
         return sb.toString();
     }

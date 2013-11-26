@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.http.Header;
+import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
@@ -280,6 +281,11 @@ public class FilesDownloader implements Closeable
         return executorService.awaitTermination(timeout, unit);
     }
     
+    protected void addCommonHeaders(HttpRequest request)
+    {
+        request.addHeader("Accept", "*/*");      
+    }
+    
     protected void doDownloadInThread(final FileData data, final DownloadTask downloadTask)
     {
         HttpResponse response = null;
@@ -362,6 +368,7 @@ public class FilesDownloader implements Closeable
                         get.addHeader("If-Modified-Since", lastModified);
                     }
                 }
+                addCommonHeaders(get);
                 downloadTask.currentRequest = get;
                 response = httpClient.execute(get);
                 final int httpCode = response.getStatusLine().getStatusCode(); 
@@ -390,6 +397,7 @@ public class FilesDownloader implements Closeable
                 get = new HttpGet(data.source);
                 currentFileSize = tempFile.length();
                 get.addHeader("Range", "bytes=" + currentFileSize + "-");
+                addCommonHeaders(get);
                 downloadTask.currentRequest = get;
                 response = httpClient.execute(get);
                 final int httpCode = response.getStatusLine().getStatusCode(); 
@@ -418,6 +426,7 @@ public class FilesDownloader implements Closeable
             
             if (!gotFullFile && !gotPartialFile){
                 get = new HttpGet(data.source);
+                addCommonHeaders(get);
                 downloadTask.currentRequest = get;
                 response = httpClient.execute(get);
             }

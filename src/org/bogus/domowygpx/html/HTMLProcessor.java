@@ -3,6 +3,8 @@ package org.bogus.domowygpx.html;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.bogus.logging.LogFactory;
@@ -18,6 +20,10 @@ import org.htmlparser.util.ParserException;
 public class HTMLProcessor
 {
     private final static Log logger = LogFactory.getLog(HTMLProcessor.class);
+
+    private static final Pattern entitiesPattern1 = 
+            Pattern.compile(
+                "&(quot|amp|lt|gt|#([0-9]+)|#x([0-9A-F]+));", Pattern.CASE_INSENSITIVE);
     
     private ImageSourceResolver imageSourceResolver;
 
@@ -74,12 +80,12 @@ public class HTMLProcessor
                                 {
                                     String value = attr.getValue();
                                     if (value != null && value.length() > 0){
-                                        String value2 = imageSourceResolver.processImgSrc(value, sourcePlaceCode);
-                                        if (value2 != null){
-                                            if (!value2.equals(value)){
-                                                attr.setValue(value2);
-                                                hasAnyChange = true;
-                                            }
+                                        String value2 = unescapeHtml(value);
+                                        value2 = imageSourceResolver.processImgSrc(value2, sourcePlaceCode);
+                                        value2 = escapeHtml(value2);
+                                        if (!value2.equals(value)){
+                                            attr.setValue(value2);
+                                            hasAnyChange = true;
                                         }
                                     }
                                 }
@@ -112,5 +118,96 @@ public class HTMLProcessor
             result.setLength(resultLen);
             return false; 
         }
+    }
+    
+    protected String escapeHtml(String str)
+    {
+        StringBuilder result = null;
+        int len = str.length();
+        for (int i=0; i<len; i++){
+            char c = str.charAt(i);
+            if (c == '&' || c == '"' || c == '>' || c == '<'){
+                if (result == null){
+                    result = new StringBuilder(str.length() + 20);
+                    result.append(str.substring(0, i));
+                }
+                result.append('&');
+                switch(c){
+                    case '&': result.append("amp"); break;
+                    case '"': result.append("quot"); break;
+                    case '>': result.append("gt"); break;
+                    case '<': result.append("lt"); break;
+                }
+                result.append(';');
+            } else {
+                if (result != null){
+                    result.append(c);
+                }
+            }
+        }
+        if (result != null){
+            return result.toString();
+        } else {
+            return str;
+        }
+    }
+
+    protected String unescapeHtml(String str)
+    {
+        // yes, i know there is org.apache.commons.lang3.StringEscapeUtils
+        StringBuilder result = unescape2Html(str);
+        if (result == null){
+            return str;
+        } else {
+            return result.toString();
+        }
+    }
+    
+    protected StringBuilder unescape2Html(CharSequence source) {
+        Matcher matcher = entitiesPattern1.matcher(source);
+        boolean result0 = matcher.find();
+        int start = 0;
+        if (result0) {
+            StringBuilder result = new StringBuilder(source.length());
+            do {
+                int end = matcher.start();
+                result.append(source.subSequence(start, end));
+                String entity = matcher.group(1).toLowerCase(Locale.US);
+                try{
+                    if ("amp".equals(entity)){
+                        result.append('&');
+                    } else 
+                    if ("quot".equals(entity)){
+                        result.append('"');
+                    } else 
+                    if ("lt".equals(entity)){
+                        result.append('<');
+                    } else 
+                    if ("gt".equals(entity)){
+                        result.append('>');
+                    } else 
+                    if (entity.startsWith("#x")){
+                        String num = matcher.group(3); 
+                        int x = Integer.parseInt(num, 16);
+                        result.append((char)x);
+                    } else
+                    if (entity.startsWith("#")){
+                        String num = matcher.group(2); 
+                        int x = Integer.parseInt(num);
+                        result.append((char)x);
+                    } else {
+                        // should not happen
+                        result.append('&').append(entity).append(';');
+                    }
+                }catch(NumberFormatException nfe){
+                    result.append('&').append(entity).append(';');
+                }
+                start = matcher.end();
+                result0 = matcher.find();
+            } while (result0);
+            result.append(source.subSequence(start, source.length()));
+            return result;
+        }
+        return null;
     }
 }
