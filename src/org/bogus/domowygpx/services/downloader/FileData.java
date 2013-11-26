@@ -9,6 +9,7 @@ import org.bogus.ToStringBuilder;
 import org.bogus.domowygpx.services.FilesDownloaderService;
 import org.bogus.geocaching.egpx.BuildConfig;
 
+import android.annotation.SuppressLint;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -50,6 +51,7 @@ public class FileData implements java.io.Serializable, Cloneable, Parcelable {
     public String[][] headers;
     /** Exception, if any was thrown during file download */
     public Exception exception;
+    public String exceptionString;
 
     // TEMPORARY STATE
     /** Number of bytes stored in a temp file (from previous session) */
@@ -105,6 +107,41 @@ public class FileData implements java.io.Serializable, Cloneable, Parcelable {
         } else {
             return super.toString();
         }
+    }
+    
+    @SuppressLint("SimpleDateFormat")
+    public StringBuilder toDeveloperDebugString(StringBuilder sb)
+    {
+        sb.append("ID: ").append(fileDataId).append('\n');
+        sb.append("CO: ").append(source).append('\n');
+        sb.append("GDZIE: ").append(target).append('\n');
+        sb.append("SKĄD: ").append(cacheCode).append('\n');
+        sb.append("STATUS: ");
+        switch(state){
+            case FILE_STATE_SCHEDULED: sb.append("SCHEDULED"); break;
+            case FILE_STATE_RUNNING: sb.append("RUNNING"); break;
+            case FILE_STATE_FINISHED: sb.append("FINISHED"); break;
+            case FILE_STATE_SKIPPED: sb.append("SKIPPED"); break;
+            case FILE_STATE_TRANSIENT_ERROR: sb.append("TRANSIENT_ERROR"); break;
+            case FILE_STATE_PERMANENT_ERROR: sb.append("PERMANENT_ERROR"); break;
+            default: sb.append(state); break;
+        }
+        sb.append('\n');
+        if (statusLine != null || headers != null){
+            sb.append("SZCZEGÓŁY HTTP\n");
+            if (statusLine != null){
+                sb.append(statusLine).append('\n');
+            }
+            if (headers != null){
+                for (String[] header : headers){
+                    sb.append(header[0]).append(": ").append(header[1]).append('\n');
+                }
+            }
+        }
+        if (exceptionString != null){
+            sb.append("SZCZEGÓŁY BŁĘDU\n").append(exceptionString).append('\n');
+        }
+        return sb;
     }
 
     @Override

@@ -48,6 +48,13 @@ public interface GpxDownloaderApi
     boolean removeTask(int taskId);
     
     /**
+     * Returns string helping developer diagnose application state
+     * @param taskId
+     * @return
+     */
+    public String taskToDeveloperDebugString(int taskId);
+    
+    /**
      * Registers client listener, events will be queued to the calling thread
      * {@link android.os.MessageQueue MessageQueue}, so make sure caller has one
      * @param listener Event listener

@@ -10,6 +10,7 @@ import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -32,6 +33,7 @@ import org.bogus.domowygpx.utils.HttpException;
 import org.bogus.geocaching.egpx.BuildConfig;
 import org.bogus.geocaching.egpx.R;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -169,6 +171,30 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                 return super.toString();
             }
         }
+        
+        @SuppressLint("SimpleDateFormat")
+        public StringBuilder toDeveloperDebugString(StringBuilder sb)
+        {
+            sb.append("FILES ID: ").append(taskId).append('\n');
+            sb.append("STATUS: ");
+            switch(state){
+                case STATE_RUNNING: sb.append("RUNNING"); break; 
+                case STATE_FINISHED: sb.append("FINISHED"); break;
+                case STATE_CANCELLING: sb.append("CANCELLING"); break;
+                case STATE_PAUSING: sb.append("PAUSING"); break;
+                case STATE_STOPPED: sb.append("STOPPED"); break;
+                default: sb.append(state); break;
+            }
+            sb.append('\n');
+            sb.append("DATA: ").append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(createdDate))).append('\n');
+            sb.append("FLAGI: 0x").append(Integer.toHexString(flags)).append('\n');
+            sb.append("LICZBA PLIKÓW: ").append(totalFiles).append('\n');
+            sb.append(" * zakończone: ").append(finishedFiles).append('\n');
+            sb.append(" * pominięte: ").append(skippedFiles).append('\n');
+            sb.append(" * z błędami: ").append(transientErrorFiles).append('/').append(permanentErrorFiles).append('\n');
+            return sb;
+        }
+        
     }
     
     class DownloadProgressMonitorImpl implements DownloadProgressMonitor
@@ -537,6 +563,56 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         return fd;
     }
     
+    private List<FileData> loadTaskFiles(int taskId, String whereClause)
+    {
+        Cursor cursor = database.query("files", 
+            new String[]{"_id", "state", "cache_code", "source", "target", 
+                "virtual_target", "priority", "retry_count", "headers", "exception", "status_line"}, 
+            whereClause,  
+            (String[])null, null, null, "_id");
+        List<FileData> result = new ArrayList<FileData>(cursor.getCount());
+        if (cursor.moveToFirst()){
+            do{
+                final FileData file = new FileData();
+                file.fileDataId = cursor.getInt(0);
+                try {
+                    file.taskId = taskId; 
+                    file.state = cursor.getInt(1);
+                    file.cacheCode = cursor.getString(2);
+                    file.source = new URI(cursor.getString(3));
+                    file.target = new File(cursor.getString(4));
+                    file.virtualTarget = cursor.getString(5);
+                    if (cursor.isNull(6)){
+                        file.priority = Integer.MAX_VALUE;
+                    } else {
+                        file.priority = cursor.getInt(6);
+                    }
+                    file.retryCount = cursor.getInt(7);
+                    String headers = cursor.getString(8);
+                    if (headers != null){
+                        String[] headers2 = headers.split("[\n\r]+");
+                        file.headers = new String[headers2.length][];
+                        for (int i=0; i<headers2.length; i++){
+                            String header = headers2[i];
+                            int idx = header.indexOf(':');
+                            String headerName = header.substring(0, idx);
+                            String headerValue = header.substring(idx+2);
+                            file.headers[i] = new String[]{headerName, headerValue};
+                        }
+                    }
+                    file.exceptionString = cursor.getString(9);
+                    file.statusLine = cursor.getString(10);
+                    result.add(file);
+                } catch (URISyntaxException e) {
+                    Log.e(LOG_TAG, "Failed to read file, _id=" + file.fileDataId, e);
+                }
+            }while(cursor.moveToNext());
+            
+        }
+        cursor.close();
+        return result;
+    }
+    
     /**
      * Reads files to be downloaded for a given task, and schedules them for download
      * @param task
@@ -547,7 +623,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         FilesDownloadTask task, 
         boolean restartFromScratch) 
     {
-        int count = 0;
+        List<FileData> files = null; 
         database.beginTransaction();
         try{
             synchronized(task){
@@ -572,56 +648,16 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                 whereClause.append(FileData.FILE_STATE_ABORTED).append(", ");
                 whereClause.append(FileData.FILE_STATE_TRANSIENT_ERROR).append(")");
                 
-                Cursor cursor = database.query("files", 
-                    new String[]{"_id", "state", "cache_code", "source", "target", "virtual_target", "priority", "retry_count", "headers"}, 
-                    whereClause.toString(),  
-                    (String[])null, null, null, "_id");
-                if (cursor.moveToFirst()){
-                    do{
-                        final FileData file = new FileData();
-                        file.fileDataId = cursor.getInt(0);
-                        try {
-                            file.taskId = task.taskId; 
-                            file.state = cursor.getInt(1);
-                            file.cacheCode = cursor.getString(2);
-                            file.source = new URI(cursor.getString(3));
-                            file.target = new File(cursor.getString(4));
-                            file.virtualTarget = cursor.getString(5);
-                            if (cursor.isNull(6)){
-                                file.priority = Integer.MAX_VALUE;
-                            } else {
-                                file.priority = cursor.getInt(6);
-                            }
-                            file.retryCount = cursor.getInt(7);
-                            String headers = cursor.getString(8);
-                            if (headers != null){
-                                String[] headers2 = headers.split("[\n\r]+");
-                                file.headers = new String[headers2.length][];
-                                for (int i=0; i<headers2.length; i++){
-                                    String header = headers2[i];
-                                    int idx = header.indexOf(':');
-                                    String headerName = header.substring(0, idx);
-                                    String headerValue = header.substring(idx+2);
-                                    file.headers[i] = new String[]{headerName, headerValue};
-                                }
-                            }
-                        } catch (URISyntaxException e) {
-                            Log.e(LOG_TAG, "Failed to read file, _id=" + file.fileDataId, e);
-                            continue;
-                        }
-                        count++;
-                        task.filesDownloader.submit(file);
-                    }while(cursor.moveToNext());
-                    
-                }
-                cursor.close();
-                
+                files = loadTaskFiles( task.taskId, whereClause.toString());
                 database.setTransactionSuccessful();
             }
         }finally{
             database.endTransaction();
         }
-        return count > 0;
+        for (FileData file : files){
+            task.filesDownloader.submit(file);
+        }
+        return files.size() > 0;
     }
     
     /**
@@ -1468,6 +1504,26 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             result.add(task2);
         }
         return result;
+    }
+    
+    @Override
+    public String taskToDeveloperDebugString(int taskId)
+    {
+        final FilesDownloadTask task = getTaskById(taskId);
+        if (task == null){
+            return null;
+        }
+        StringBuilder sb = new StringBuilder(4096);
+        List<FileData> files = null;
+        synchronized(task){
+            task.toDeveloperDebugString(sb);
+            files = loadTaskFiles(taskId, "task_id=" + taskId);
+        }
+        for (FileData file : files){
+            sb.append("--------------------\n");
+            file.toDeveloperDebugString(sb);
+        }
+        return sb.toString();
     }
     
     @Override
