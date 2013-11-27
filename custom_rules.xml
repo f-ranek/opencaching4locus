@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Opencaching4Locus">
+	
+	<!-- 
+	   Expected key releases.dir in local.properties
+	-->
+	
+	<target name="-post-build" if="build.is.mode.release" 
+		depends="-post-build-0,-print-git-local-modifications">
+	</target>
+	
+    <target name="-post-build-0">
+    	<echo>Release postprocessing</echo>
+        <xpath input="${manifest.abs.file}" expression="/manifest/@android:versionCode"
+                output="release.final.application.versionCode" />
+    	<tstamp>
+    		<format property="release.final.timestamp" pattern="yyyyMMdd" />
+    	</tstamp>
+        <property name="release.final.dir" value="${releases.dir}${release.final.timestamp}" />        
+        <mkdir dir="${release.final.dir}" />
+    	<property name="release.final.dir.abs" location="${release.final.dir}" />
+    	<property name="release.final.apk" 
+    		value="${release.final.dir.abs}/${ant.project.name}-${release.final.application.versionCode}.apk" />
+        <property name="release.final.mappings" 
+            value="${release.final.dir.abs}/mapping-${release.final.application.versionCode}.txt" />
+    	<property name="release.final.version" 
+            value="${release.final.dir.abs}/version-${release.final.application.versionCode}.txt" />
+    	<move tofile="${release.final.apk}" file="${out.final.file}"/>
+    	<copy
+    		file="${out.absolute.dir}/proguard/mapping.txt"
+    		tofile="${release.final.mappings}" />
+    	<echo>Release APK saved to: ${release.final.apk}</echo>
+    	
+    	<echo>Saving git-info to: ${release.final.version}</echo>
+    	<echo append="false" file="${release.final.version}" message="git-tag: " />
+        <exec executable="git" failonerror="false">
+        	<arg line="describe --tags HEAD" />
+        	<redirector append="true" output="${release.final.version}" logerror="true" />
+    	</exec>
+    	<echo append="true" file="${release.final.version}" message="git-rev: " />
+        <exec executable="git" failonerror="false">
+            <arg line="rev-parse HEAD" />
+            <redirector append="true" output="${release.final.version}" logerror="true" />
+        </exec>
+
+        <exec executable="git" failonerror="false">
+            <arg line="status --porcelain" />
+            <redirector outputproperty="release.final.git.localModifications" logerror="true" />
+        </exec>
+
+    	<condition property="release.final.git.localModifications.present">
+    		<length string="${release.final.git.localModifications}" when="greater" length="2" trim="true" />
+    	</condition>
+    </target>
+	<target name="-print-git-local-modifications" if="release.final.git.localModifications.present">
+        <echo append="true" file="${release.final.version}" 
+        	message="git-local-modifications: ${line.separator}${release.final.git.localModifications}" />
+		<echo level="warning">*** Local Git modifications has been found!!!</echo>
+	</target>
+</project>

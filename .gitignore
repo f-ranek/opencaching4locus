@@ -7,4 +7,6 @@ TestResults
 /assets
 /gen
 /proguard
+/local.properties
+/temp
 /src/org/bogus/domowygpx/application/dc
