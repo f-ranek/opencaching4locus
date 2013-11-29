@@ -21,6 +21,7 @@ import org.apache.commons.io.input.AutoCloseInputStream;
 import org.apache.commons.logging.Log;
 import org.bogus.logging.LogFactory;
 
+import android.content.Context;
 import android.os.Environment;
 public class TargetDirLocator
 {
@@ -32,9 +33,17 @@ public class TargetDirLocator
     private final Pattern spacePattern = Pattern.compile("[ \t]+");
     private Set<File> mountPoints;
     
+    @SuppressWarnings("unused")
+    private final Context context;
+    
+    public TargetDirLocator(Context context)
+    {
+        this.context = context;
+    }
+
     protected boolean checkDirectory(File f)
     {
-        return f.exists() && f.canRead() && f.isDirectory();
+        return f != null && f.exists() && f.canRead() && f.isDirectory();
     }
     
     protected Set<File> getMountPoints()
@@ -50,10 +59,10 @@ public class TargetDirLocator
             if (checkDirectory(f)){
                 mountPoints.add(f);
             }
-            f = Environment.getDataDirectory();
-            if (checkDirectory(f)){
-                mountPoints.add(f);
-            }
+            //f = context. // Environment.getExternalStorageAndroidDataDir();
+            //if (checkDirectory(f)){
+            //    mountPoints.add(f);
+            //}
             this.mountPoints = Collections.unmodifiableSet(mountPoints);
         }
         return mountPoints;

@@ -1,12 +1,19 @@
 package org.bogus.domowygpx.application;
 
+import java.io.File;
+import java.util.List;
+
+import org.bogus.domowygpx.utils.TargetDirLocator;
 import org.bogus.geocaching.egpx.R;
 
 import android.app.Activity;
 import android.app.Service;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.os.Environment;
 import android.util.Log;
 
 public class Application extends android.app.Application
@@ -39,6 +46,9 @@ public class Application extends android.app.Application
         int sblv = getStatusBarBackgroundLightValue();
         Log.d(LOG_TAG, "StatusBarBackgroundLightValue: " + sblv);
         notificationIconResid = sblv < 128 ? R.drawable.ic_logo_czyste_biale : R.drawable.ic_logo_czyste_czarne;
+        
+        setupPreferences();
+        
         /* SENSELESS :/
         SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
         if (config.getBoolean("Application_restartDownloadOnApplicationStart", true)){
@@ -134,5 +144,116 @@ public class Application extends android.app.Application
     public int getNotificationIconResid()
     {
         return notificationIconResid;
+    }
+    
+    private void setupPreferences()
+    {
+        SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
+        try{
+            int version = config.getInt("configVersion", -1);
+            if (version <= 0){
+                initNewConfig();
+                return ;
+            }
+            Editor editor = config.edit();
+            switch(version){
+                case 1: 
+                    updatePreferences(config, editor, 1);
+                    editor.putInt("configVersion", 2);
+                    editor.commit();
+                    
+                    createDirectories(config, "gpxTargetDirName");
+                    createDirectories(config, "gpxTargetDirNameTemp");
+                    createDirectories(config, "imagesTargetDirName");
+                    
+                    break;
+                case 2: 
+                    break;
+                default:
+                    Log.w(LOG_TAG, "Newer preferences found: " + version);
+                    initNewConfig();
+            }
+            
+            // TODO: sprawdzić, czy docelowy katalog istnieje, i jak nie
+            // to albo spróbować utworzyć, albo wybrać inny katalog
+            
+        }catch(Exception e){
+            Log.e(LOG_TAG, "Failed to read config", e);
+            initNewConfig();
+        }
+    }
+    
+    private void initNewConfig()
+    {
+        SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
+        Editor editor = config.edit();
+        editor.clear();
+        
+        initSaveDirectories(config, editor);
+        
+        editor.putInt("configVersion", 2);
+        editor.commit();    
+    }
+    
+    private void initSaveDirectories(SharedPreferences config, Editor editor)
+    {
+        final TargetDirLocator tdl = new TargetDirLocator(this);
+        final List<File> locus = tdl.locateLocus();
+        File gpxTargetDirName = null;
+        File gpxTargetDirNameTemp = null;
+        File imagesTargetDirName = null;
+        if (locus != null && !locus.isEmpty()){
+            File loc = locus.get(0); 
+            gpxTargetDirName = new File(loc, "mapItems");
+            gpxTargetDirNameTemp = new File (loc, "mapItems-temp");
+            imagesTargetDirName = new File(loc, ".cacheImages");
+        } else {
+            final List<File> data = tdl.locateSaveDirectories();
+            File dir;
+            if (data == null || data.isEmpty()){
+                dir = data.get(0);
+            } else {
+                dir = Environment.getDataDirectory();
+            }
+            gpxTargetDirName = new File(dir, "kesze"); // XXX localization!!!
+            gpxTargetDirNameTemp = new File (dir, "kesze-temp");
+            imagesTargetDirName = new File(dir, ".cacheImages");
+        }
+        
+        editor.putString("gpxTargetDirName", gpxTargetDirName.toString());
+        editor.putString("gpxTargetDirNameTemp", gpxTargetDirNameTemp.toString()); 
+        editor.putString("imagesTargetDirName", imagesTargetDirName.toString());
+        
+    }
+    
+    private void createDirectories(SharedPreferences config, String key)
+    {
+        String val = config.getString(key, null);
+        if (val != null){
+            File f = new File(val);
+            f.mkdirs();
+        }
+    }
+    
+    private void updatePreferences(SharedPreferences config, Editor editor, int fromVersion)
+    {
+        if (fromVersion == 1){
+            String targetFileName = config.getString("targetFileName", null);
+            initSaveDirectories(config, editor);
+            if (targetFileName != null && targetFileName.length() > 0){
+                File tfn = new File(targetFileName);
+                editor.putString("lastFileName", tfn.getName());
+                File tdn = tfn.getParentFile();
+                if (tdn != null){
+                    editor.putString("gpxTargetDirName", tdn.toString());
+                    File tdnp = tdn.getParentFile();
+                    if (tdnp != null){
+                        editor.putString("gpxTargetDirNameTemp", new File(tdnp, tdn.getName() + "-temp").toString());
+                        editor.putString("imagesTargetDirName", new File(tdnp, ".cacheImages").toString()); 
+                    }
+                }
+            }
+            editor.remove("targetFileName");
+        }
     }
 }

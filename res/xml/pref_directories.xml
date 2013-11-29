@@ -1,0 +1,20 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" 
+    android:title="@string/pref_title_directories"
+    android:order="1">
+    
+    <org.bogus.android.FolderPreference
+        android:key="gpxTargetDirName"
+        android:title="@string/pref_directories_target_dir"
+        />
+    
+    <org.bogus.android.FolderPreference
+        android:key="gpxTargetDirNameTemp"
+        android:title="@string/pref_directories_target_dir_temp"
+        />
+    
+    <org.bogus.android.FolderPreference
+        android:key="imagesTargetDirName"
+        android:title="@string/pref_directories_target_images"
+        />
+    
+</PreferenceScreen>
