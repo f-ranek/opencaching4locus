@@ -1,0 +1,22 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <ListPreference
+        android:key="downloadImagesStrategy"
+        android:defaultValue="onlyOnWIFI"
+        android:entries="@array/pref_download_images_strategy_titles"
+        android:entryValues="@array/pref_download_images_strategy_values"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pref_download_images_strategy" 
+    />    
+    
+    <org.bogus.android.IntListPreference
+        android:key="limitCacheLogs"
+        android:defaultValue="20"
+        android:entries="@array/pref_download_logs_count_titles"
+        android:entryValues="@array/pref_download_logs_count_values"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pref_download_logs_count" 
+    />    
+
+</PreferenceScreen>

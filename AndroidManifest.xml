@@ -33,7 +33,7 @@
             android:name="org.bogus.domowygpx.activities.DownloadListActivity"
             android:label="@string/titleActivityDownloadList"
             android:configChanges="keyboardHidden|orientation" 
-            android:launchMode="singleInstance">
+            android:launchMode="singleTop">
         </activity>
         <activity
             android:name="org.bogus.domowygpx.activities.SettingsActivity"

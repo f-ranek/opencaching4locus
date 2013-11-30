@@ -221,12 +221,13 @@ public class FolderPreference extends EditTextPreference
     
     protected boolean validate()
     {
+        File dir = null;
         String message = null;
         CharSequence currentFolder = getEditText().getText();
         if (currentFolder == null || currentFolder.length() == 0){
             message = "Wybierz katalog";
         } else {
-            File dir = new File(currentFolder.toString());
+            dir = new File(currentFolder.toString());
             if (dir.isFile()){
                 message = "Wybierz katalog, nie plik";
             } else {
@@ -246,6 +247,11 @@ public class FolderPreference extends EditTextPreference
             builder.setNegativeButton("OK", null);
             builder.show();
             return false;
+        } else {
+            if (!dir.isAbsolute()){
+                dir = dir.getAbsoluteFile();
+                getEditText().setText(dir.getPath());
+            }
         }
         
         return true;

@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.bogus.android.FolderPreference;
 import org.bogus.android.FolderPreferenceHelperActivity;
+import org.bogus.android.IntListPreference;
 import org.bogus.geocaching.egpx.R;
 
 import android.annotation.TargetApi;
@@ -41,7 +42,7 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
      * as a master/detail two-pane view on tablets. When true, a single pane is
      * shown on tablets.
      */
-    private static final boolean ALWAYS_SIMPLE_PREFS = false;
+    private static final boolean ALWAYS_SIMPLE_PREFS = true;
 
     private FolderPreferenceHelperActivityListener currActivityResultListener;
     
@@ -75,61 +76,31 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
         getPreferenceScreen().addPreference(fakeHeader);
         addPreferencesFromResource(R.xml.pref_my_account);
 
-        fakeHeader = new PreferenceCategory(this); // o-rzesz-ku
+        fakeHeader = new PreferenceCategory(this);
+        fakeHeader.setTitle(R.string.pref_title_downloads);
+        getPreferenceScreen().addPreference(fakeHeader);
+        addPreferencesFromResource(R.xml.pref_downloads);
+
+        fakeHeader = new PreferenceCategory(this); 
         fakeHeader.setTitle(R.string.pref_title_directories);
         getPreferenceScreen().addPreference(fakeHeader);
         addPreferencesFromResource(R.xml.pref_directories);
         
         PreferenceScreen preferenceScreen = getPreferenceScreen();
         final Map<String, ?> allConfigValues = getPreferenceManager().getSharedPreferences().getAll();
-        bindPrefereneHierarchyX(preferenceScreen, allConfigValues);
+        setupPrefereneHierarchy(preferenceScreen, allConfigValues);
         
-        //startActivityForResult(Intent intent, int requestCode);
-        
-        //int childCount = preferenceScreen.getPreferenceCount()
-        //getPreferenceManager().findPreference("x")
-        
-        //bindPreferenceSummaryToValue(findPreference("userName"));
-        //bindPreferenceSummaryToValue(findPreference("foundStrategy"));
-        
-        // XXX load automatically!!!!
-        /*
-        // In the simplified UI, fragments are not used at all and we instead
-        // use the older PreferenceActivity APIs.
-
-        // Add 'general' preferences.
-        addPreferencesFromResource(R.xml.pref_general);
-
-        // Add 'notifications' preferences, and a corresponding header.
-        PreferenceCategory fakeHeader = new PreferenceCategory(this);
-        fakeHeader.setTitle(R.string.pref_header_notifications);
-        getPreferenceScreen().addPreference(fakeHeader);
-        addPreferencesFromResource(R.xml.pref_notification);
-
-        // Add 'data and sync' preferences, and a corresponding header.
-        fakeHeader = new PreferenceCategory(this);
-        fakeHeader.setTitle(R.string.pref_header_data_sync);
-        getPreferenceScreen().addPreference(fakeHeader);
-        addPreferencesFromResource(R.xml.pref_data_sync);
-
-        // Bind the summaries of EditText/List/Dialog/Ringtone preferences to
-        // their values. When their values change, their summaries are updated
-        // to reflect the new value, per the Android Design guidelines.
-        bindPreferenceSummaryToValue(findPreference("example_text"));
-        bindPreferenceSummaryToValue(findPreference("example_list"));
-        bindPreferenceSummaryToValue(findPreference("notifications_new_message_ringtone"));
-        bindPreferenceSummaryToValue(findPreference("sync_frequency"));
-        */
+        // XXX load UI automatically!!!!
     }
 
-    private void bindPrefereneHierarchyX(PreferenceGroup group, Map<String, ?> values)
+    private void setupPrefereneHierarchy(PreferenceGroup group, Map<String, ?> values)
     {
         int count = group.getPreferenceCount();
         for (int i=0; i<count; i++){
             Preference item = group.getPreference(i);
             if (item instanceof PreferenceGroup){
                 PreferenceGroup group2 = ((PreferenceGroup)item);
-                bindPrefereneHierarchyX(group2, values);
+                setupPrefereneHierarchy(group2, values);
             } else {
                 final String key = item.getKey(); 
                 item.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
@@ -139,39 +110,6 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
                 if (item instanceof FolderPreference){
                     ((FolderPreference)item).setFolderPreferenceHelperActivity(this);
                 }
-                /*
-                if (item instanceof TwoStatePreference){
-                    Boolean value = (Boolean)values.get(key);
-                    if (value != null){
-                        sBindPreferenceSummaryToValueListener.onPreferenceChange(item, value);
-                    }
-                } else 
-                if (item instanceof EditTextPreference){
-                    String value = (String)values.get(key);
-                    if (value != null){
-                        sBindPreferenceSummaryToValueListener.onPreferenceChange(item, value);
-                    }
-                } else 
-                if (item instanceof ListPreference){
-                    String value = (String)values.get(key);
-                    if (value != null){
-                        sBindPreferenceSummaryToValueListener.onPreferenceChange(item, value);
-                    }
-                } else 
-                if (item instanceof IntListPreference){
-                    Integer value = (Integer)values.get(key);
-                    if (value != null){
-                        sBindPreferenceSummaryToValueListener.onPreferenceChange(item, value);
-                    }
-                } else 
-                if (item instanceof MultiSelectListPreference){
-                    Set<String> value = (Set<String>)values.get(key);
-                    if (value != null){
-                        sBindPreferenceSummaryToValueListener.onPreferenceChange(item, value);
-                    }
-                } else {
-                    // ups, unknown preference
-                }*/
             }
         }
     }
@@ -234,6 +172,18 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
                 ListPreference listPreference = (ListPreference)preference;
                 String stringValue2 = value.toString();
                 int index = listPreference.findIndexOfValue(stringValue2);
+
+                // Set the summary to reflect the new value.
+                if (index >= 0){
+                    stringValue = listPreference.getEntries()[index].toString();
+                }
+            } else 
+            if (preference instanceof IntListPreference) {
+                // For list preferences, look up the correct display value in
+                // the preference's 'entries' list.
+                IntListPreference listPreference = (IntListPreference)preference;
+                Integer intValue2 = (Integer)value;
+                int index = listPreference.findIndexOfValue(intValue2);
 
                 // Set the summary to reflect the new value.
                 if (index >= 0){

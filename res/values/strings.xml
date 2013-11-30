@@ -11,26 +11,24 @@
     <string name="getLocationFromGpsCancel">Anuluj pobieranie</string>
     <string name="star">* - dozwolone formaty:\n1. [+-]ddd.ddddd\n2. [+-]ddd:mm.mmmmm\n3. [+-]ddd:mm:ss.sssss\n4. WGS84 (NSEW ddd° mm.mmm\')</string>
 
-    <string name="userName">Login:</string>
+    <!-- 
     <string name="hintUserName">Login w serwisie OC</string>
     <string name="foundStrategy">Skrzynki znalezione przez użytkownika zostaną:</string>
     <string name="foundStrategyMarked">oznaczone</string>
     <string name="foundStrategySkipped">pominięte</string>
-
+    -->
+    
     <string name="targetFileName">Zapisz jako:</string>
-    <string name="hintTargetFileName">Pełna ścieżka do pliku GPX</string>
-    <string name="targetDirName">Kat. obrazów:</string>
-    <string name="hintTargetDirName">Pełna ścieżka, lub względna do powyższej</string>
-
-    <string name="downloadImagesStrategy">Pobieranie dołączonych obrazów</string>
-    <string name="downloadImagesStrategyAlways">zawsze</string>
-    <string name="downloadImagesStrategyOnWiFi">gdy na WiFi</string>
-    <string name="downloadImagesStrategyNever">nigdy</string>
-
+    <string name="hintTargetFileName">Ew. nazwa pliku GPX</string>
+    <string name="targetAutoImportToLocus">Importuj do Locusa</string>
+    <string name="downloadImages_always">Pobierz obrazy (tak)</string>
+    <string name="downloadImages_wifi">Pobierz obrazy (WiFi)</string>
+    <string name="downloadImages_never">Pobierz obrazy (nie)</string>
+    
     <string name="start">Start</string>
 
-    <string name="maxNumOfCaches">Limit liczby:</string>
-    <string name="maxCacheDistance">Limit odległości [km/m]:</string>
+    <string name="maxNumOfCaches">Maks. liczba keszy:</string>
+    <string name="maxCacheDistance">Maks. odległość [km/m]:</string>
 
     <string name="hintMaxNumOfCaches">np. 200 keszy</string>
     <string name="hintMaxCacheDistance">np. 10km</string>

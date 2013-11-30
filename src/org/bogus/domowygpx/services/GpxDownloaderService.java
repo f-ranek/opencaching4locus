@@ -55,7 +55,6 @@ import org.bogus.domowygpx.utils.HttpException;
 import org.bogus.domowygpx.utils.InputStreamHolder;
 import org.bogus.geocaching.egpx.BuildConfig;
 import org.bogus.geocaching.egpx.R;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -609,7 +608,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     StringBuilder requestURL = new StringBuilder(256);
                     requestURL.append(okApi.getAPIUrl());
                     
-                    List<String> cacheList = null;
+                    //List<String> cacheList = null;
                     
                     if (taskConfig.isHasGeoLocation()){
                         JSONObject searchParams = new JSONObject();
@@ -627,14 +626,14 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                         }
                         
                         searchParams.put("status", "Available");
-                        if (taskConfig.getOutSourceCaches().isEmpty()){
+                        /*if (taskConfig.getOutSourceCaches().isEmpty()){*/
                             requestURL.append("services/caches/shortcuts/search_and_retrieve");
                             requestURL.append("?search_method=services/caches/search/nearest");
                             requestURL.append("&search_params=");
                             requestURL.append(urlEncode(searchParams));
                             appendReturnParameters(requestURL, userUuid, true);
                             //isQueryForFinalData = true;
-                        } else {
+                        /*} else {
                             requestURL.append("services/caches/search/nearest");
                             requestURL.append('?');
                             @SuppressWarnings("unchecked")
@@ -675,12 +674,12 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                                     GpxTaskEvent.EVENT_TYPE_WARN);
                                 cacheList = cacheList.subList(0, 500);
                             }
-                        }
+                        }*/
                     } else {
-                        cacheList = taskConfig.getOutSourceCaches();
+                        //cacheList = taskConfig.getOutSourceCaches();
                     }
                     
-                    if (cacheList != null){
+                    /*if (cacheList != null){
                         // prepare query for the final data retrieval
                         requestURL.setLength(0);
                         requestURL.append(okApi.getAPIUrl());
@@ -693,7 +692,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                             requestURL.setLength(requestURL.length()-2);
                         }
                         appendReturnParameters(requestURL, userUuid, false);
-                    }
+                    }*/
                     
                     // execute requestURL and process response
                     sendProgressInfo("Szukam keszy"); 

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
-    android:layout_height="wrap_content" xmlns:tools="http://schemas.android.com/tools">
+    android:layout_height="wrap_content" >
 
     <LinearLayout
         android:layout_width="fill_parent"
@@ -16,7 +17,6 @@
             android:textAppearance="?android:attr/textAppearanceMedium" />
 
         <TableLayout
-            android:id="@+id/tableLayout1"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:padding="10dp"
@@ -24,7 +24,6 @@
             android:stretchColumns="1" >
 
             <TableRow
-                android:id="@+id/tableRowLatitude"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content" >
 
@@ -50,7 +49,6 @@
             </TableRow>
 
             <TableRow
-                android:id="@+id/tableRowLongitude"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content" >
 
@@ -89,7 +87,6 @@
             </TableRow>
 
             <TableRow
-                android:id="@+id/tableRowGetLocationFromGps"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" >
 
@@ -104,14 +101,12 @@
                     android:id="@+id/btnGetLocationFromGps"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:nextFocusUp="@string/btnGetLocationFromGps"
                     android:onClick="onBtnGetLocationFromGpsClicked"
                     android:text="@string/getLocationFromGps"
                     android:textAppearance="?android:attr/textAppearanceMediumInverse" />
             </TableRow>
 
             <TableRow
-                android:id="@+id/tableRowMaxNumOfCaches"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content" >
 
@@ -122,7 +117,7 @@
                     android:layout_gravity="center_vertical"
                     android:paddingRight="10dp"
                     android:text="@string/maxNumOfCaches"
-                    android:textAppearance="?android:attr/textAppearanceMedium" >
+                    android:textAppearance="?android:attr/textAppearanceSmall" >
                 </TextView>
 
                 <LinearLayout
@@ -151,7 +146,6 @@
             </TableRow>
 
             <TableRow
-                android:id="@+id/tableRowMaxCacheDistance"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content" >
 
@@ -190,7 +184,6 @@
             </TableRow>
 
             <TableRow
-                android:id="@+id/tableRowTargetFileName"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content" >
 
@@ -213,11 +206,7 @@
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/hintTargetFileName"
-                        android:inputType="textMultiLine"
-                        android:nextFocusDown="@+id/editTargetDirName"
-                        android:textAppearance="?android:attr/textAppearanceSmallInverse" >
-
-                    </EditText>
+                        android:inputType="textMultiLine" />
 
                     <TextView
                         android:id="@+id/errorTargetFileName"
@@ -229,192 +218,72 @@
                 </LinearLayout>
             </TableRow>
 
-            <TableRow
-                android:id="@+id/tableRowDownloadImagesStrategy"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" >
-
-                <TextView
-                    android:id="@+id/textViewDownloadImagesStrategy"
-                    android:layout_width="match_parent"
-                    android:layout_height="fill_parent"
-                    android:gravity="center_vertical"
-                    android:maxWidth="80dp"
-                    android:paddingRight="10dp"
-                    android:text="@string/downloadImagesStrategy"
-                    android:textAppearance="?android:attr/textAppearanceMedium" />
-
-                <RadioGroup
-                    android:id="@+id/radioDownloadImagesStrategy"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical" >
-
-                    <RadioButton
-                        android:id="@+id/radioDownloadImagesStrategyAlways"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:tag="always"
-                        android:text="@string/downloadImagesStrategyAlways"
-                        android:textAppearance="?android:attr/textAppearance" />
-
-                    <RadioButton
-                        android:id="@+id/radioDownloadImagesStrategyOnlyWiFi"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:tag="onlyOnWIFI"
-                        android:text="@string/downloadImagesStrategyOnWiFi" />
-
-                    <RadioButton
-                        android:id="@+id/radioDownloadImagesStrategyNever"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:tag="never"
-                        android:text="@string/downloadImagesStrategyNever" />
-                </RadioGroup>
-            </TableRow>
 
             <TableRow
-                android:id="@+id/tableRowTargetDirName"
+                android:id="@+id/tableRowAutoLocusImport"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content" >
-
-                <TextView
-                    android:id="@+id/textViewTargetDirName"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:paddingRight="10dp"
-                    android:text="@string/targetDirName"
-                    android:textAppearance="?android:attr/textAppearanceMedium" />
 
                 <LinearLayout
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical" >
-
-                    <EditText
-                        android:id="@+id/editTargetDirName"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="@string/hintTargetDirName"
-                        android:inputType="textNoSuggestions"
-                        android:maxLines="1"
-                        android:nextFocusDown="@+id/editUserName"
-                        android:textAppearance="?android:attr/textAppearanceSmallInverse" />
+                    android:layout_span="2"
+                    android:orientation="horizontal"
+                    android:weightSum="10"
+                    tools:ignore="UselessParent" >
 
                     <TextView
-                        android:id="@+id/errorTargetDirName"
+                        android:id="@+id/textViewAutoLocusImport"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="10"
+                        android:text="@string/targetAutoImportToLocus"
+                        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+                    <CheckBox
+                        android:id="@+id/checkBoxAutoLocusImport"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:paddingRight="10dp"
-                        android:text="@string/errorPlaceholderText"
-                        android:textAppearance="?android:attr/textAppearanceSmall" />
+                        android:checked="true"
+                        android:focusable="true"
+                        android:gravity="right|center_vertical" />
+
                 </LinearLayout>
             </TableRow>
 
             <TableRow
-                android:id="@+id/tableRowUserName"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content" >
-
-                <TextView
-                    android:id="@+id/textViewUserName"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:paddingRight="10dp"
-                    android:text="@string/userName"
-                    android:textAppearance="?android:attr/textAppearanceMedium" >
-                </TextView>
-
-                <EditText
-                    android:id="@+id/editUserName"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="@string/hintUserName"
-                    android:maxLines="1"
-                    android:nextFocusDown="@+id/editSourceCachesList" />
-            </TableRow>
-
-            <TableRow
-                android:id="@+id/tableRowFoundStrategy"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" >
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="fill_parent"
-                    android:gravity="center_vertical"
-                    android:maxWidth="80dp"
-                    android:paddingRight="10dp"
-                    android:text="@string/foundStrategy"
-                    android:textAppearance="?android:attr/textAppearanceSmall" />
-
-                <RadioGroup
-                    android:id="@+id/radioFoundStrategy"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical" >
-
-                    <RadioButton
-                        android:id="@+id/radioFoundStrategySkip"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:tag="skip"
-                        android:text="@string/foundStrategySkipped" />
-
-                    <RadioButton
-                        android:id="@+id/radioFoundStrategyMark"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:tag="mark"
-                        android:text="@string/foundStrategyMarked" />
-                </RadioGroup>
-            </TableRow>
-
-            <TableRow
-                android:id="@+id/tableRowSourceCachesList"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content" 
-                android:visibility="gone">
-
-                <TextView
-                    android:id="@+id/textViewSourceCachesList"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:paddingRight="10dp"
-                    android:text="@string/sourceCachesList"
-                    android:textAppearance="?android:attr/textAppearanceSmall" >
-                </TextView>
 
                 <LinearLayout
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical" >
-
-                    <EditText
-                        android:id="@+id/editSourceCachesList"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="@string/hintSourceCachesList"
-                        android:inputType="textMultiLine"
-                        android:nextFocusDown="@+id/btnStart"
-                        android:textAppearance="?android:attr/textAppearanceSmallInverse" />
+                    android:layout_span="2"
+                    android:orientation="horizontal"
+                    android:weightSum="10"
+                    tools:ignore="UselessParent" >
 
                     <TextView
-                        android:id="@+id/errorSourceCachesList"
+                        android:id="@+id/textViewDownloadImages"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="10"
+                        android:text="@string/downloadImages_wifi"
+                        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+                    <CheckBox
+                        android:id="@+id/checkBoxDownloadImages"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:paddingRight="10dp"
-                        android:text="@string/errorPlaceholderText"
-                        android:textAppearance="?android:attr/textAppearanceSmall" />
+                        android:layout_weight="10"
+                        android:checked="true"
+                        android:focusable="true"
+                        android:gravity="right|center_vertical" />
+
                 </LinearLayout>
             </TableRow>
 
             <TableRow
-                android:id="@+id/tableRowStart"
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content" >
 
@@ -430,9 +299,12 @@
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
+                        android:minHeight="60dp"
                         android:onClick="onBtnStartClicked"
                         android:text="@string/start"
-                        android:textAppearance="?android:attr/textAppearanceLargeInverse" >
+                        android:textAppearance="?android:attr/textAppearanceLargeInverse"
+                        android:textStyle="bold" >
+
                     </Button>
 
                     <TextView
@@ -444,6 +316,7 @@
                         android:textAppearance="?android:attr/textAppearanceSmall" />
                 </LinearLayout>
             </TableRow>
+            
         </TableLayout>
 
         <TextView

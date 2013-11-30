@@ -26,6 +26,34 @@
     <string name="pref_btn_choose_directory">Wybierz</string>
     <string name="pref_btn_choose_directory_failed">Brak zainstalowanego np. OpenIntents File Manager</string>
     
+    <!-- Downloads -->
+    <string name="pref_title_downloads">Pobieranie</string>
+    <string name="pref_download_images_strategy">Pobieranie dołączonych obrazów</string>
+    <string-array name="pref_download_images_strategy_titles">
+        <item>zawsze</item>
+        <item>gdy na WiFi</item>
+        <item>nigdy</item>
+    </string-array>
+    <string-array name="pref_download_images_strategy_values">
+        <item>always</item>
+        <item>onlyOnWIFI</item>
+        <item>never</item>
+    </string-array>
+    
+    <string name="pref_download_logs_count">Ilość logów na kesz</string>
+    <string-array name="pref_download_logs_count_titles">
+        <item>10</item>
+        <item>20</item>
+        <item>50</item>
+        <item>Wszystkie!</item>
+    </string-array>
+    <integer-array name="pref_download_logs_count_values">
+        <item>10</item>
+        <item>20</item>
+        <item>50</item>
+        <item>-1</item>
+    </integer-array>
+    
     <!-- Example General settings -->
     <string name="pref_header_general">General</string>
     <string name="pref_title_social_recommendations">Enable social recommendations</string>

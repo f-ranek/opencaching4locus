@@ -1,6 +1,4 @@
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" 
-    android:title="@string/pref_title_directories"
-    android:order="1">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     
     <org.bogus.android.FolderPreference
         android:key="gpxTargetDirName"
