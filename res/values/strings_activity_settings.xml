@@ -46,12 +46,14 @@
         <item>20</item>
         <item>50</item>
         <item>Wszystkie!</item>
+        <item>Wcale :P</item>
     </string-array>
     <integer-array name="pref_download_logs_count_values">
         <item>10</item>
         <item>20</item>
         <item>50</item>
         <item>-1</item>
+        <item>0</item>
     </integer-array>
     
     <!-- Example General settings -->
