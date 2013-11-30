@@ -49,6 +49,8 @@ public class Application extends android.app.Application
         
         setupPreferences();
         
+        // TODO: cleanup gpxTargetDirNameTemp
+        
         /* SENSELESS :/
         SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
         if (config.getBoolean("Application_restartDownloadOnApplicationStart", true)){
@@ -68,7 +70,6 @@ public class Application extends android.app.Application
                 }
             }, SystemClock.uptimeMillis() + 15L*1000L);
         }*/
-        /*
         locus.api.utils.Logger.registerLogger(new locus.api.utils.Logger.ILogger(){
 
             @Override
@@ -94,7 +95,6 @@ public class Application extends android.app.Application
             {
                 android.util.Log.e(tag, msg, e);
             }});
-        */    
     }
     
     @Override

@@ -157,53 +157,16 @@ public class MainActivity extends Activity
                 hideSoftKeyboard();
             }
         });
-
-        //checkBoxAutoLocusImport.get
-		
-		//editUserName = (EditText) findViewById(R.id.editUserName);
-		/*editUserName.addTextChangedListener(new TextWatcher()
-        {
-            
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count)
-            {
-            }
-            
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after)
-            {
-            }
-            
-            @SuppressWarnings("synthetic-access")
-            @Override
-            public void afterTextChanged(Editable s)
-            {
-                setRadioGroupEnabled(radioGroupFoundStrategy, s.length() != 0);
-            }
-        });*/
-
-		//radioGroupFoundStrategy = (RadioGroup) findViewById(R.id.radioFoundStrategy);
-	    //radioGroupDownloadImagesStrategy = (RadioGroup) findViewById(R.id.radioDownloadImagesStrategy);
-		
-	    //editSourceCachesList = (EditText) findViewById(R.id.editSourceCachesList);
-
-		
-        //btnStart = (Button) findViewById(R.id.btnStart);
-        //textViewErrorOthers = (TextView)findViewById(R.id.errorOthers);
-
-        // editLat.requestFocus();
         
         errorFieldsMap.put("LOCATION", R.id.errorLocation);
         errorFieldsMap.put("CACHE_COUNT_LIMIT", R.id.errorMaxNumOfCaches);
         errorFieldsMap.put("MAX_CACHE_DISTANCE", R.id.errorMaxCacheDistance);
         errorFieldsMap.put("TARGET_FILE", R.id.errorTargetFileName);
-        //errorFieldsMap.put("CACHE_LIST", R.id.errorSourceCachesList);
 
         errorFieldsFocusMap.put("LOCATION", R.id.editLatitude);
         errorFieldsFocusMap.put("CACHE_COUNT_LIMIT", R.id.editMaxNumOfCaches);
         errorFieldsFocusMap.put("MAX_CACHE_DISTANCE", R.id.editMaxCacheDistance);
         errorFieldsFocusMap.put("TARGET_FILE", R.id.editTargetFileName);
-        //errorFieldsFocusMap.put("CACHE_LIST", R.id.editSourceCachesList);
         
         errorFieldsMap.put("", R.id.errorOthers);
         
@@ -389,7 +352,9 @@ public class MainActivity extends Activity
         //SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
         
 	    TaskConfiguration taskConfiguration = new TaskConfiguration();
-	    taskConfiguration.setLatitude(editLat.getText());
+        taskConfiguration.initFromConfig(this);
+
+        taskConfiguration.setLatitude(editLat.getText());
 	    taskConfiguration.setLongitude(editLon.getText());
 	    taskConfiguration.setMaxNumOfCaches(editMaxNumOfCaches.getText());
 	    taskConfiguration.setMaxCacheDistance(editMaxCacheDistance.getText());
@@ -397,7 +362,6 @@ public class MainActivity extends Activity
 	    taskConfiguration.setDownloadImagesStrategy(currentDownloadImagesStrategy);
 	    taskConfiguration.setDoLocusImport(checkBoxAutoLocusImport.isChecked());
 	    
-	    taskConfiguration.initFromConfig(this);
 	    taskConfiguration.parseAndValidate(this);
 	    
 	    for (String modifiedField : taskConfiguration.getModifiedFields()){
@@ -405,9 +369,6 @@ public class MainActivity extends Activity
 	            int maxNumOfCaches = taskConfiguration.getOutMaxNumOfCaches();
 	            editMaxNumOfCaches.setText(maxNumOfCaches <= 0 ? "" : String.valueOf(maxNumOfCaches));
 	        } else 
-            if ("TARGET_FILE".equals(modifiedField)){
-                editTargetFileName.setText(taskConfiguration.getTargetFileName());
-            } else
             if ("MAX_CACHE_DISTANCE".equals(modifiedField)){
                 String s;
                 if (taskConfiguration.getOutMaxCacheDistance() < 1){
@@ -430,7 +391,6 @@ public class MainActivity extends Activity
 
 	    final List<Pair<String, String>> warnings = taskConfiguration.getWarnings();
         processErrorsList(warnings, true);
-	    
         
         if (!warnings.isEmpty()){
             if (previousTaskConfiguration == null || !taskConfiguration.equals(previousTaskConfiguration)){
@@ -441,7 +401,6 @@ public class MainActivity extends Activity
         }
         
         resetViewErrors();
-        
 
         {
             final Intent intent = new Intent(this, DownloadListActivity.class);
@@ -500,45 +459,9 @@ public class MainActivity extends Activity
         config.putString("maxNumOfCaches", editMaxNumOfCaches.getText().toString());
         config.putString("downloadImagesStrategy", currentDownloadImagesStrategy);
         config.putBoolean("autoLocusImport", checkBoxAutoLocusImport.isChecked());
-        //config.putString("userName", editUserName.getText().toString());
-        
-        /*String foundStrategy = getFoundStrategy();
-        if (foundStrategy != null){
-            config.putString("foundStrategy", foundStrategy);
-        } else {
-            config.remove("foundStrategy");
-        }*/
-        
-        /*String downloadImagesStrategy = getDownloadImagesStrategy();
-        if (downloadImagesStrategy != null){
-            config.putString("downloadImagesStrategy", downloadImagesStrategy);
-        } else {
-            config.remove("downloadImagesStrategy");
-        }*/
-
-        //config.putString("sourceCachesList", editSourceCachesList.getText().toString());
 
         config.commit();
 	}
-	
-	/*protected String getFoundStrategy()
-	{
-	    return getCheckboxTag(radioGroupFoundStrategy);
-	}*/
-	
-    /*protected String getDownloadImagesStrategy()
-    {
-        return getCheckboxTag(radioGroupDownloadImagesStrategy);
-    }
-
-    protected String getCheckboxTag(RadioGroup radioGroup)
-	{
-        View radioDownloadImagesStrategy = radioGroup.findViewById(radioGroup.getCheckedRadioButtonId());
-        if (radioDownloadImagesStrategy != null){
-            return (String)radioDownloadImagesStrategy.getTag();
-        }
-        return null;
-	}*/
 	
 	@Override
 	protected void onStart()
@@ -565,22 +488,6 @@ public class MainActivity extends Activity
 		    editMaxCacheDistance.setText(config.getString("maxCacheDistance", ""));
 		    editMaxNumOfCaches.setText(config.getString("maxNumOfCaches", ""));
 		    checkBoxAutoLocusImport.setChecked(config.getBoolean("autoLocusImport", true));
-		    
-            /*editUserName.setText(config.getString("userName", ""));
-		    String foundStrategy = config.getString("foundStrategy", TaskConfiguration.FOUND_STRATEGY_MARK);
-		    RadioButton radioFoundStrategy = (RadioButton)radioGroupFoundStrategy.findViewWithTag(foundStrategy);
-		    if (radioFoundStrategy != null){
-		        radioFoundStrategy.setChecked(true);
-		    }*/
-		    
-		    // editTargetDirName.setText(config.getString("targetDirName", ""));
-            /*String downloadImagesStrategy = config.getString("downloadImagesStrategy", TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI);
-            RadioButton radioDownloadImagesStrategy = (RadioButton)radioGroupDownloadImagesStrategy.findViewWithTag(downloadImagesStrategy);
-            if (radioDownloadImagesStrategy != null){
-                radioDownloadImagesStrategy.setChecked(true);
-            }*/
-		    
-            //editSourceCachesList.setText(config.getString("sourceCachesList", ""));
             
             updateBtnGetLocationFromGps(isGpsPending());
 		}catch(Exception e){
@@ -595,34 +502,14 @@ public class MainActivity extends Activity
 	{
 	    startGetLocationFromGps(true);
 
-	    final boolean hasLocus = locus.api.android.utils.LocusUtils.isLocusAvailable(this);
+	    final boolean hasLocus = locus.api.android.utils.LocusUtils.isLocusAvailable(this, 200);
 	    if (!hasLocus){
 	        final String fileName = new SimpleDateFormat("yyyy-MM-dd_HH.mm'.gpx'").format(new Date());
 	        editTargetFileName.setText(fileName);
 	    }
         currentDownloadImagesStrategy = TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI;
-        /*RadioButton radioFoundStrategy = (RadioButton)radioGroupFoundStrategy.findViewWithTag(TaskConfiguration.FOUND_STRATEGY_MARK);
-        if (radioFoundStrategy != null){
-            radioFoundStrategy.setChecked(true);
-        }*/
-        /*RadioButton radioDownloadImagesStrategy = (RadioButton)radioGroupDownloadImagesStrategy.findViewWithTag(TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI);
-        if (radioDownloadImagesStrategy != null){
-            radioDownloadImagesStrategy.setChecked(true);
-        }*/
-        
-        //setRadioGroupEnabled(radioGroupFoundStrategy, false);
 	}
 
-	/*protected void setRadioGroupEnabled(RadioGroup radioGroup, boolean enabled)
-	{
-	    radioGroup.setEnabled(enabled);
-	    int childrenCount = radioGroup.getChildCount();
-	    for (int i=0; i<childrenCount; i++){
-	        View child = radioGroup.getChildAt(i);
-	        child.setEnabled(enabled);
-	    }
-	}*/
-	
     @Override
     public boolean onCreateOptionsMenu(Menu menu)
     {
@@ -687,7 +574,7 @@ public class MainActivity extends Activity
         currentDownloadImagesStrategy = config.getString("downloadImagesStrategy", TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI);
         updateDownloadImagesState();
 
-        final boolean hasLocus = locus.api.android.utils.LocusUtils.isLocusAvailable(this);
+        final boolean hasLocus = locus.api.android.utils.LocusUtils.isLocusAvailable(this, 200);
         tableRowAutoLocusImport.setVisibility(hasLocus ? View.VISIBLE : View.GONE);
     }
 

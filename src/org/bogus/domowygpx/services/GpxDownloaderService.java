@@ -29,6 +29,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPOutputStream;
 
+import locus.api.android.ActionFiles;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.TeeInputStream;
 import org.apache.http.Header;
@@ -419,11 +421,22 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             retrParams.put("ns_ground", "true");
             retrParams.put("ns_gsak", "true");
             retrParams.put("ns_ox", "true");
-            retrParams.put("latest_logs", "true");
             retrParams.put("images", "descrefs:all");
             retrParams.put("trackables", "desc:list");
             retrParams.put("recommendations", "desc:count");
-            retrParams.put("lpc", "all");
+            retrParams.put("attrs", "gc:attrs|desc:text|gc_ocde:attrs"); // do I need ox:tags ?
+            
+            // ("my_notes", "desc:text"); -> Auth Level 3
+
+            if (taskConfig.getMaxCacheLogs() != 0){
+                retrParams.put("latest_logs", "true");
+                if (taskConfig.getMaxCacheLogs() > 0){
+                    retrParams.put("lpc", String.valueOf(taskConfig.getMaxCacheLogs()));
+                } else {
+                    retrParams.put("lpc", "all");
+                } 
+            }
+                
             if (userUUID != null &&  TaskConfiguration.FOUND_STRATEGY_MARK.equals(taskConfig.getFoundStrategy())){
                 retrParams.put("user_uuid", userUUID);
                 retrParams.put("mark_found", "true");
@@ -610,7 +623,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     
                     //List<String> cacheList = null;
                     
-                    if (taskConfig.isHasGeoLocation()){
+                    //if (taskConfig.isHasGeoLocation()){
                         JSONObject searchParams = new JSONObject();
                         NumberFormat nf = new DecimalFormat("##0.########", new DecimalFormatSymbols(Locale.US));
                         searchParams.put("center", nf.format(taskConfig.getOutLatitude()) + "|" + nf.format(taskConfig.getOutLongitude()));
@@ -675,9 +688,9 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                                 cacheList = cacheList.subList(0, 500);
                             }
                         }*/
-                    } else {
+                    //} else {
                         //cacheList = taskConfig.getOutSourceCaches();
-                    }
+                    //}
                     
                     /*if (cacheList != null){
                         // prepare query for the final data retrieval
@@ -763,6 +776,17 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 os.flush();
                 IOUtils.closeQuietly(os);
                 os = null;
+                
+                if (taskConfig.isDoLocusImport()){
+                    try{
+                        ActionFiles.importFileLocus(GpxDownloaderService.this, 
+                            taskConfig.getOutTargetFileName(), true,
+                            Intent.FLAG_ACTIVITY_NEW_TASK);
+                    }catch(Exception e){
+                        Log.e(LOG_TAG, "Failed to start Locus", e);
+                        sendProgressInfo("Błąd importu do Locusa");
+                    }
+                }
                 
                 try{
                     final List<FileData> foundImages = imageUrlProcessor.getDataFiles();

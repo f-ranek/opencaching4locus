@@ -42,7 +42,7 @@ public class GpxProcessor implements GpxState, Closeable
     private File sourceFile;
     private InputStream sourceStream;
     private File destFileBaseName;
-    private long maxFileSize = 5*1024*1024;
+    private long maxFileSize;
     
     private List<GpxProcessMonitor> observers = new CopyOnWriteArrayList<GpxProcessMonitor>();
     
