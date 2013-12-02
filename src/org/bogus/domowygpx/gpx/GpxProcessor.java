@@ -30,6 +30,7 @@ public class GpxProcessor implements GpxState, Closeable
     
     private final static String NS_GROUNDSPEAK = "http://www.groundspeak.com/cache/1/0/1";
     private final static String NS_OPENCACHING = "http://www.opencaching.com/xmlschemas/opencaching/1/0";
+    private final static String NS_GSAK = "http://www.gsak.net/xmlv1/5";
     
     private File lastCreatedFile;
     private String currentCacheCode;
@@ -301,6 +302,7 @@ public class GpxProcessor implements GpxState, Closeable
                         
                         setPrefix("groundspeak", NS_GROUNDSPEAK);
                         setPrefix("ox", NS_OPENCACHING);
+                        setPrefix("gsak", NS_GSAK);
                     } else 
                     if (wptDepth == parserDepth-1 && "name".equals(localName))
                     {

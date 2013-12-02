@@ -421,10 +421,12 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             retrParams.put("ns_ground", "true");
             retrParams.put("ns_gsak", "true");
             retrParams.put("ns_ox", "true");
+            retrParams.put("ns_gsak", "true");
             retrParams.put("images", "descrefs:all");
             retrParams.put("trackables", "desc:list");
             retrParams.put("recommendations", "desc:count");
             retrParams.put("attrs", "gc:attrs|desc:text|gc_ocde:attrs"); // do I need ox:tags ?
+            retrParams.put("alt_wpts", "true");
             
             // ("my_notes", "desc:text"); -> Auth Level 3
 
