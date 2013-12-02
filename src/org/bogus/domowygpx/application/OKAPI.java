@@ -32,7 +32,7 @@ public class OKAPI
         if (obj == null){
             return null;
         }
-        return obj.toString().replace(getAPIUrl(), "xxxxxxxxxx");
+        return obj.toString().replace(getAPIKey(), "xxxxxxxxxx");
     }
     
     public static OKAPI getInstance(Application application)

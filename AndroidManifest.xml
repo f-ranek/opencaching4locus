@@ -28,7 +28,11 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+            <intent-filter android:icon="@drawable/ic_logo_straszne_cieniowane_9">
+                <action android:name="locus.api.android.INTENT_ITEM_MAIN_FUNCTION" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            </activity>
         <activity
             android:name="org.bogus.domowygpx.activities.DownloadListActivity"
             android:label="@string/titleActivityDownloadList"
@@ -40,6 +44,23 @@
             android:label="@string/title_activity_settings"
             android:configChanges="keyboardHidden|orientation" 
             android:launchMode="singleTop">
+        </activity>
+        <activity
+            android:name="org.bogus.domowygpx.activities.LocusSearchForCachesActivity" 
+            android:configChanges="keyboardHidden|orientation"
+            android:label="@string/titleLocusSearch"
+            android:theme="@style/Theme.Transparent"
+            android:icon="@drawable/ic_logo_straszne_cieniowane_9"
+            >
+            <intent-filter>
+                <action android:name="locus.api.android.INTENT_ITEM_POINT_TOOLS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="locus.api.android.INTENT_ITEM_SEARCH_LIST" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            
         </activity>
         
         <service
@@ -55,53 +76,60 @@
             android:label="@string/filesDownloaderServiceName" >
         </service>
         
-        <!-- activity android:name="org.bogus.domowygpx.activities.LocusImportActivity" 
+        <activity android:name="org.bogus.domowygpx.activities.LocusImportActivity" 
             android:label="@string/applicationName"
 			android:theme="@style/Theme.Transparent"
-			android:configChanges="keyboardHidden|orientation">
-			<intent-filter android:label="Opencaching OPA" android:icon="@drawable/logo_straszne">
+			android:configChanges="keyboardHidden|orientation"
+			android:enabled="false">
+			<intent-filter android:label="Opencaching OPA" android:icon="@drawable/ic_logo_straszne_cieniowane_9">
 				<action android:name="menion.android.locus.ON_POINT_ACTION" />
 				<category android:name="android.intent.category.DEFAULT" />
 			</intent-filter>
             
-            <!- - thanks to this, app appear in list of available locations - ->
-            <intent-filter android:label="Opencaching GL" android:icon="@drawable/logo_straszne">
+            <!-- thanks to this, app appear in list of available locations -->
+            <!-- Dodaj punkt na mapie -> Lokalizacja, Współrzędne -->
+            <!-- <intent-filter android:label="Opencaching GL" android:icon="@drawable/ic_logo_straszne_cieniowane_9">
                 <action android:name="locus.api.android.INTENT_ITEM_GET_LOCATION" />
                 <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
+            </intent-filter> -->
 
-            <!- - thanks to this, app appear in sub-menu of every point - ->
-            <intent-filter android:label="Opencaching PT" android:icon="@drawable/logo_straszne">
+            <!-- thanks to this, app appear in sub-menu of every point -->
+            <!-- Any point menu -->
+            <intent-filter android:label="Opencaching PT" android:icon="@drawable/ic_logo_straszne_cieniowane_9">
                 <action android:name="locus.api.android.INTENT_ITEM_POINT_TOOLS" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
-            <!- - thanks to this, app appear in function list - ->
-            <intent-filter android:label="Opencaching MF" android:icon="@drawable/logo_straszne">
+            <!-- thanks to this, app appear in function list -->
+            <!-- Menu -> Więcej, sekcja Dodatki -->
+            <!-- <intent-filter android:label="Opencaching MF" android:icon="@drawable/ic_logo_straszne_cieniowane_9">
                 <action android:name="locus.api.android.INTENT_ITEM_MAIN_FUNCTION" />
                 <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
+            </intent-filter> -->
 
-            <!- - thanks to this, app appear in searching options - ->
-            <intent-filter android:label="Opencaching SL" android:icon="@drawable/logo_straszne">
+            <!-- thanks to this, app appear in searching options -->
+            <!-- Menu -> Szukaj -->
+            <intent-filter android:label="Opencaching SL" android:icon="@drawable/ic_logo_straszne_cieniowane_9">
                 <action android:name="locus.api.android.INTENT_ITEM_SEARCH_LIST" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
-            <!- - thanks to this, app appear in points screen - tools button - ->
-            <intent-filter android:label="Opencaching PST" android:icon="@drawable/logo_straszne">
+            <!-- thanks to this, app appear in points screen - tools button -->
+            <!-- Dane -> Punkty -> Katalog -->
+            <!-- <intent-filter android:label="Opencaching PST" android:icon="@drawable/ic_logo_straszne_cieniowane_9">
                 <action android:name="locus.api.android.INTENT_ITEM_POINTS_SCREEN_TOOLS" />
                 <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
+            </intent-filter> -->
 
-            <intent-filter android:label="Opencaching PT GC" android:icon="@drawable/logo_straszne">
+            <!-- GeoCaching point menu -->
+            <!-- <intent-filter android:label="Opencaching PT GC" android:icon="@drawable/ic_logo_straszne_cieniowane_9">
                 <action android:name="locus.api.android.INTENT_ITEM_POINT_TOOLS" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="locus" />
                 <data android:path="menion.android.locus/point_geocache" />
-            </intent-filter>
+            </intent-filter> -->
 
-		</activity-->
+		</activity>
     </application>
 
 </manifest>

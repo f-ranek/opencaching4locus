@@ -1,20 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="fill_parent"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content" >
 
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical" >
-
-        <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:text="@string/info1"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
 
         <TableLayout
             android:layout_width="fill_parent"
@@ -28,23 +17,19 @@
                 android:layout_height="wrap_content" >
 
                 <TextView
+                    android:id="@+id/textViewGeoPosition"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"
+                    android:layout_span="2"
+                    android:gravity="center"
+                    android:paddingBottom="5dp"
                     android:paddingRight="10dp"
-                    android:text="@string/latitude"
-                    android:textAppearance="?android:attr/textAppearanceMedium" >
-                </TextView>
+                    android:text="GEO_POSITION_GOES_HERE"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    tools:ignore="HardcodedText" >
 
-                <EditText
-                    android:id="@+id/editLatitude"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="@string/hintGeoData"
-                    android:inputType="textNoSuggestions"
-                    android:maxLines="1"
-                    android:nextFocusDown="@+id/editLongitude" >
-                </EditText>
+                </TextView>
             </TableRow>
 
             <TableRow
@@ -52,62 +37,7 @@
                 android:layout_height="wrap_content" >
 
                 <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:paddingRight="10dp"
-                    android:text="@string/longitude"
-                    android:textAppearance="?android:attr/textAppearanceMedium" >
-                </TextView>
-
-                <LinearLayout
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical" >
-
-                    <EditText
-                        android:id="@+id/editLongitude"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="@string/hintGeoData"
-                        android:inputType="textNoSuggestions"
-                        android:maxLines="1"
-                        android:nextFocusDown="@+id/editMaxNumOfCaches" />
-
-                    <TextView
-                        android:id="@+id/errorLocation"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:paddingRight="10dp"
-                        android:text="@string/errorPlaceholderText"
-                        android:textAppearance="?android:attr/textAppearanceSmall" />
-                </LinearLayout>
-            </TableRow>
-
-            <TableRow
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" >
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:paddingRight="10dp"
-                    android:textAppearance="?android:attr/textAppearanceMedium" >
-                </TextView>
-
-                <Button
-                    android:id="@+id/btnGetLocationFromGps"
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/getLocationFromGps"
-                    android:textAppearance="?android:attr/textAppearanceMediumInverse" />
-            </TableRow>
-
-            <TableRow
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content" >
-
-                <TextView
+                    android:id="@+id/textViewMaxNumOfCaches"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"
@@ -146,6 +76,7 @@
                 android:layout_height="wrap_content" >
 
                 <TextView
+                    android:id="@+id/textViewMaxCacheDistance"
                     android:layout_width="wrap_content"
                     android:layout_height="fill_parent"
                     android:layout_gravity="center_vertical"
@@ -182,73 +113,6 @@
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content" >
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:paddingRight="10dp"
-                    android:text="@string/targetFileName"
-                    android:textAppearance="?android:attr/textAppearanceMedium" />
-
-                <LinearLayout
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical" >
-
-                    <EditText
-                        android:id="@+id/editTargetFileName"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="@string/hintTargetFileName"
-                        android:inputType="textMultiLine" />
-
-                    <TextView
-                        android:id="@+id/errorTargetFileName"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:paddingRight="10dp"
-                        android:text="@string/errorPlaceholderText"
-                        android:textAppearance="?android:attr/textAppearanceSmall" />
-                </LinearLayout>
-            </TableRow>
-
-
-            <TableRow
-                android:id="@+id/tableRowAutoLocusImport"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content" >
-
-                <LinearLayout
-                    android:layout_width="fill_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_span="2"
-                    android:orientation="horizontal"
-                    android:weightSum="10"
-                    tools:ignore="UselessParent" >
-
-                    <TextView
-                        android:id="@+id/textViewAutoLocusImport"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="10"
-                        android:text="@string/targetAutoImportToLocus"
-                        android:textAppearance="?android:attr/textAppearanceLarge" />
-
-                    <CheckBox
-                        android:id="@+id/checkBoxAutoLocusImport"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:checked="true"
-                        android:focusable="true"
-                        android:gravity="right|center_vertical" />
-
-                </LinearLayout>
-            </TableRow>
-
-            <TableRow
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content" >
-
                 <LinearLayout
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
@@ -278,6 +142,38 @@
             </TableRow>
 
             <TableRow
+                android:id="@+id/tableRowDontAskAgain"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" >
+
+                <LinearLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_span="2"
+                    android:orientation="horizontal"
+                    android:weightSum="10"
+                    tools:ignore="UselessParent" >
+
+                    <TextView
+                        android:id="@+id/textViewDontAskAgain"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="10"
+                        android:text="@string/dontAskAgain"
+                        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+                    <CheckBox
+                        android:id="@+id/checkBoxDontAskAgain"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="10"
+                        android:checked="false"
+                        android:focusable="true"
+                        android:gravity="right|center_vertical" />
+                </LinearLayout>
+            </TableRow>
+
+            <TableRow
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content" >
 
@@ -287,18 +183,6 @@
                     android:layout_span="2"
                     android:orientation="vertical"
                     tools:ignore="UselessParent" >
-
-                    <Button
-                        android:id="@+id/btnStart"
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:minHeight="60dp"
-                        android:text="@string/start"
-                        android:textAppearance="?android:attr/textAppearanceLargeInverse"
-                        android:textStyle="bold" >
-
-                    </Button>
 
                     <TextView
                         android:id="@+id/errorOthers"
@@ -311,22 +195,6 @@
             </TableRow>
             
         </TableLayout>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:text="@string/star"
-            android:textAppearance="?android:attr/textAppearanceMedium" >
-        </TextView>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:text="@string/history"
-            android:textAppearance="?android:attr/textAppearanceMedium" >
-        </TextView>
-    </LinearLayout>
+    
 
 </ScrollView>

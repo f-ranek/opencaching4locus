@@ -54,6 +54,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.os.MessageQueue;
 import android.os.Messenger;
 import android.os.Parcelable;
 import android.os.RemoteException;
@@ -620,10 +621,10 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
      * @return false, if no files have been scheduled for a download (this should not happen)
      */
     protected boolean startTaskFromDatabase(
-        FilesDownloadTask task, 
+        final FilesDownloadTask task, 
         boolean restartFromScratch) 
     {
-        List<FileData> files = null; 
+        final List<FileData> files; 
         database.beginTransaction();
         try{
             synchronized(task){
@@ -654,9 +655,18 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         }finally{
             database.endTransaction();
         }
-        for (FileData file : files){
-            task.filesDownloader.submit(file);
-        }
+        
+        final MessageQueue queue = Looper.myQueue();
+        queue.addIdleHandler(new MessageQueue.IdleHandler(){
+
+            @Override
+            public boolean queueIdle()
+            {
+                for (FileData file : files){
+                    task.filesDownloader.submit(file);
+                }
+                return false;
+            }});
         return files.size() > 0;
     }
     

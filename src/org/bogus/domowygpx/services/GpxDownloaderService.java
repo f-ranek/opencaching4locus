@@ -83,7 +83,9 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.os.MessageQueue;
 import android.os.Messenger;
+import android.os.RemoteException;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.util.Pair;
@@ -100,7 +102,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
     synchronized HttpClient getHttpClient(){
         if (httpClient == null){
             HttpClient aHttpClient = HttpClientFactory.createHttpClient(true, this);
-            aHttpClient.getParams().setIntParameter(HttpClientFactory.RAW_SOCKET_RECEIVE_BUFFER_SIZE, 32*1024);
+            // aHttpClient.getParams().setIntParameter(HttpClientFactory.RAW_SOCKET_RECEIVE_BUFFER_SIZE, 32*1024);
             httpClient = aHttpClient;
         }
         return httpClient;        
@@ -545,11 +547,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         
         private boolean processDefaultException(Exception e)
         {
-            /*if (e instanceof IOException && !(e instanceof FileNotFoundException || e instanceof HttpException)
-            ){
-                setErrorDescription("Błąd komunikacji sieciowej", e); 
-                return true;
-            }*/
             if (e instanceof SocketException || 
                     e instanceof UnknownHostException ||
                     e instanceof org.apache.http.client.ClientProtocolException ||
@@ -780,14 +777,23 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 os = null;
                 
                 if (taskConfig.isDoLocusImport()){
-                    try{
-                        ActionFiles.importFileLocus(GpxDownloaderService.this, 
-                            taskConfig.getOutTargetFileName(), true,
-                            Intent.FLAG_ACTIVITY_NEW_TASK);
-                    }catch(Exception e){
-                        Log.e(LOG_TAG, "Failed to start Locus", e);
-                        sendProgressInfo("Błąd importu do Locusa");
-                    }
+                    // TODO: do not invoke Locus if no caches has been found
+                    // instead, display a message -> but in UI, not service :-]
+                    new Handler(Looper.getMainLooper()).postDelayed(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            try{
+                                ActionFiles.importFileLocus(GpxDownloaderService.this, 
+                                    taskConfig.getOutTargetFileName(), true,
+                                    Intent.FLAG_ACTIVITY_NEW_TASK);
+                            }catch(Exception e){
+                                Log.e(LOG_TAG, "Failed to start Locus", e);
+                                sendProgressInfo("Błąd importu do Locusa");
+                            }
+                        }
+                    }, 250);
                 }
                 
                 try{
@@ -1051,28 +1057,10 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
     }    
     
     @Override
-    public /*synchronized*/ IBinder onBind(Intent intent)
+    public IBinder onBind(Intent intent)
     {
-        //boundClientsCount++;
-        //Log.i(LOG_TAG, "Client has bound, boundClientsCount=" + boundClientsCount);
         return mBinder;
     }
-    
-    /*@Override
-    public synchronized void onRebind(Intent intent)
-    {
-        boundClientsCount++;
-        Log.i(LOG_TAG, "Client has rebound, boundClientsCount=" + boundClientsCount);
-    }
-
-    @Override
-    public synchronized boolean onUnbind(Intent intent)
-    {
-        boundClientsCount--;
-        Log.i(LOG_TAG, "Client has unbound, boundClientsCount=" + boundClientsCount);
-        shutdownSelf();
-        return true;
-    }*/
     
     @SuppressWarnings("deprecation")
     static String urlEncode(Object object)
@@ -1103,7 +1091,26 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 final GpxTask gpxTask = createTask(taskConfiguration);
                 final WorkerThread thread = new WorkerThread(taskConfiguration, gpxTask);
                 threads.add(thread);
-                thread.start();
+                
+                final Messenger messenger = intent.getExtras().getParcelable(INTENT_EXTRA_MESSENGER);
+                if (messenger != null){
+                    try{
+                        messenger.send(Message.obtain(null, 0, gpxTask.taskId, 0));
+                    }catch(RemoteException re){
+                        
+                    }
+                }
+                
+                final MessageQueue queue = Looper.myQueue();
+                queue.addIdleHandler(new MessageQueue.IdleHandler(){
+
+                    @Override
+                    public boolean queueIdle()
+                    {
+                        thread.start();
+                        return false;
+                    }});
+                
             } else
             {
                 Log.w(LOG_TAG, "Got unknown action=" + action);
@@ -1117,7 +1124,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
     protected void showNotification(NotificationCompat.Builder builder, boolean foreground)
     {
         builder.setSmallIcon(Application.getInstance(this).getNotificationIconResid());
-        // builder.setLargeIcon(getResources().getDrawable(777));
         
         final Context appContext = getApplicationContext();
      
@@ -1233,9 +1239,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
     
     protected synchronized void workFinished(WorkerThread t)
     {
-        //synchronized(finishedTasks){
-        //    finishedTasks.add(t.gpxTask);
-        //}
         threads.remove(t);
         updateNotification();
         shutdownSelf();
@@ -1430,7 +1433,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
      */
     void updateTaskInDatabase(GpxTask task, GpxTaskEvent event)
     {
-        //Log.i(LOG_TAG, "setTaskState, taskId=" + taskId + ", newState=" + newState);
         database.beginTransaction();
         try{
             final ContentValues updateValues = new ContentValues();
@@ -1479,17 +1481,9 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         }
     }
     
-    //protected void loadTasksData()
-    //{
-        // at this point, database has been clean up from stale active tasks 
-    //    finishedTasks.clear();
-    //    finishedTasks.addAll(getTasks(-1, false));
-    //}
-    
     @Override
     public List<GpxTask> getTasks(int filterTaskId, boolean attachEvents)
     {
-        Log.i(LOG_TAG, "getTaskEvents, taskId=" + filterTaskId + ", attachEvents=" + attachEvents + " START");
         List<GpxTask> result = null;
         database.beginTransaction();
         try{
@@ -1579,7 +1573,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             }
         }
         
-        Log.i(LOG_TAG, "getTaskEvents, taskId=" + filterTaskId + ", attachEvents=" + attachEvents + " END, count=" + result.size());
         return result;
     }
     
@@ -1622,9 +1615,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
     @Override
     public boolean removeTask(final int taskId)
     {
-        Log.i(LOG_TAG, "removeTask, taskId=" + taskId + ", START");
         boolean dbResult = false;
-        //boolean localResult = false;
         database.beginTransaction();
         try{
             // remove task if it's finished
@@ -1641,18 +1632,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             database.endTransaction();
         }
 
-        //synchronized(finishedTasks){
-        //    Iterator<GpxTask> finishedTasksIt = finishedTasks.iterator();
-        //    while(finishedTasksIt.hasNext()){
-        //        if (finishedTasksIt.next().taskId == taskId){
-        //            finishedTasksIt.remove();
-        //            localResult = true;
-        //            break;
-        //        }
-        //    }
-        //}        
-        
-        if (/*localResult || */dbResult){
+        if (dbResult){
             for (Pair<Handler, GpxDownloaderListener> client : listeners){
                 final GpxDownloaderListener listener = client.second;
                 if (client.first.getLooper() == Looper.getMainLooper()){
@@ -1668,9 +1648,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             }
         }
         
-        Log.i(LOG_TAG, "removeTask, taskId=" + taskId + ", dbResult=" + dbResult/* + ", localResult=" + localResult*/);
-        
-        return /*localResult ||*/ dbResult;
+        return dbResult;
     }
     
     @Override
@@ -1688,11 +1666,9 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                         // ignore
                     }
                 }
-                Log.i(LOG_TAG, "cancelTask, taskId=" + taskId + ", result=true");
                 return true;
             }
         }
-        Log.i(LOG_TAG, "cancelTask, taskId=" + taskId + ", result=false");
         return false;
     }
     
@@ -1718,31 +1694,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         return sb.toString();
     }
     
-    /*@Override
-    public boolean markTaskEventsSeen(int taskId)
-    {
-        Log.i(LOG_TAG, "markTaskEventsSeen, taskId=" + taskId + ", START");
-        boolean result = false;
-        database.beginTransaction();
-        try{
-            String sql = "update tasks set flags=flags|" + GpxTaskEvents.EVENTS_FLAG_SEEN + 
-                " where state != 0 and (flags&" + GpxTaskEvents.EVENTS_FLAG_SEEN + ")=0 and _id=" + taskId; 
-            database.execSQL(sql);
-            Cursor cursor = database.rawQuery("SELECT changes()", null);
-            if (cursor.moveToFirst()){
-                result = cursor.getInt(0) != 0;
-            }
-            cursor.close();
-            database.setTransactionSuccessful();
-        }finally{
-            database.endTransaction();
-        }
-        Log.i(LOG_TAG, "markTaskEventsSeen, taskId=" + taskId + ", result=" + result);
-        return result;
-    }*/
-    
-    
-     @Override
+    @Override
     public void registerEventListener(GpxDownloaderListener listener)
     {
         if (listener == null){
@@ -1771,13 +1723,11 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
     @Override
     public synchronized void onDestroy()
     {
-        Log.i(LOG_TAG, "Called onDestroy, threadsCount=" + threads.size() + 
-            /*" boundClientsCount=" + boundClientsCount +*/ ", listeners=" + listeners);
+        Log.i(LOG_TAG, "Called onDestroy, threadsCount=" + threads.size() + ", listeners=" + listeners);
         for (WorkerThread t : threads){
             t.interrupt();
         }
         threads.clear();
-        //finishedTasks.clear();        
         listeners.clear();
         
         closeHttpClient();
@@ -1785,7 +1735,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         databaseHelper.close();
         databaseHelper = null;
         database = null;
-        //boundClientsCount = 0;
     }
 
     

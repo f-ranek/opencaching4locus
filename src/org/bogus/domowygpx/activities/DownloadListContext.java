@@ -28,21 +28,16 @@ import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-public class DownloadListItems
+public abstract class DownloadListContext
 {
-    public abstract static class ListItemContext
-    {
-        Context context;
-        GpxDownloaderApi gpxDownloader;
-        FilesDownloaderApi filesDownloader;
-        Handler handler;
-        
-        abstract void notifyDataSetChanged();
-    }
+    Context context;
+    GpxDownloaderApi gpxDownloader;
+    FilesDownloaderApi filesDownloader;
+    Handler handler;
     
+    abstract void notifyDataSetChanged();
     
-    
-    static class ListItemViewHolder {
+    class ListItemViewHolder {
         
         View viewRoot;
         TextView textViewMainInfo;
@@ -77,17 +72,12 @@ public class DownloadListItems
             btnDownloadItemStop.setVisibility(View.GONE);
             btnDownloadItemPlay.setVisibility(View.GONE);
             btnDownloadItemCancel.setVisibility(View.GONE);
+            // visual view editor can not handle that
+            textViewMainInfo.setTextAppearance(context, R.style.TextAppearance_Large);
         }
     }
 
-    static abstract class BaseListItem {
-        
-        protected final ListItemContext ctx;
-
-        public BaseListItem(ListItemContext context)
-        {
-            this.ctx = context;
-        }
+    abstract class BaseListItem {
         
         String formatDate(final long date)
         {
@@ -97,11 +87,11 @@ public class DownloadListItems
             final Date date2 = new Date(date);
             
             if (diffHours > 12 || date > now){
-                final DateFormat df2 = android.text.format.DateFormat.getMediumDateFormat(ctx.context);
+                final DateFormat df2 = android.text.format.DateFormat.getMediumDateFormat(context);
                 sb.append(df2.format(date2));
                 sb.append('\n');
             }
-            final DateFormat df1 = android.text.format.DateFormat.getTimeFormat(ctx.context);
+            final DateFormat df1 = android.text.format.DateFormat.getTimeFormat(context);
             sb.append(df1.format(date2));
             return sb.toString();
         }
@@ -137,7 +127,6 @@ public class DownloadListItems
         {
             holder.textViewMainInfo.setText(message);
             holder.textViewDateInfo.setText(createdDate);
-            final Context context = ctx.context; 
             if (isError){
                 holder.textViewMainInfo.setTextAppearance(context, R.style.TextAppearance_Large_Error);
             } else
@@ -267,18 +256,13 @@ public class DownloadListItems
         }
     }
     
-    static class GpxListItem extends BaseListItem {
+    class GpxListItem extends BaseListItem {
         
         int totalSize;
         int stateCode;
         boolean cancelling;
         
         Runnable statusUpdater;
-        
-        public GpxListItem(ListItemContext context)
-        {
-            super(context);
-        }
         
         final View.OnClickListener onCancelListener = new View.OnClickListener()
         {
@@ -291,9 +275,9 @@ public class DownloadListItems
         
         void cancel()
         {
-            if (ctx.gpxDownloader.cancelTask(taskId)){
+            if (gpxDownloader.cancelTask(taskId)){
                 cancelling = true;
-                ctx.notifyDataSetChanged();
+                notifyDataSetChanged();
             }
         }
         
@@ -330,7 +314,7 @@ public class DownloadListItems
         @Override
         void onItemRemoval()
         {
-            ctx.gpxDownloader.removeTask(taskId);
+            gpxDownloader.removeTask(taskId);
         }
         
         @Override
@@ -349,14 +333,14 @@ public class DownloadListItems
                     cancel();
                     return true;
                 case R.id.actionDownloadItemDevDetails:
-                    String devDetails = ctx.gpxDownloader.taskToDeveloperDebugString(taskId);
-                    AndroidUtils.showDeveloperDetailsInfo(ctx.context, devDetails);
+                    String devDetails = gpxDownloader.taskToDeveloperDebugString(taskId);
+                    AndroidUtils.showDeveloperDetailsInfo(context, devDetails);
                     return true;
             }
             return super.onContextMenuItemSelected(item);
         }
         
-        boolean onGpxEventInternal(GpxTask task, GpxTaskEvent event)
+        boolean onGpxEvent(GpxTask task, GpxTaskEvent event)
         {
             boolean updateView = false;
             updateView |= stateCode != task.stateCode;
@@ -383,8 +367,8 @@ public class DownloadListItems
                         @Override
                         public void onTaskEvent(GpxTaskEvent event, GpxTask task)
                         {
-                            if (GpxListItem.this.onGpxEventInternal(task, event)){
-                                ctx.notifyDataSetChanged();
+                            if (GpxListItem.this.onGpxEvent(task, event)){
+                                notifyDataSetChanged();
                             }
                         }
                         
@@ -398,17 +382,17 @@ public class DownloadListItems
                     public void run()
                     {
                         boolean updated = false;
-                        if (ctx.gpxDownloader != null){
-                            updated = ctx.gpxDownloader.updateCurrentCacheStatus(taskId, statusUpdaterListener);
+                        if (gpxDownloader != null){
+                            updated = gpxDownloader.updateCurrentCacheStatus(taskId, statusUpdaterListener);
                         }
                         if (!updated || statusUpdater == null){
                             statusUpdater = null;
                         } else {
-                            ctx.handler.postDelayed(statusUpdater, 1000);
+                            handler.postDelayed(statusUpdater, 1000);
                         }
                     }
                 };
-                ctx.handler.postDelayed(statusUpdater, 1000);
+                handler.postDelayed(statusUpdater, 1000);
             }
             
             if (task.stateCode == GpxTask.STATE_ERROR  || 
@@ -473,7 +457,7 @@ public class DownloadListItems
                 msg.append(", ");
             }
             if (task.totalCacheCount > 0){
-                msg.append(ctx.context.getResources().getQuantityString(
+                msg.append(context.getResources().getQuantityString(
                     R.plurals.cache, task.totalCacheCount, task.totalCacheCount));
             }
             if (totalSize > 0){
@@ -484,12 +468,7 @@ public class DownloadListItems
         }
     }
     
-    static class FileListItem extends BaseListItem {
-        
-        public FileListItem(ListItemContext context)
-        {
-            super(context);
-        }
+    class FileListItem extends BaseListItem {
 
         private long oldTotalSize;
         FilesDownloadTask task;
@@ -507,7 +486,7 @@ public class DownloadListItems
             @Override
             public void onClick(View v)
             {
-                ctx.filesDownloader.stopTask(taskId);
+                filesDownloader.stopTask(taskId);
             }
         };
 
@@ -516,17 +495,17 @@ public class DownloadListItems
             @Override
             public void onClick(View v)
             {
-                ctx.filesDownloader.cancelTask(taskId);
+                filesDownloader.cancelTask(taskId);
             }
         };
         
         void replay(boolean restartFromScratch)
         {
-            boolean result = ctx.filesDownloader.restartTask(taskId, restartFromScratch);
+            boolean result = filesDownloader.restartTask(taskId, restartFromScratch);
             if (result){
                 progressCurrent = 0;
                 progressMax = -1; 
-                ctx.notifyDataSetChanged();
+                notifyDataSetChanged();
             }
         }
         
@@ -631,14 +610,14 @@ public class DownloadListItems
                     replay(true);
                     return true;
                 case R.id.actionDownloadItemStop:
-                    ctx.filesDownloader.stopTask(taskId);
+                    filesDownloader.stopTask(taskId);
                     return true;
                 case R.id.actionDownloadItemCancel:
-                    ctx.filesDownloader.cancelTask(taskId);
+                    filesDownloader.cancelTask(taskId);
                     return true;
                 case R.id.actionDownloadItemDevDetails:
-                    String devDetails = ctx.filesDownloader.taskToDeveloperDebugString(taskId);
-                    AndroidUtils.showDeveloperDetailsInfo(ctx.context, devDetails);
+                    String devDetails = filesDownloader.taskToDeveloperDebugString(taskId);
+                    AndroidUtils.showDeveloperDetailsInfo(context, devDetails);
                     return true;
             }
             return super.onContextMenuItemSelected(item);
@@ -673,7 +652,7 @@ public class DownloadListItems
         private void generateDetails()
         {
             StringBuilder msg = new StringBuilder(128);
-            msg.append(ctx.context.getResources().getQuantityString(
+            msg.append(context.getResources().getQuantityString(
                 task.finishedFiles == task.totalFiles ? R.plurals.filesCount : R.plurals.filesCountOverTotal, 
                 task.finishedFiles, task.finishedFiles, task.totalFiles));
             if (task.totalDownloadSize > 1024){
@@ -683,13 +662,13 @@ public class DownloadListItems
             int errors = task.permanentErrorFiles + task.transientErrorFiles;
             if (errors > 0){
                 msg.append(", ");
-                msg.append(ctx.context.getResources().getQuantityString(
+                msg.append(context.getResources().getQuantityString(
                     R.plurals.error, errors, errors));
             }
             int skipped = task.skippedFiles;
             if (skipped > 0){
                 msg.append(", ");
-                msg.append(ctx.context.getResources().getQuantityString(
+                msg.append(context.getResources().getQuantityString(
                     R.plurals.skipped, skipped, skipped));
             }
             if (msg.length() > 0){
@@ -778,22 +757,16 @@ public class DownloadListItems
         @Override
         void onItemRemoval()
         {
-            ctx.filesDownloader.removeTask(taskId);
+            filesDownloader.removeTask(taskId);
         }
-
         
     }
     
     
-    static class OperationsListAdapter extends BaseAdapter
+    class OperationsListAdapter extends BaseAdapter
     {
-        private LayoutInflater layoutInflater;
+        private LayoutInflater layoutInflater = LayoutInflater.from(context);
         final List<BaseListItem> listItems = new ArrayList<BaseListItem>();
-        
-        public OperationsListAdapter(Context context)
-        {
-            layoutInflater = LayoutInflater.from(context);
-        }
         
         @Override
         public boolean hasStableIds() {

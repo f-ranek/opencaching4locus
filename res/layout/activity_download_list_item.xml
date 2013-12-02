@@ -24,7 +24,7 @@
             android:longClickable="false"
             android:paddingRight="4dp"
             android:text="Tu będzie opis tego, co się właśnie dzieje"
-            android:textAppearance="?style/TextAppearance.Large"
+            android:textAppearance="?android:attr/textAppearanceLarge"
             tools:ignore="HardcodedText" />
 
         <TextView

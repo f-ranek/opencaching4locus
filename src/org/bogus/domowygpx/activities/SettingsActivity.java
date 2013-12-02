@@ -3,6 +3,7 @@ package org.bogus.domowygpx.activities;
 import java.util.List;
 import java.util.Map;
 
+import org.bogus.android.AndroidUtils;
 import org.bogus.android.FolderPreference;
 import org.bogus.android.FolderPreferenceHelperActivity;
 import org.bogus.android.IntListPreference;
@@ -12,6 +13,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
@@ -86,6 +88,17 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
         getPreferenceScreen().addPreference(fakeHeader);
         addPreferencesFromResource(R.xml.pref_directories);
         
+        Preference pref = findPreference("downloadImagesStrategy");
+        CompoundPreferenceChangeListener.add(pref, new Preference.OnPreferenceChangeListener(){
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue)
+            {
+                Editor editor = preference.getSharedPreferences().edit();
+                editor.putString("Locus.downloadImagesStrategy", AndroidUtils.toString(newValue));
+                editor.commit();
+                return true;
+            }});
+        
         PreferenceScreen preferenceScreen = getPreferenceScreen();
         final Map<String, ?> allConfigValues = getPreferenceManager().getSharedPreferences().getAll();
         setupPrefereneHierarchy(preferenceScreen, allConfigValues);
@@ -102,8 +115,8 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
                 PreferenceGroup group2 = ((PreferenceGroup)item);
                 setupPrefereneHierarchy(group2, values);
             } else {
-                final String key = item.getKey(); 
-                item.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
+                final String key = item.getKey();
+                CompoundPreferenceChangeListener.add(item, sBindPreferenceSummaryToValueListener);
                 Object value = values.get(key);
                 sBindPreferenceSummaryToValueListener.onPreferenceChange(item, value);
                 
@@ -238,7 +251,7 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
     static void bindPreferenceSummaryToValue(Preference preference)
     {
         // Set the listener to watch for value changes.
-        preference.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
+        CompoundPreferenceChangeListener.add(preference, sBindPreferenceSummaryToValueListener);
 
         // Trigger the listener immediately with the preference's
         // current value.
@@ -273,7 +286,7 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
      * This fragment shows general preferences only. It is used when the
      * activity is showing a two-pane settings UI.
      */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    /*@TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static class GeneralPreferenceFragment extends PreferenceFragment
     {
         @Override
@@ -289,13 +302,13 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
             bindPreferenceSummaryToValue(findPreference("example_text"));
             bindPreferenceSummaryToValue(findPreference("example_list"));
         }
-    }
+    }*/
 
     /**
      * This fragment shows data and sync preferences only. It is used when the
      * activity is showing a two-pane settings UI.
      */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    /*@TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static class DataSyncPreferenceFragment extends PreferenceFragment
     {
         @Override
@@ -310,7 +323,7 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
             // guidelines.
             bindPreferenceSummaryToValue(findPreference("sync_frequency"));
         }
-    }
+    }*/
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
@@ -338,5 +351,51 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
         if (currActivityResultListener == self){
             currActivityResultListener = null;
         }
+    }
+    
+    static class CompoundPreferenceChangeListener implements Preference.OnPreferenceChangeListener
+    {
+        private Preference.OnPreferenceChangeListener[] listeners;
+
+        public CompoundPreferenceChangeListener(Preference.OnPreferenceChangeListener... listeners)
+        {
+            this.listeners = listeners;
+        }
+        
+        public static void add(Preference preference, 
+            Preference.OnPreferenceChangeListener listener)
+        {
+            if (preference == null || listener == null){
+                throw new NullPointerException();
+            }
+            
+            final Preference.OnPreferenceChangeListener prev = preference.getOnPreferenceChangeListener();
+            if (prev == null){
+                preference.setOnPreferenceChangeListener(listener);
+            } else 
+            if (prev instanceof Preference.OnPreferenceChangeListener){
+                CompoundPreferenceChangeListener cpl = (CompoundPreferenceChangeListener)prev;
+                Preference.OnPreferenceChangeListener[] listeners = 
+                        new Preference.OnPreferenceChangeListener[cpl.listeners.length+1];
+                System.arraycopy(cpl.listeners, 0, listeners, 0, cpl.listeners.length);
+                listeners[listeners.length-1] = listener;
+                preference.setOnPreferenceChangeListener(new CompoundPreferenceChangeListener(listeners));
+            } else {
+                preference.setOnPreferenceChangeListener(new CompoundPreferenceChangeListener(prev, listener));
+            }
+        }
+        
+        @Override
+        public boolean onPreferenceChange(Preference preference, Object newValue)
+        {
+            boolean result = true;
+            for(Preference.OnPreferenceChangeListener listener: listeners){
+                if (!listener.onPreferenceChange(preference, newValue)){
+                    result = false;
+                }
+            }
+            return result;
+        }
+        
     }
 }

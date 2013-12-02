@@ -6,11 +6,10 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.bogus.android.swipe2dismiss.SwipeDismissListViewTouchListener;
-import org.bogus.domowygpx.activities.DownloadListItems.BaseListItem;
-import org.bogus.domowygpx.activities.DownloadListItems.FileListItem;
-import org.bogus.domowygpx.activities.DownloadListItems.GpxListItem;
-import org.bogus.domowygpx.activities.DownloadListItems.ListItemContext;
-import org.bogus.domowygpx.activities.DownloadListItems.OperationsListAdapter;
+import org.bogus.domowygpx.activities.DownloadListContext.BaseListItem;
+import org.bogus.domowygpx.activities.DownloadListContext.FileListItem;
+import org.bogus.domowygpx.activities.DownloadListContext.GpxListItem;
+import org.bogus.domowygpx.activities.DownloadListContext.OperationsListAdapter;
 import org.bogus.domowygpx.services.FilesDownloaderListener;
 import org.bogus.domowygpx.services.FilesDownloaderService;
 import org.bogus.domowygpx.services.FilesDownloaderService.FilesDownloadTask;
@@ -49,7 +48,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
     
     private final static boolean FORCE_OLD_SWIPE_TO_REMOVE = false;
     
-    final ListItemContext listItemContext = new ListItemContext(){
+    final DownloadListContext listItemContext = new DownloadListContext(){
         @Override
         void notifyDataSetChanged()
         {
@@ -104,7 +103,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
                 return (GpxListItem)listItem;
             }
         }
-        GpxListItem result = new GpxListItem(listItemContext);
+        GpxListItem result = listItemContext.new GpxListItem();
         result.createdDateVal = task.createdDate;
         result.taskId = taskId;
         result.stableId = ++stableIdCounter;
@@ -123,7 +122,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
                 return (FileListItem)listItem;
             }
         }
-        FileListItem result = new FileListItem(listItemContext);
+        FileListItem result = listItemContext.new FileListItem();
         result.createdDateVal = task.createdDate;
         result.taskId = taskId;
         result.stableId = ++stableIdCounter;
@@ -220,7 +219,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
 
         listViewOperations = (ListView)findViewById(R.id.listViewOperations);
         
-        listViewAdapter = new OperationsListAdapter(this);
+        listViewAdapter = listItemContext.new OperationsListAdapter();
         if (!FORCE_OLD_SWIPE_TO_REMOVE && android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1){
             SwipeDismissListViewTouchListener touchListener =
                     new SwipeDismissListViewTouchListener(
@@ -266,7 +265,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
     protected boolean onGpxEventInternal(GpxTask task, final GpxTaskEvent event, boolean bulkOperation)
     {
         final GpxListItem listItem = getGpxListItem(task, bulkOperation);
-        boolean updateView = listItem.onGpxEventInternal(task, event);
+        boolean updateView = listItem.onGpxEvent(task, event);
         return updateView;
     }
     

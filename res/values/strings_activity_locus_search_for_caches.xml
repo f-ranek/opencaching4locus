@@ -1,0 +1,7 @@
+<resources>
+
+    <string name="titleLocusSearch">Szukaj keszy w pobliżu</string>
+    <string name="titleLocusSearchInProgress">Pracuję&#8230;</string>
+    <string name="dontAskAgain">Nie pytaj więcej</string>
+    <string name="btnClose">Zamknij</string>
+</resources>

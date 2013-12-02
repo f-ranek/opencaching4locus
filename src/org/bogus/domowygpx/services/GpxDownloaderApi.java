@@ -6,6 +6,8 @@ import org.bogus.domowygpx.activities.TaskConfiguration;
 import org.bogus.domowygpx.services.GpxDownloaderService.GpxTask;
 import org.bogus.domowygpx.services.GpxDownloaderService.GpxTaskEvent;
 
+import android.os.Messenger;
+
 /**
  * Interface to interact with GpxDownloader service 
  * @author Boguś
@@ -20,6 +22,11 @@ public interface GpxDownloaderApi
     public static final String INTENT_ACTION_START_DOWNLOAD = "org.bogus.domowygpx.services.GpxDownloaderService.START_DOWNLOAD_GPX";
 
     public static final String INTENT_EXTRA_TASK_CONFIGURATION = "org.bogus.domowygpx.services.GpxDownloaderService.TASK_CONFIGURATION";
+    /**
+     * Optional {@link Messenger}, that will be notified in response to {@link #INTENT_ACTION_START_DOWNLOAD} with the taskId
+     * of a new gpx task
+     */
+    public static final String INTENT_EXTRA_MESSENGER = "org.bogus.domowygpx.GpxDownloaderService.MESSENGER";
     
     /**
      * Sends an asynchronous signal to cancel the given task. When the task finishes, 

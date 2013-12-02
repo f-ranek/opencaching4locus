@@ -31,7 +31,7 @@
     <string name="maxCacheDistance">Maks. odległość [km/m]:</string>
 
     <string name="hintMaxNumOfCaches">np. 200 keszy</string>
-    <string name="hintMaxCacheDistance">np. 10km</string>
+    <string name="hintMaxCacheDistance">np. 10 km</string>
 
     <string name="maxNumOfCachesDefault">50</string>
 

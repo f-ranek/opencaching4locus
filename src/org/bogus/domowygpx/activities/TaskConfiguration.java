@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Locale;
 
 import org.bogus.ToStringBuilder;
+import org.bogus.android.AndroidUtils;
 import org.bogus.domowygpx.utils.LocationUtils;
 import org.bogus.domowygpx.utils.Pair;
 
@@ -48,8 +49,8 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
     private int maxCacheLogs;
 
     
-    private double outLatitude;
-    private double outLongitude;
+    private double outLatitude = Double.NaN;
+    private double outLongitude = Double.NaN;
     private int outMaxNumOfCaches;
     private double outMaxCacheDistance;
     
@@ -91,15 +92,15 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         warnings = new ArrayList<Pair<String,String>>(2);
         modifiedFields = new ArrayList<String>(2);
         
-        outLatitude = outLongitude = 0;
-        boolean hasGeoLocation = (latitude != null && latitude.length() > 0) || 
+        boolean hasInGeoLocation = (latitude != null && latitude.length() > 0) || 
                 (longitude != null && longitude.length() > 0);
-        if (hasGeoLocation){
+        boolean hasInGeoLocationOk = false; 
+        if (hasInGeoLocation){
+            outLatitude = outLongitude = Double.NaN;
             if ((latitude != null && latitude.length() > 0) ^ 
-                (longitude != null && longitude.length() > 0)){
-                
+                (longitude != null && longitude.length() > 0))
+            {
                 errors.add(Pair.makePair("LOCATION", "Położenie geograficzne jest niepełne"));
-                hasGeoLocation = false;
             } else {
                 try{
                     Pair<Integer, Double> lat = LocationUtils.parseLocation(latitude);
@@ -111,21 +112,26 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
                     
                     outLatitude = lat.second;
                     outLongitude = lon.second;
+                    hasInGeoLocationOk = true;
                 }catch(IllegalArgumentException e){
                     errors.add(Pair.makePair("LOCATION", "Położenie geograficzne jest w niepoprwnym formacie"));
-                    hasGeoLocation = false;
-                    outLatitude = outLongitude = 0;
                 }
             }
         }
-        if (!hasGeoLocation && !hasErrorInField("LOCATION")){
-            errors.add(Pair.makePair("LOCATION", "Wprowadź lokalizację keszy"));
+
+        boolean hasOutGeoLocationOk = outLatitude != Double.NaN && outLongitude != Double.NaN;
+        
+        if (!hasInGeoLocationOk && !hasOutGeoLocationOk){
+            outLatitude = outLongitude = Double.NaN;
+            if (!hasErrorInField("LOCATION")){
+                errors.add(Pair.makePair("LOCATION", "Wprowadź lokalizację keszy"));
+            }
         }
         
         outMaxNumOfCaches = -1;
         if (maxNumOfCaches != null && maxNumOfCaches.length() > 0){
             try{
-                outMaxNumOfCaches = Integer.parseInt(toString(maxNumOfCaches));
+                outMaxNumOfCaches = Integer.parseInt(AndroidUtils.toString(maxNumOfCaches));
                 if (outMaxNumOfCaches < 1 || outMaxNumOfCaches > 500){
                     warnings.add(Pair.makePair("CACHE_COUNT_LIMIT", "Limit musi być w przedziale 1 do 500"));
                     modifiedFields.add("CACHE_COUNT_LIMIT");
@@ -142,7 +148,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         outMaxCacheDistance = -1;
         if (maxCacheDistance != null && maxCacheDistance.length() > 0){
             boolean meters = false;
-            String mcd = toString(maxCacheDistance);
+            String mcd = AndroidUtils.toString(maxCacheDistance);
             if (mcd.endsWith("km")){
                 mcd = mcd.substring(0, maxCacheDistance.length()-2);
             } else if (mcd.endsWith("m")){
@@ -169,7 +175,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
             }
         }
         
-        if (hasGeoLocation && outMaxCacheDistance <= 0 && outMaxNumOfCaches < 0)
+        if (outMaxCacheDistance <= 0 && outMaxNumOfCaches < 0)
         {
             errors.add(Pair.makePair("CACHE_COUNT_LIMIT", "Wprowadź liczbę keszy lub dystans"));
         }
@@ -192,8 +198,17 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         outTargetFileName = null;
         if (targetFileName == null || targetFileName.length() == 0){
             if (doLocusImport){
-                final String fileName = new SimpleDateFormat("yyyy-MM-dd_HH.mm'.gpx'").format(new Date());
-                outTargetFileName = new File(gpxTargetDirNameTemp, fileName); 
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH.mm'.gpx'");
+                final Date now = new Date();
+                do{
+                    final String fileName = sdf.format(now);
+                    outTargetFileName = new File(gpxTargetDirNameTemp, fileName);
+                    if (outTargetFileName.exists()){
+                        now.setTime(now.getTime()+60*1000);
+                    } else {
+                        break;
+                    }
+                }while(true);
             } else {
                 if (hasLocus){
                     errors.add(Pair.makePair("TARGET_FILE", "Wprowadź nazwę pliku, lub zaznacz import do Locusa"));
@@ -202,7 +217,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
                 }
             }
         } else {
-            final String tfn = toString(targetFileName);
+            final String tfn = AndroidUtils.toString(targetFileName);
             if (tfn.toLowerCase(Locale.US).endsWith(".gpx")){
                 outTargetFileName = new File(tfn);
             } else {
@@ -390,24 +405,15 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         return 0;
     }
 
-    private static String toString(Object obj)
-    {
-        if (obj == null){
-            return null;
-        } else {
-            return obj.toString();
-        }
-    }
-    
     @Override
     public void writeToParcel(Parcel dest, int flags)
     {
-        dest.writeString(toString(latitude));
-        dest.writeString(toString(longitude));
-        dest.writeString(toString(maxNumOfCaches));
-        dest.writeString(toString(maxCacheDistance));
+        dest.writeString(AndroidUtils.toString(latitude));
+        dest.writeString(AndroidUtils.toString(longitude));
+        dest.writeString(AndroidUtils.toString(maxNumOfCaches));
+        dest.writeString(AndroidUtils.toString(maxCacheDistance));
         dest.writeByte((byte)(doLocusImport ? 1 : 0));
-        dest.writeString(toString(targetFileName));
+        dest.writeString(AndroidUtils.toString(targetFileName));
 
         dest.writeString(gpxTargetDirName);
         dest.writeString(gpxTargetDirNameTemp);
@@ -424,8 +430,8 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         dest.writeDouble(outMaxCacheDistance);
         
         dest.writeByte((byte)(outDownloadImages ? 1 : 0));
-        dest.writeString(toString(outTargetFileName));
-        dest.writeString(toString(outTargetDirName));
+        dest.writeString(AndroidUtils.toString(outTargetFileName));
+        dest.writeString(AndroidUtils.toString(outTargetDirName));
     }
     
     protected static TaskConfiguration fromParcel(Parcel src)
@@ -602,6 +608,16 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         builder.add("warnings", warnings);
         builder.add("modifiedFields", modifiedFields);
         return builder.toString();
+    }
+
+    public void setOutLongitude(double outLongitude)
+    {
+        this.outLongitude = outLongitude;
+    }
+
+    public void setOutLatitude(double outLatitude)
+    {
+        this.outLatitude = outLatitude;
     }
 
 }

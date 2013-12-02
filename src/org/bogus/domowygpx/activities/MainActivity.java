@@ -2,27 +2,24 @@ package org.bogus.domowygpx.activities;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
+import locus.api.android.utils.LocusConst;
+import locus.api.android.utils.LocusUtils;
+
+import org.bogus.android.AndroidUtils;
 import org.bogus.domowygpx.services.GpxDownloaderService;
 import org.bogus.domowygpx.utils.LocationUtils;
-import org.bogus.domowygpx.utils.Pair;
 import org.bogus.geocaching.egpx.R;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -31,10 +28,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -42,6 +37,8 @@ import android.widget.Toast;
 public class MainActivity extends Activity
 {
 	private static final String LOG_TAG = "MainActivity";
+	
+	private boolean locationAlreadySet;
 	
     private EditText editLat;
     private EditText editLon;
@@ -52,7 +49,6 @@ public class MainActivity extends Activity
 
     private EditText editTargetFileName;
 
-    private ConnectivityManager conectivityManager;
     private LocationManager locman;
     private LocationListener locationListener;
 
@@ -60,25 +56,11 @@ public class MainActivity extends Activity
     CheckBox checkBoxAutoLocusImport;
     private TextView textViewAutoLocusImport;
     
-    String currentDownloadImagesStrategy;
-    CheckBox checkBoxDownloadImages;
-    private TextView textViewDownloadImages;
-
-    private Map<String, Integer> errorFieldsMap = new HashMap<String, Integer>();
-    private Map<String, Integer> errorFieldsFocusMap = new HashMap<String, Integer>();
-    boolean focusedOnErrorField;
+    private DownloadImagesFragment downloadImagesFragment;
     
-    private TaskConfiguration previousTaskConfiguration;
+    private ValidationUtils validationUtils;
     
-    void hideSoftKeyboard()
-    {
-        final InputMethodManager inputManager = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-        final View currentlyFocused = getCurrentFocus();
-        if (currentlyFocused != null){
-            inputManager.hideSoftInputFromWindow(currentlyFocused.getWindowToken(),
-                InputMethodManager.HIDE_NOT_ALWAYS);
-        }
-    }
+    private Button btnStart;
     
 	/** Called when the activity is first created. */
 	@Override
@@ -90,6 +72,19 @@ public class MainActivity extends Activity
 		editLat = (EditText) findViewById(R.id.editLatitude);
 		editLon = (EditText) findViewById(R.id.editLongitude);
 		btnGetLocationFromGps = (Button) findViewById(R.id.btnGetLocationFromGps);
+		btnGetLocationFromGps.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                AndroidUtils.hideSoftKeyboard(MainActivity.this);
+                if (!isGpsPending()){
+                    startGetLocationFromGps(false);
+                } else {
+                    stopGetLocationFromGps();
+                }
+            }
+        });
 		
 		editTargetFileName = (EditText) findViewById(R.id.editTargetFileName);
 		
@@ -103,7 +98,7 @@ public class MainActivity extends Activity
                 public void onClick(View v)
                 {
                     if (v.isClickable()){
-                        hideSoftKeyboard();
+                        AndroidUtils.hideSoftKeyboard(MainActivity.this);
                     }
                 }
             });
@@ -115,65 +110,56 @@ public class MainActivity extends Activity
             public void onClick(View v)
             {
                 if (checkBoxAutoLocusImport.isClickable()){
+                    AndroidUtils.hideSoftKeyboard(MainActivity.this);
                     checkBoxAutoLocusImport.toggle();
-                    hideSoftKeyboard();
                 }
             }
         });
 		
-		checkBoxDownloadImages = (CheckBox) findViewById(R.id.checkBoxDownloadImages);
-		checkBoxDownloadImages.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
+		btnStart = (Button) findViewById(R.id.btnStart);
+		btnStart.setOnClickListener(new View.OnClickListener()
         {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
-            {
-                if (isChecked){
-                    currentDownloadImagesStrategy = TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ALWAYS;
-                } else {
-                    currentDownloadImagesStrategy = TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_NEVER;
-                }
-                updateDownloadImagesState();
-                hideSoftKeyboard();
-            }
-        });
-		textViewDownloadImages = (TextView) findViewById(R.id.textViewDownloadImages);
-		textViewDownloadImages.setOnClickListener(new View.OnClickListener()
-        {
+            
             @Override
             public void onClick(View v)
             {
-                if (TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI.equals(currentDownloadImagesStrategy)){
-                    currentDownloadImagesStrategy = TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ALWAYS;
-                } else
-                if (TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_NEVER.equals(currentDownloadImagesStrategy)){
-                    currentDownloadImagesStrategy = TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI;
-                } else 
-                if (TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ALWAYS.equals(currentDownloadImagesStrategy)){
-                    currentDownloadImagesStrategy = TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_NEVER;
-                } else {
-                    throw new IllegalStateException();
-                }
-                updateDownloadImagesState();
-                hideSoftKeyboard();
+                MainActivity.this.start();
             }
         });
         
-        errorFieldsMap.put("LOCATION", R.id.errorLocation);
-        errorFieldsMap.put("CACHE_COUNT_LIMIT", R.id.errorMaxNumOfCaches);
-        errorFieldsMap.put("MAX_CACHE_DISTANCE", R.id.errorMaxCacheDistance);
-        errorFieldsMap.put("TARGET_FILE", R.id.errorTargetFileName);
+		validationUtils = new ValidationUtils(this.getWindow().getDecorView());
+		
+		validationUtils.addErrorField("LOCATION", R.id.errorLocation);
+		validationUtils.addErrorField("CACHE_COUNT_LIMIT", R.id.errorMaxNumOfCaches);
+		validationUtils.addErrorField("MAX_CACHE_DISTANCE", R.id.errorMaxCacheDistance);
+		validationUtils.addErrorField("TARGET_FILE", R.id.errorTargetFileName);
 
-        errorFieldsFocusMap.put("LOCATION", R.id.editLatitude);
-        errorFieldsFocusMap.put("CACHE_COUNT_LIMIT", R.id.editMaxNumOfCaches);
-        errorFieldsFocusMap.put("MAX_CACHE_DISTANCE", R.id.editMaxCacheDistance);
-        errorFieldsFocusMap.put("TARGET_FILE", R.id.editTargetFileName);
+		validationUtils.addErrorFocusField("LOCATION", R.id.editLatitude);
+		validationUtils.addErrorFocusField("CACHE_COUNT_LIMIT", R.id.editMaxNumOfCaches);
+		validationUtils.addErrorFocusField("MAX_CACHE_DISTANCE", R.id.editMaxCacheDistance);
+		validationUtils.addErrorFocusField("TARGET_FILE", R.id.editTargetFileName);
         
-        errorFieldsMap.put("", R.id.errorOthers);
+        validationUtils.addErrorField("", R.id.errorOthers);
         
-        resetViewErrors();
+        validationUtils.resetViewErrors();
         
         locman = (LocationManager)getSystemService(LOCATION_SERVICE);
-        conectivityManager = (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
+
+        downloadImagesFragment = new DownloadImagesFragment();
+        downloadImagesFragment.onCreate(getWindow().getDecorView());
+        downloadImagesFragment.setWindow(getWindow());
+        
+        // invoked as Locus add-on?
+        final Intent intent = getIntent();
+        if (LocusUtils.isIntentMainFunction(intent)){
+            locus.api.objects.extra.Location loc = 
+                    LocusUtils.getLocationFromIntent(intent, LocusConst.INTENT_EXTRA_LOCATION_MAP_CENTER);
+            if (loc != null){
+                Location loc2 = LocusUtils.convertToA(loc);
+                updateLocationInfo(loc2);
+                locationAlreadySet = true;
+            }
+        }
 	}
 	
 	protected void updateLocationInfo(Location location)
@@ -200,16 +186,6 @@ public class MainActivity extends Activity
         editLat.setText(LocationUtils.format(location.getLatitude(), latFormat));
         editLon.setText(LocationUtils.format(location.getLongitude(), lonFormat));
     }
-
-    public void onBtnGetLocationFromGpsClicked(final View btn)
-	{
-        hideSoftKeyboard();
-	    if (!isGpsPending()){
-	        startGetLocationFromGps(false);
-	    } else {
-	        stopGetLocationFromGps();
-	    }
-	}
 	
 	protected final boolean isGpsPending()
 	{
@@ -312,42 +288,10 @@ public class MainActivity extends Activity
         btnGetLocationFromGps.setText(isGpsPending ? R.string.getLocationFromGpsCancel : R.string.getLocationFromGps);
     }
 
-    protected void markError(String errorText, TextView errorControl, boolean isWarning)
-    {
-        final boolean isShown = errorControl.getVisibility() == TextView.VISIBLE;
-        if (isShown){
-            errorControl.append("\n\r");
-            errorControl.append(errorText);
-        } else {
-            errorControl.setText(errorText);
-        }
-        
-        errorControl.setVisibility(TextView.VISIBLE);
-        errorControl.setTextAppearance(this, 
-            isWarning ? R.style.TextAppearance_Small_Warning 
-                    : R.style.TextAppearance_Small_Error);
-    }
-    
-    protected void resetViewError(int viewId)
-    {
-        TextView v = (TextView)findViewById(viewId);
-        v.setText(null);
-        v.setVisibility(TextView.GONE);
-        v.setTextAppearance(this, android.R.style.TextAppearance_Small);
-    }
-    
-    protected void resetViewErrors()
-    {
-        for (Integer id : errorFieldsMap.values()){
-            resetViewError(id);
-        }
-        focusedOnErrorField = false;
-    }
-    
-    public void onBtnStartClicked(final View btn)
+    void start()
 	{
-        hideSoftKeyboard();
-        resetViewErrors();
+        AndroidUtils.hideSoftKeyboard(this);
+        validationUtils.resetViewErrors();
         
         //SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
         
@@ -359,7 +303,7 @@ public class MainActivity extends Activity
 	    taskConfiguration.setMaxNumOfCaches(editMaxNumOfCaches.getText());
 	    taskConfiguration.setMaxCacheDistance(editMaxCacheDistance.getText());
 	    taskConfiguration.setTargetFileName(editTargetFileName.getText());
-	    taskConfiguration.setDownloadImagesStrategy(currentDownloadImagesStrategy);
+	    taskConfiguration.setDownloadImagesStrategy(downloadImagesFragment.getCurrentDownloadImagesStrategy());
 	    taskConfiguration.setDoLocusImport(checkBoxAutoLocusImport.isChecked());
 	    
 	    taskConfiguration.parseAndValidate(this);
@@ -372,35 +316,17 @@ public class MainActivity extends Activity
             if ("MAX_CACHE_DISTANCE".equals(modifiedField)){
                 String s;
                 if (taskConfiguration.getOutMaxCacheDistance() < 1){
-                    s = Math.round(taskConfiguration.getOutMaxCacheDistance()*1000) + "m";
+                    s = Math.round(taskConfiguration.getOutMaxCacheDistance()*1000) + " m";
                 } else {
-                    s = taskConfiguration.getOutMaxCacheDistance() + "km";
+                    s = taskConfiguration.getOutMaxCacheDistance() + " km";
                 }
                 editMaxCacheDistance.setText(s);
             } 
 	    }
 	    
-	    final List<Pair<String, String>> errors = taskConfiguration.getErrors();
-	    processErrorsList(errors, false);
-	    
-	    if (!errors.isEmpty()){
-            previousTaskConfiguration = null;
-	        Toast.makeText(this, "Przed kontynuacją popraw zaznaczone błędy", Toast.LENGTH_LONG).show();
+	    if (!validationUtils.checkForErrors(taskConfiguration)){
 	        return ;
 	    }
-
-	    final List<Pair<String, String>> warnings = taskConfiguration.getWarnings();
-        processErrorsList(warnings, true);
-        
-        if (!warnings.isEmpty()){
-            if (previousTaskConfiguration == null || !taskConfiguration.equals(previousTaskConfiguration)){
-                previousTaskConfiguration = taskConfiguration;
-                Toast.makeText(this, "Wystąpiły pewne problemy. Zweryfikuj dane, po czym ponownie kliknij 'Start'", Toast.LENGTH_LONG).show();
-                return ;
-            }
-        }
-        
-        resetViewErrors();
 
         {
             final Intent intent = new Intent(this, DownloadListActivity.class);
@@ -416,34 +342,6 @@ public class MainActivity extends Activity
         }
 	}
 
-    protected void processErrorsList(final List<Pair<String, String>> errors, boolean isWarning)
-    {
-        for (Pair<String, String> error : errors){
-	        final String fieldCode = error.first;
-	        final String errorText = error.second;
-	        
-	        int errorViewId;
-	        if (fieldCode != null && errorFieldsMap.containsKey(fieldCode)){
-	            errorViewId = errorFieldsMap.get(fieldCode);
-	        } else {
-	            errorViewId = R.id.errorOthers;
-	        }
-	        
-	        if (!focusedOnErrorField && fieldCode != null && errorFieldsFocusMap.containsKey(fieldCode)){
-	            // Use Next Focus.. properties
-	            int focusFieldId = errorFieldsFocusMap.get(fieldCode);
-	            findViewById(focusFieldId).requestFocus();
-	            focusedOnErrorField = true;
-	        }
-	        
-	        View errorView = findViewById(errorViewId);
-	        if (errorView instanceof TextView){
-	            TextView errorTextView = (TextView)errorView;
-	            markError(errorText, errorTextView, isWarning);
-	        }
-	    }
-    }
-	
 	@Override
 	protected void onStop()
 	{
@@ -457,7 +355,7 @@ public class MainActivity extends Activity
         config.putString("targetFileName", editTargetFileName.getText().toString());
         config.putString("maxCacheDistance", editMaxCacheDistance.getText().toString());
         config.putString("maxNumOfCaches", editMaxNumOfCaches.getText().toString());
-        config.putString("downloadImagesStrategy", currentDownloadImagesStrategy);
+        config.putString("downloadImagesStrategy", downloadImagesFragment.getCurrentDownloadImagesStrategy());
         config.putBoolean("autoLocusImport", checkBoxAutoLocusImport.isChecked());
 
         config.commit();
@@ -482,8 +380,10 @@ public class MainActivity extends Activity
                 return ;
 		    }
 		    
-		    editLat.setText(config.getString("latitude", ""));
-		    editLon.setText(config.getString("longitude", ""));
+		    if (!locationAlreadySet){
+		        editLat.setText(config.getString("latitude", ""));
+		        editLon.setText(config.getString("longitude", ""));
+		    }
 		    editTargetFileName.setText(config.getString("targetFileName", ""));
 		    editMaxCacheDistance.setText(config.getString("maxCacheDistance", ""));
 		    editMaxNumOfCaches.setText(config.getString("maxNumOfCaches", ""));
@@ -500,14 +400,18 @@ public class MainActivity extends Activity
 	@SuppressLint("SimpleDateFormat")
     protected void initNewConfig()
 	{
-	    startGetLocationFromGps(true);
+	    if (editLat.getText() == null || editLat.getText().length() == 0 ||
+	            editLon.getText() == null || editLon.getText().length() == 0)
+	    {
+	        startGetLocationFromGps(true);
+	    }
 
 	    final boolean hasLocus = locus.api.android.utils.LocusUtils.isLocusAvailable(this, 200);
 	    if (!hasLocus){
 	        final String fileName = new SimpleDateFormat("yyyy-MM-dd_HH.mm'.gpx'").format(new Date());
 	        editTargetFileName.setText(fileName);
 	    }
-        currentDownloadImagesStrategy = TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI;
+	    downloadImagesFragment.setCurrentDownloadImagesStrategy(TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI);
 	}
 
     @Override
@@ -540,30 +444,6 @@ public class MainActivity extends Activity
         return super.onOptionsItemSelected(item);
     }  
     
-    void updateDownloadImagesState()
-    {
-        int lblResId;
-        boolean state;
-        if (TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI.equals(currentDownloadImagesStrategy)){
-            NetworkInfo wifiInfo = conectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-            state = wifiInfo.isConnected();        
-            lblResId = R.string.downloadImages_wifi;
-        } else
-        if (TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_NEVER.equals(currentDownloadImagesStrategy)){
-            state = false;
-            lblResId = R.string.downloadImages_never;
-        } else 
-        if (TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ALWAYS.equals(currentDownloadImagesStrategy)){
-            state = true;
-            lblResId = R.string.downloadImages_always;
-        } else {
-            throw new IllegalStateException();
-        }
-        
-        textViewDownloadImages.setText(lblResId);
-        checkBoxDownloadImages.setChecked(state);
-    }
-
     @Override
     protected void onResume()
     {
@@ -571,8 +451,8 @@ public class MainActivity extends Activity
 
         // this may change in preferences, as well as wifi state may change
         final SharedPreferences config = this.getSharedPreferences("egpx", MODE_PRIVATE);
-        currentDownloadImagesStrategy = config.getString("downloadImagesStrategy", TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI);
-        updateDownloadImagesState();
+        downloadImagesFragment.setCurrentDownloadImagesStrategy(
+            config.getString("downloadImagesStrategy", TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI));
 
         final boolean hasLocus = locus.api.android.utils.LocusUtils.isLocusAvailable(this, 200);
         tableRowAutoLocusImport.setVisibility(hasLocus ? View.VISIBLE : View.GONE);
@@ -584,6 +464,7 @@ public class MainActivity extends Activity
     {
         final SharedPreferences config = this.getSharedPreferences("egpx", MODE_PRIVATE);
         final Editor editor = config.edit();
+        final String currentDownloadImagesStrategy = downloadImagesFragment.getCurrentDownloadImagesStrategy();
         if (!currentDownloadImagesStrategy.equals(config.getString("downloadImagesStrategy", null))){
             editor.putString("downloadImagesStrategy", currentDownloadImagesStrategy);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD){
