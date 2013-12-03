@@ -373,7 +373,7 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
             if (prev == null){
                 preference.setOnPreferenceChangeListener(listener);
             } else 
-            if (prev instanceof Preference.OnPreferenceChangeListener){
+            if (prev instanceof CompoundPreferenceChangeListener){
                 CompoundPreferenceChangeListener cpl = (CompoundPreferenceChangeListener)prev;
                 Preference.OnPreferenceChangeListener[] listeners = 
                         new Preference.OnPreferenceChangeListener[cpl.listeners.length+1];
