@@ -11,12 +11,14 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Environment;
 import android.preference.EditTextPreference;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -265,5 +267,28 @@ public class FolderPreference extends EditTextPreference
     public void setFolderPreferenceHelperActivity(FolderPreferenceHelperActivity folderPreferenceHelperActivity)
     {
         this.folderPreferenceHelperActivity = folderPreferenceHelperActivity;
+    }
+
+    @Override
+    protected void showDialog(Bundle state)
+    {
+        super.showDialog(state);
+        final AlertDialog dialog = (AlertDialog)getDialog();
+        final Button btnPositive = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        btnPositive.setOnClickListener(new View.OnClickListener()
+        {            
+            @Override
+            public void onClick(View v)
+            {
+                if (validate()){
+                    // simulate dialog close
+                    // NOTE: this will call #validate() again
+                    FolderPreference.this.onClick(dialog, AlertDialog.BUTTON_POSITIVE);
+                    dialog.dismiss();
+                }
+            }
+        });
+        dialog.getWindow().setSoftInputMode(
+            WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
     }
 }
