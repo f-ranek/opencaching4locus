@@ -37,6 +37,7 @@ import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -180,7 +181,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         gpxListItem.message = getResources().getString(R.string.titleLocusSearchInProgress); 
         gpxListItem.applyToView(listItemViewHolder, true);
         
-        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+        final AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
         dialogBuilder.setView(view);
         dialog = dialogBuilder.create();
         dialog.setOnDismissListener(onDismissListener);
@@ -195,7 +196,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         }
         
         final LayoutInflater inflater = LayoutInflater.from(this);
-        final View view = inflater.inflate(R.layout.activity_locus_search_for_caches, null);
+        final ViewGroup view = (ViewGroup)inflater.inflate(R.layout.activity_locus_search_for_caches, null);
         
         {
             TextView textViewGeoPosition = (TextView) view.findViewById(R.id.textViewGeoPosition);

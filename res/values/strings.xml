@@ -37,9 +37,6 @@
 
     <string name="history">Historia zmian:\n1.0 - pierwsza wersja, na bazie programu Awaryjny GPX.</string>
 
-    <string name="sourceCachesList">Kesze do pobrania:</string>
-    <string name="hintSourceCachesList">Nazwa pliku lub lista keszy</string>
-
     <string name="errorPlaceholderText">ERROR_TEXT_GOES_HERE</string>
 
     <string name="gpxDownloaderServiceName">Usługa pobierania GPX</string>

@@ -1,12 +1,19 @@
 package org.bogus.domowygpx.activities;
 
+import java.util.Queue;
+
 import org.bogus.android.AndroidUtils;
+import org.bogus.android.LockableScrollView;
+import org.bogus.android.SimpleQueue;
 import org.bogus.geocaching.egpx.R;
 
 import android.app.Activity;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Looper;
+import android.os.MessageQueue;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -23,8 +30,14 @@ public class DownloadImagesFragment
     boolean preventEvents;
 
     Window window;
-    public void onCreate(final View owner)
+    ViewGroup view;
+    
+    private LockableScrollView lockableScrollViewCache;
+    private boolean lockableScrollViewCached;
+    
+    public void onCreate(final ViewGroup owner)
     {
+        this.view = owner;
         conectivityManager = (ConnectivityManager)owner.getContext().getSystemService(
             Activity.CONNECTIVITY_SERVICE);
 
@@ -94,11 +107,72 @@ public class DownloadImagesFragment
                 throw new IllegalStateException();
             }
             
+            final LockableScrollView sv = getLockableScrollView();
+            if (sv != null && !sv.isChildRequestsLocked()){
+                sv.setChildRequestsLocked(true);
+                Looper.myQueue().addIdleHandler(new MessageQueue.IdleHandler()
+                {
+                    // unlock scroll view when all the layout events are done
+                    @Override
+                    public boolean queueIdle()
+                    {
+                        sv.setChildRequestsLocked(false);
+                        return false;
+                    }
+                });
+            }
+
+            // The text change will trigger layout request, which in turn will trigger
+            // scroll request to the view currently owning focus. We prevent this
+            // by installing our ScrollView implementation, that can suppress scrolling
+            // children to be on-screen
             textViewDownloadImages.setText(lblResId);
             checkBoxDownloadImages.setChecked(state);
         }finally{
             preventEvents = false;
         }
+    }
+
+    
+    private LockableScrollView getLockableScrollView()
+    {
+        // assume we have no severe tree rebuild 
+        if (lockableScrollViewCached){
+            return lockableScrollViewCache;
+        } else {
+            lockableScrollViewCached = true;
+            return lockableScrollViewCache = findLockableScrollView();
+        }
+    }
+    
+    /**
+     * Performs breadth-first search over the view tree,
+     * and returns first {@link LockableScrollView} found
+     * @return
+     */
+    private LockableScrollView findLockableScrollView()
+    {
+        ViewGroup view = this.view;
+        if (view instanceof LockableScrollView){
+            return (LockableScrollView)view;
+        }
+        
+        LockableScrollView result = null;
+        final Queue<ViewGroup> queue = SimpleQueue.getInstance();
+        do{
+            if (view instanceof LockableScrollView){
+                result = (LockableScrollView)view;
+                break;
+            }
+            final int childCount = view.getChildCount();
+            for (int i=0; i<childCount; i++){
+                final View childView = view.getChildAt(i);
+                if (childView instanceof ViewGroup){
+                    queue.add((ViewGroup)childView);
+                }
+            }
+        }while((view = queue.poll()) != null);
+        return result;
     }
 
     public String getCurrentDownloadImagesStrategy()

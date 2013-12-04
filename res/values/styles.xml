@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <style name="Theme.Transparent" parent="android:Theme">
+    <style name="Theme.Main" parent="android:Theme.Light" />
+    
+    <style name="Theme.Transparent" parent="Theme.Main">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowContentOverlay">@null</item>
@@ -35,17 +36,15 @@
         <item name="android:textColor">@color/warning_color</item>
     </style>
 
-<!--
-    <shape name="gradient_edt_focused" 
-        android:shape="rectangle">
-        <stroke android:width="1dip" android:color="@color/color_edit_error" />
-        <solid android:color="#00000000" />
-    </shape>
-    
-    <selector  > 
-<item android:state_pressed="true" android:drawable="@layout/gradient_edt_pressed"/>
-<item android:state_focused="true" android:drawable="@layout/gradient_edt_focused"/>
-<item android:drawable="@layout/gradient_edt_default"/>
-</selector>-->
+    <style name="Widget.ProgressBar.Horizontal.8"
+           parent="@android:style/Widget.ProgressBar.Horizontal">
+        <item name="android:progressDrawable">@drawable/progress_horizontal</item>
+        <item name="android:indeterminateDrawable">@drawable/progress_indeterminate_horizontal</item>
+    </style>
 
+        <style name="Widget.Button.Small.8"
+            parent="@android:style/Widget.Button.Small">
+        <item name="android:background">@drawable/btn_default_small</item>
+    </style>
+    
 </resources>

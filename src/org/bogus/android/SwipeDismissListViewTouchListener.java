@@ -1,4 +1,4 @@
-package org.bogus.android.swipe2dismiss;
+package org.bogus.android;
 
 import android.annotation.TargetApi;
 import android.graphics.Rect;

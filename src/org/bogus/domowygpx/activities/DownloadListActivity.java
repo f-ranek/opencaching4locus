@@ -5,7 +5,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
-import org.bogus.android.swipe2dismiss.SwipeDismissListViewTouchListener;
+import org.bogus.android.SwipeDismissListViewTouchListener;
 import org.bogus.domowygpx.activities.DownloadListContext.BaseListItem;
 import org.bogus.domowygpx.activities.DownloadListContext.FileListItem;
 import org.bogus.domowygpx.activities.DownloadListContext.GpxListItem;
@@ -20,7 +20,6 @@ import org.bogus.domowygpx.services.GpxDownloaderService.GpxTaskEvent;
 import org.bogus.domowygpx.services.downloader.FileData;
 import org.bogus.geocaching.egpx.R;
 
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
@@ -31,11 +30,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.support.v4.app.NavUtils;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
-import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -211,6 +208,8 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
     {
         // enableAcceleration();
         super.onCreate(savedInstanceState);
+        
+        //setupActionBar();
         
         listItemContext.context = this;
         listItemContext.handler = new Handler(Looper.getMainLooper());
@@ -426,12 +425,12 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
     /**
      * Set up the {@link android.app.ActionBar}, if the API is available.
      */
-    @SuppressWarnings("unused")
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    /*@TargetApi(Build.VERSION_CODES.HONEYCOMB)
     private void setupActionBar()
     {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            getActionBar().setDisplayHomeAsUpEnabled(true);
+            //ActionBar actionBar = getActionBar();
+            //getActionBar().setDisplayHomeAsUpEnabled(true);
         }
     }
 
@@ -461,6 +460,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
         }
         return super.onOptionsItemSelected(item);
     }
+    */
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {

@@ -200,7 +200,8 @@
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/hintTargetFileName"
-                        android:inputType="textMultiLine" />
+                        android:inputType="text"
+                        android:maxLines="1" />
 
                     <TextView
                         android:id="@+id/errorTargetFileName"
@@ -282,6 +283,7 @@
                 android:layout_height="wrap_content" >
 
                 <LinearLayout
+                    android:id="@+id/tableRowStart"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
                     android:layout_span="2"

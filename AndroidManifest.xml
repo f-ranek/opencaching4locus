@@ -6,7 +6,7 @@
 
     <uses-sdk
         android:minSdkVersion="8"
-        android:targetSdkVersion="8" />
+        android:targetSdkVersion="16" />
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -19,11 +19,12 @@
         android:allowBackup="true"
         android:name="org.bogus.domowygpx.application.Application"
         android:icon="@drawable/logo_straszne"
-        android:label="@string/applicationName" >
+        android:label="@string/applicationName" 
+        android:theme="@style/Theme.Main">
         <activity
             android:name="org.bogus.domowygpx.activities.MainActivity"
-            android:configChanges="keyboardHidden|orientation"
-            android:label="@string/applicationName" >
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="@string/applicationName">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -36,18 +37,18 @@
         <activity
             android:name="org.bogus.domowygpx.activities.DownloadListActivity"
             android:label="@string/titleActivityDownloadList"
-            android:configChanges="keyboardHidden|orientation" 
+            android:configChanges="keyboardHidden|orientation|screenSize" 
             android:launchMode="singleTop">
         </activity>
         <activity
             android:name="org.bogus.domowygpx.activities.SettingsActivity"
             android:label="@string/title_activity_settings"
-            android:configChanges="keyboardHidden|orientation" 
+            android:configChanges="keyboardHidden|orientation|screenSize" 
             android:launchMode="singleTop">
         </activity>
         <activity
             android:name="org.bogus.domowygpx.activities.LocusSearchForCachesActivity" 
-            android:configChanges="keyboardHidden|orientation"
+            android:configChanges="keyboardHidden|orientation|screenSize"
             android:label="@string/titleLocusSearch"
             android:theme="@style/Theme.Transparent"
             android:icon="@drawable/ic_logo_straszne_cieniowane_9"
@@ -79,7 +80,7 @@
         <activity android:name="org.bogus.domowygpx.activities.LocusImportActivity" 
             android:label="@string/applicationName"
 			android:theme="@style/Theme.Transparent"
-			android:configChanges="keyboardHidden|orientation"
+			android:configChanges="keyboardHidden|orientation|screenSize"
 			android:enabled="false">
 			<intent-filter android:label="Opencaching OPA" android:icon="@drawable/ic_logo_straszne_cieniowane_9">
 				<action android:name="menion.android.locus.ON_POINT_ACTION" />

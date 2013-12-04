@@ -7,13 +7,16 @@ import locus.api.android.utils.LocusConst;
 import locus.api.android.utils.LocusUtils;
 
 import org.bogus.android.AndroidUtils;
+import org.bogus.android.LockableScrollView;
 import org.bogus.domowygpx.services.GpxDownloaderService;
 import org.bogus.domowygpx.utils.LocationUtils;
 import org.bogus.geocaching.egpx.R;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.app.ActionBar;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -23,7 +26,9 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.util.AttributeSet;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -60,14 +65,28 @@ public class MainActivity extends Activity
     
     private ValidationUtils validationUtils;
     
-    private Button btnStart;
-    
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(final Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.main);
+		
+		final LayoutInflater inflater = LayoutInflater.from(this);
+		inflater.setFactory(new LayoutInflater.Factory(){
+
+            @Override
+            public View onCreateView(String name, Context context, AttributeSet attrs)
+            {
+                // we don't use LockableScrollView in xml, because this breaks Eclipse editor
+                // (it does not understand we are ScrollView, and truncates viewport)
+                if ("ScrollView".equals(name)){
+                    return new LockableScrollView(context, attrs);
+                } else {
+                    return null;
+                }
+            }});
+		final ViewGroup view = (ViewGroup)inflater.inflate(R.layout.main, null);
+		setContentView(view);
 		
 		editLat = (EditText) findViewById(R.id.editLatitude);
 		editLon = (EditText) findViewById(R.id.editLongitude);
@@ -116,8 +135,12 @@ public class MainActivity extends Activity
             }
         });
 		
-		btnStart = (Button) findViewById(R.id.btnStart);
-		btnStart.setOnClickListener(new View.OnClickListener()
+		if (hasActionBar()){
+		    ViewGroup tableRowStart = (ViewGroup) findViewById(R.id.tableRowStart);
+		    tableRowStart.setVisibility(View.GONE);
+		} else {
+		    Button btnStart = (Button) findViewById(R.id.btnStart);
+		    btnStart.setOnClickListener(new View.OnClickListener()
         {
             
             @Override
@@ -126,7 +149,7 @@ public class MainActivity extends Activity
                 MainActivity.this.start();
             }
         });
-        
+		}
 		validationUtils = new ValidationUtils(this.getWindow().getDecorView());
 		
 		validationUtils.addErrorField("LOCATION", R.id.errorLocation);
@@ -146,7 +169,7 @@ public class MainActivity extends Activity
         locman = (LocationManager)getSystemService(LOCATION_SERVICE);
 
         downloadImagesFragment = new DownloadImagesFragment();
-        downloadImagesFragment.onCreate(getWindow().getDecorView());
+        downloadImagesFragment.onCreate(view);
         downloadImagesFragment.setWindow(getWindow());
         
         // invoked as Locus add-on?
@@ -414,6 +437,32 @@ public class MainActivity extends Activity
 	    downloadImagesFragment.setCurrentDownloadImagesStrategy(TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI);
 	}
 
+    /**
+     * Set up the {@link android.app.ActionBar}, if the API is available.
+     */
+    /*@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    private void setupActionBar()
+    {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            ActionBar actionBar = getActionBar();
+            if (actionBar != null){
+                //actionBar.s
+            }
+            //getActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+    }*/
+	
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    protected final boolean hasActionBar()
+    {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            ActionBar actionBar = getActionBar();
+            return actionBar != null;
+        } else {
+            return false;
+        }
+    }
+	
     @Override
     public boolean onCreateOptionsMenu(Menu menu)
     {
@@ -425,7 +474,7 @@ public class MainActivity extends Activity
     @Override
     public boolean onOptionsItemSelected(MenuItem item)
     {
-        final Intent intent;
+        Intent intent = null;
         switch (item.getItemId()) {
             case R.id.actionGoToDownloads:
                 intent = new Intent(this, DownloadListActivity.class);
@@ -433,8 +482,9 @@ public class MainActivity extends Activity
             case R.id.actionSettings:
                 intent = new Intent(this, org.bogus.domowygpx.activities.SettingsActivity.class);
                 break;
-            default:
-                intent = null;
+            case R.id.actionStart:
+                start();
+                break;
         }
         if (intent != null){
             intent.setAction(Intent.ACTION_VIEW);
