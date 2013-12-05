@@ -186,9 +186,9 @@ public class HttpClientFactory
         }
 
         // timeout to wait for a connection establishment (in seconds)
-        final int connectionTimeout = config.getInt("HttpClientFactory_connectionTimeout", 20);
+        final int connectionTimeout = config.getInt("HttpClientFactory_connectionTimeout", 60);
         // timeout to wait for data (in seconds)
-        final int socketTimeout = config.getInt("HttpClientFactory_socketTimeout", 20);
+        final int socketTimeout = config.getInt("HttpClientFactory_socketTimeout", 60);
         // buffer size for recive and send data to sockets
         // NOTE: internal operating system socket buffers can be set using RAW_SOCKET_RECEIVE_BUFFER_SIZE
         // and RAW_SOCKET_SEND_BUFFER_SIZE parameter names (int)
