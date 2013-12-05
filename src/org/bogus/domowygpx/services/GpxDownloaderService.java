@@ -12,9 +12,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.net.SocketException;
 import java.net.URLEncoder;
-import java.net.UnknownHostException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
@@ -547,9 +545,15 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         
         private boolean processDefaultException(Exception e)
         {
-            if (e instanceof SocketException || 
-                    e instanceof UnknownHostException ||
+            if (e instanceof org.apache.http.conn.ConnectionPoolTimeoutException){
+                setErrorDescription("Za dużo połączeń wychodzących", e); 
+                return true;
+            }
+            if (e instanceof java.net.SocketException || 
+                    e instanceof java.net.UnknownHostException ||
+                    e instanceof java.net.SocketTimeoutException ||
                     e instanceof org.apache.http.client.ClientProtocolException ||
+                    e instanceof org.apache.http.conn.ConnectTimeoutException ||
                     e instanceof org.apache.http.ConnectionClosedException)
             {
                 setErrorDescription("Błąd komunikacji sieciowej", e); 
