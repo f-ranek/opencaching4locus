@@ -405,7 +405,7 @@ public abstract class DownloadListContext
                 cancelling = false;
                 statusUpdater = null;
             }
-            if (task.stateCode == GpxTaskEvent.EVENT_TYPE_FINISHED_OK){
+            if (task.stateCode == GpxTask.STATE_DONE){
                 updateView = true;
                 isDone = true;
                 progressMax = -1;

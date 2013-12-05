@@ -779,7 +779,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                                 sendProgressInfo("Błąd importu do Locusa");
                             }
                         }
-                    }, 250);
+                    }, 500);
                 }
                 
                 try{

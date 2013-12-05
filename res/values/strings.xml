@@ -3,7 +3,6 @@
 
     <string name="applicationName">Opencaching</string>
     <string name="info1">Dobra, jakiś sensowny opis poproszę :D\nProgram przygotowany został do współpracy z programami Locus i Columbus trochę też.</string>
-    <string name="btnGetLocationFromGps">Pobierz z GPSa</string>
     <string name="latitude">Szerokość*:</string>
     <string name="longitude">Długość*:</string>
     <string name="hintGeoData">ddd:mm:ss.ssss</string>

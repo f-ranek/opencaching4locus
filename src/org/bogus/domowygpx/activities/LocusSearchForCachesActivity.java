@@ -25,7 +25,6 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -38,44 +37,29 @@ import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class LocusSearchForCachesActivity extends Activity implements GpxDownloaderListener
 {
     private static final String LOG_TAG = "LocusSearch4CachesActivity";
     
-    final DownloadListContext listItemContext = new DownloadListContext(){
+    DownloadListContext listItemContext = new DownloadListContext(){
         @Override
         void notifyDataSetChanged()
         {
+            if (gpxListItem != null && listItemViewHolder != null){
+                gpxListItem.applyToView(listItemViewHolder, true);
+                gpxListItem.updateProgressRow(listItemViewHolder);
+            }
         }};
 
-    final DialogInterface.OnDismissListener onDismissListener = new DialogInterface.OnDismissListener()
-    {
-        @Override
-        public void onDismiss(DialogInterface dlg)
-        {
-            dialog = null;
-            Log.v(LOG_TAG, "OnDismissListener called");
-            final SharedPreferences config = LocusSearchForCachesActivity.this.
-                    getSharedPreferences("egpx", MODE_PRIVATE);
-            final Editor editor = config.edit();
-            editor.putString("Locus.maxCacheDistance", AndroidUtils.toString(editMaxCacheDistance.getText()));
-            editor.putString("Locus.maxNumOfCaches", AndroidUtils.toString(editMaxNumOfCaches.getText()));
-            editor.putString("Locus.downloadImagesStrategy", downloadImagesFragment.getCurrentDownloadImagesStrategy());
-            
-            if (quickSearch){
-                editor.putBoolean("Locus.searchWithoutAsking", checkBoxDontAskAgain.isChecked());
-            }
-            
-            editor.commit();
-        }
-    };
-        
     boolean quickSearch; 
+    boolean gpxTaskFinished;
  
     EditText editMaxNumOfCaches;
     EditText editMaxCacheDistance;
@@ -87,14 +71,14 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
     
     private locus.api.objects.extra.Location location;
     
-    int gpxTaskId = -2;
     GpxListItem gpxListItem;
     ListItemViewHolder listItemViewHolder;
     
     String maxNumOfCachesText;
     String maxCacheDistanceText;
     String downloadImagesStrategy;
-    AlertDialog dialog;
+    AlertDialog paramsDialog;
+    AlertDialog progressDialog;
     
     @Override
     public void onCreate(final Bundle savedInstanceState)
@@ -166,9 +150,8 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
     
     protected void showProgressDialog()
     {
-        if(dialog != null){
-            dialog.dismiss();
-            dialog = null;
+        if (paramsDialog != null){
+            paramsDialog.dismiss();
         } 
 
         final LayoutInflater inflater = LayoutInflater.from(this);
@@ -180,18 +163,42 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         gpxListItem = listItemContext.new GpxListItem();
         gpxListItem.message = getResources().getString(R.string.titleLocusSearchInProgress); 
         gpxListItem.applyToView(listItemViewHolder, true);
+        gpxListItem.updateProgressRow(listItemViewHolder);
         
         final AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
         dialogBuilder.setView(view);
-        dialog = dialogBuilder.create();
-        dialog.setOnDismissListener(onDismissListener);
-        dialog.show();
-        updateProgressDialogWidth();
+        dialogBuilder.setOnCancelListener(new DialogInterface.OnCancelListener()
+        {
+            @Override
+            public void onCancel(DialogInterface dlg)
+            {
+                Log.v(LOG_TAG, "Progress dialog onCancel");
+                if (!gpxTaskFinished){
+                    Toast.makeText(LocusSearchForCachesActivity.this, 
+                        R.string.msgDownloadInBackground, 
+                        Toast.LENGTH_LONG).show();
+                }
+                finish(Activity.RESULT_CANCELED);
+            }
+        });
+        progressDialog = dialogBuilder.create();
+        progressDialog.show();
+        
+        
+        final WindowManager wm = (WindowManager)getSystemService(Context.WINDOW_SERVICE);
+        final Display display = wm.getDefaultDisplay();
+        final Window window = progressDialog.getWindow();
+        final WindowManager.LayoutParams wlp = window.getAttributes();
+        @SuppressWarnings("deprecation")
+        final int width = Math.min(display.getWidth(), display.getHeight());
+        wlp.width = width;
+        window.setAttributes(wlp);
     }
     
     protected void showParamsDialog()
     {
-        if (dialog != null){
+        if (paramsDialog != null){
+            paramsDialog.show();
             return ;
         }
         
@@ -215,7 +222,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
                 public void onClick(View v)
                 {
                     if (v.isClickable()){
-                        AndroidUtils.hideSoftKeyboard(dialog);
+                        AndroidUtils.hideSoftKeyboard(paramsDialog);
                     }
                 }
             });
@@ -226,7 +233,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
             public void onClick(View v)
             {
                 if (checkBoxDontAskAgain.isClickable()){
-                    AndroidUtils.hideSoftKeyboard(dialog);
+                    AndroidUtils.hideSoftKeyboard(paramsDialog);
                     checkBoxDontAskAgain.toggle();
                 }
             }
@@ -258,25 +265,55 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
         dialogBuilder.setTitle(R.string.titleLocusSearch);
-        dialogBuilder.setNegativeButton(R.string.btnClose, null);
+        dialogBuilder.setNegativeButton(R.string.btnClose, new DialogInterface.OnClickListener()
+        {
+            @Override
+            public void onClick(DialogInterface dialog, int which)
+            {
+                Log.v(LOG_TAG, "Params dialog BUTTON_NEGATIVE onClick");
+                finish(Activity.RESULT_CANCELED);
+            }
+        });
         dialogBuilder.setPositiveButton(R.string.start, null);
         dialogBuilder.setOnCancelListener(new DialogInterface.OnCancelListener(){
             @Override
             public void onCancel(DialogInterface dialog)
             {
+                Log.v(LOG_TAG, "Params dialog onCancel");
                 finish(Activity.RESULT_CANCELED);
             }});
         dialogBuilder.setView(view);
         
-        dialog = dialogBuilder.create();
-        downloadImagesFragment.setWindow(dialog.getWindow());
-        dialog.setOnDismissListener(onDismissListener);
-        dialog.show();
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener()
+        paramsDialog = dialogBuilder.create();
+        downloadImagesFragment.setWindow(paramsDialog.getWindow());
+        paramsDialog.setOnDismissListener(new DialogInterface.OnDismissListener()
+        {
+            @Override
+            public void onDismiss(DialogInterface dlg)
+            {
+                Log.v(LOG_TAG, "Params dialog onDismiss");
+                final SharedPreferences config = LocusSearchForCachesActivity.this.
+                        getSharedPreferences("egpx", MODE_PRIVATE);
+                final Editor editor = config.edit();
+                editor.putString("Locus.maxCacheDistance", AndroidUtils.toString(editMaxCacheDistance.getText()));
+                editor.putString("Locus.maxNumOfCaches", AndroidUtils.toString(editMaxNumOfCaches.getText()));
+                editor.putString("Locus.downloadImagesStrategy", downloadImagesFragment.getCurrentDownloadImagesStrategy());
+                
+                if (quickSearch){
+                    editor.putBoolean("Locus.searchWithoutAsking", checkBoxDontAskAgain.isChecked());
+                }
+                
+                editor.commit();
+                paramsDialog = null;
+            }
+        });
+        paramsDialog.show();
+        paramsDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener()
         {            
             @Override
             public void onClick(View v)
             {
+                Log.v(LOG_TAG, "Params dialog BUTTON_POSITIVE onClick");
                 LocusSearchForCachesActivity.this.startDownloadFromUI();
             }
         });   
@@ -284,7 +321,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
     
     protected void startDownloadFromUI()
     {
-        AndroidUtils.hideSoftKeyboard(dialog);
+        AndroidUtils.hideSoftKeyboard(paramsDialog);
         maxNumOfCachesText = AndroidUtils.toString(editMaxNumOfCaches.getText());
         maxCacheDistanceText = AndroidUtils.toString(editMaxCacheDistance.getText());
         downloadImagesStrategy = downloadImagesFragment.getCurrentDownloadImagesStrategy();
@@ -345,7 +382,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
                     @Override
                     public boolean handleMessage(Message msg)
                     {
-                        gpxTaskId = msg.arg1;
+                        gpxListItem.taskId = msg.arg1;
                         Log.i(LOG_TAG, "GPX taskId=" + msg.arg1);
                         return true;
                     }
@@ -359,14 +396,21 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
     @Override
     protected void onDestroy()
     {
-        if (dialog != null){
-            dialog.dismiss();
-            dialog = null;
+        Log.v(LOG_TAG, "Activity onDestroy()");
+        if (paramsDialog != null){
+            paramsDialog.dismiss();
+        }
+        if (progressDialog != null){
+            progressDialog.dismiss();
         }
         if (listItemContext.gpxDownloader != null){
             listItemContext.gpxDownloader.unregisterEventListener(this);
         }
         unbindService(gpxDownloaderServiceConnection);
+        
+        gpxListItem = null;
+        listItemViewHolder = null;
+        
         super.onDestroy();
     }
     
@@ -408,24 +452,40 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
     @Override
     public void onTaskEvent(GpxTaskEvent event, GpxTask task)
     {
-        if (task.taskId == gpxTaskId){
+        if (task.taskId == gpxListItem.taskId && gpxListItem != null){
             gpxListItem.onGpxEvent(task, event);
             gpxListItem.applyToView(listItemViewHolder, true);
-            if (gpxListItem.isDone || gpxListItem.isError){
-                if (!isFinishing()){
-                    listItemContext.handler.postDelayed(new Runnable()
+            gpxListItem.updateProgressRow(listItemViewHolder);
+            boolean prevGpxTaskFinished = gpxTaskFinished;
+            int dialogTiemout = -1;
+            final int stateCode = task.stateCode;
+            if (stateCode == GpxTask.STATE_ERROR)
+            {
+                gpxTaskFinished = true;
+                dialogTiemout = 3000;
+            } else
+            if (stateCode == GpxTask.STATE_DONE || 
+                    stateCode == GpxTask.STATE_CANCELED)
+            {
+                gpxTaskFinished = true;
+                dialogTiemout = 450; 
+                
+            }
+            if (!prevGpxTaskFinished && gpxTaskFinished){
+                Log.d(LOG_TAG, "Gpx finished: " + stateCode);
+                listItemContext.handler.postDelayed(new Runnable()
+                {
+                    @Override
+                    public void run()
                     {
-                        @Override
-                        public void run()
-                        {
-                            if (dialog != null){
-                                dialog.dismiss();
-                                dialog = null;
-                            }
-                            finish(Activity.RESULT_OK);
+                        if (progressDialog != null){
+                            progressDialog.dismiss();
+                            progressDialog = null;
                         }
-                    }, 125); // TODO: make a fade-out animation
-                }
+                        finish(stateCode == GpxTask.STATE_DONE ? 
+                                Activity.RESULT_OK : Activity.RESULT_CANCELED);
+                    }
+                }, dialogTiemout); 
             }
         }
     }
@@ -433,26 +493,8 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
     @Override
     public void onTaskRemoved(int taskId)
     {
-        if (taskId == gpxTaskId){
+        if (taskId == gpxListItem.taskId){
             finish(Activity.RESULT_CANCELED);
         }
-    }
-    @Override
-    public void onConfigurationChanged(Configuration newConfig)
-    {
-        super.onConfigurationChanged(newConfig);
-        updateProgressDialogWidth();
-    }
-    
-    void updateProgressDialogWidth()
-    {
-        if (listItemViewHolder == null){
-            return ;
-        }
-        final WindowManager wm = (WindowManager)getSystemService(Context.WINDOW_SERVICE);
-        final Display display = wm.getDefaultDisplay();
-        @SuppressWarnings("deprecation")
-        int width = display.getWidth(); 
-        listItemViewHolder.viewRoot.getLayoutParams().width = (int)(0.95 * width);
     }
 }
