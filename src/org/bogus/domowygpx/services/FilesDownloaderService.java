@@ -633,7 +633,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                     ContentValues cv = new ContentValues(2);
                     cv.put("state", FileData.FILE_STATE_SCHEDULED);
                     cv.put("retry_count", 0);
-                    int rows = database.update("files", cv, "(state <> " + FileData.FILE_STATE_SCHEDULED + " or retry_count <> 0)", null);
+                    int rows = database.update("files", cv, "(state <> " + FileData.FILE_STATE_SCHEDULED + " or retry_count <> 0) AND task_id=" + task.taskId, null);
                     Log.i(LOG_TAG, "Restarting task, updated #" + rows + " rows");
                 }
                 
