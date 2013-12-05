@@ -330,7 +330,9 @@ public class FilesDownloader implements Closeable
             boolean gotFullFile = false;
             boolean gotPartialFile = false;
             long currentFileSize = 0;
-            final File tempFile = new File(data.target.getParent(), data.target.getName() + ".progress");
+            final File targetDir = data.target.getParentFile();
+            final File tempFile = new File(targetDir, data.target.getName() + ".progress");
+            targetDir.mkdirs();
             String eTag = null;
             String lastModified = null;
             
@@ -485,7 +487,6 @@ public class FilesDownloader implements Closeable
             int loopAmount = 0;
             long sessionDone = 0;
             is = response.getEntity().getContent();
-            tempFile.getParentFile().mkdirs();
             os = new FileOutputStream(tempFile, gotPartialFile);
             os = new BufferedOutputStream(os, buffer.length);
             
