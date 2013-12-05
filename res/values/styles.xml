@@ -8,7 +8,7 @@
         <item name="android:windowContentOverlay">@null</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowIsFloating">true</item>
-        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:backgroundDimEnabled">true</item>
     </style>
 
     <style name="TextAppearance.Large" 
@@ -36,15 +36,4 @@
         <item name="android:textColor">@color/warning_color</item>
     </style>
 
-    <style name="Widget.ProgressBar.Horizontal.8"
-           parent="@android:style/Widget.ProgressBar.Horizontal">
-        <item name="android:progressDrawable">@drawable/progress_horizontal</item>
-        <item name="android:indeterminateDrawable">@drawable/progress_indeterminate_horizontal</item>
-    </style>
-
-        <style name="Widget.Button.Small.8"
-            parent="@android:style/Widget.Button.Small">
-        <item name="android:background">@drawable/btn_default_small</item>
-    </style>
-    
 </resources>
