@@ -3,7 +3,6 @@ package org.bogus.domowygpx.services;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileDescriptor;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -23,7 +22,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Properties;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPOutputStream;
@@ -487,16 +485,9 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             }
             HttpResponse resp = null;
             try{
-                final Properties cache = new Properties();
-                InputStream cacheIs = null;
-                try{
-                    cacheIs = new FileInputStream(new File(getCacheDir(), "userName_to_uuid.properties"));
-                    cache.load(cacheIs);
-                }catch(Exception e){
-                }finally{
-                    IOUtils.closeQuietly(cacheIs);
-                }
-                String userUuid = cache.getProperty(userName);
+                final SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
+                final String key = "userUUID:" + userName;
+                String userUuid = config.getString(key, null);
                 if (userUuid == null){
                     final OKAPI okApi = OKAPI.getInstance(GpxDownloaderService.this); 
                     String url = okApi.getAPIUrl() + 
@@ -507,23 +498,12 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     final HttpGet get = new HttpGet(url);
                     currentRequest = get;
                     resp = httpClient.execute(get);
-                    currentRequest = null;
                     final JSONObject obj = (JSONObject)getJSONObjectFromResponse(get, resp);
                     userUuid = (String)obj.opt("uuid");
                     if (userUuid == null){
                         sendWarnErrorInfo("Brak użytkownika " + userName, GpxTaskEvent.EVENT_TYPE_WARN); 
                     } else {
-                        cache.setProperty(userName, userUuid);
-                        OutputStream cacheOs = null;
-                        try{
-                            cacheOs = new FileOutputStream(new File(getCacheDir(), "userName_to_uuid.properties"));
-                            cacheOs = new BufferedOutputStream(cacheOs, 1024);
-                            cache.store(cacheOs, null);
-                            cacheOs.flush();
-                        }catch(Exception e){
-                        }finally{
-                            IOUtils.closeQuietly(cacheOs);
-                        }
+                        config.edit().putString(key, userUuid).commit();
                     }
                 }
                 return userUuid;
@@ -533,6 +513,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 throw e;
             }finally{
                 ResponseUtils.closeResponse(resp);
+                currentRequest = null;
             }
         }
         
@@ -1020,15 +1001,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 taskState.stateCode = GpxTask.STATE_ERROR;
             }
         }
-
-        /*protected final void setState(String state)
-        {
-            this.state = state;
-            GpxTaskEvent e = new GpxTaskEvent();
-            e.eventType = GpxTaskEvent.EVENT_TYPE_LOG;
-            e.state = state;
-            pushEvent(e);
-        }*/
         
         protected void dump(PrintWriter writer)
         {
@@ -1048,7 +1020,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
     
     /** Binder exposed to clients */
     private final IBinder mBinder = new LocalBinder();
-    //private int boundClientsCount = 0;
     
     /**
      * Class used for the client Binder.  Because we know this service always
@@ -1135,10 +1106,21 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
     public synchronized int onStartCommand(Intent intent, int flags, int startId) 
     {
         startIds.add(startId);
+        if (intent == null){
+            Log.i(LOG_TAG, "called onStartCommand for startId=" + startId + ", system is restarting service");
+        } else {
+            Log.i(LOG_TAG, "called onStartCommand for startId=" + startId + ", action=" + intent.getAction());
+        }
         try{
+            /* 
+            We are actually not a sticky service, but due to a strange (bug?) android's bevavoiur, see
+                - https://groups.google.com/forum/?fromgroups=#!topic/android-developers/x4pYZcXeKsw
+                - http://stackoverflow.com/questions/9491258/service-restarted-with-start-not-sticky
+                - http://stackoverflow.com/questions/12648447/why-does-my-android-service-get-restarted-when-the-process-is-killed-even-thoug
+            So we are starting in STICKY mode, and when system restarts us, we simply stop ourself 
+             */
             if (intent == null){
-                Log.i(LOG_TAG, "onStartCommand, startId=" + startId + ", null intent");
-                return START_NOT_STICKY;
+                return START_STICKY;
             }
             
             final String action = intent.getAction();
@@ -1178,7 +1160,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         }finally{
             shutdownSelf();
         }
-        return Service.START_NOT_STICKY;
+        return Service.START_STICKY;
     }
     
     protected void showNotification(NotificationCompat.Builder builder, boolean foreground)
@@ -1383,6 +1365,8 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         cleanupDatabase();
         //loadTasksData();
         cleanupFiles();
+        
+        stopForeground(true);
     }        
 
     private void cleanupFiles()

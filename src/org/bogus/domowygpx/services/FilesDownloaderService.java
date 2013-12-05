@@ -1139,6 +1139,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     @Override
     public synchronized void onCreate()
     {
+        Log.i(LOG_TAG, "Called onCreate");
         super.onCreate();
         
         try{
@@ -1148,6 +1149,8 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             Log.e(LOG_TAG, "Failed to create database", sqle);
             throw sqle;
         }   
+        
+        stopForeground(true);
     }
 
     private void cleanupDatabase(boolean systemRestart)

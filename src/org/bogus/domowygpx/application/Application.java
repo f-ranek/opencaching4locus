@@ -19,7 +19,7 @@ import android.util.Log;
 public class Application extends android.app.Application
 {
     private final static String LOG_TAG = "Application";
-    private OKAPI okApi;
+    private volatile OKAPI okApi;
     private int notificationIconResid;
     
     public static Application getInstance(Service context)
@@ -34,18 +34,21 @@ public class Application extends android.app.Application
     
     public OKAPI getOkApi()
     {
+        if (okApi == null){
+            synchronized(this){
+                if (okApi == null){
+                    okApi = new OKAPI(this);
+                }
+            }
+        }
         return okApi;
     }
     
     @Override
     public void onCreate()
     {
+        Log.i(LOG_TAG, "Called onCreate");
         super.onCreate();
-        
-        okApi = new OKAPI(this);
-        int sblv = getStatusBarBackgroundLightValue();
-        Log.d(LOG_TAG, "StatusBarBackgroundLightValue: " + sblv);
-        notificationIconResid = sblv < 128 ? R.drawable.ic_logo_czyste_biale : R.drawable.ic_logo_czyste_czarne;
         
         setupPreferences();
         
@@ -97,13 +100,6 @@ public class Application extends android.app.Application
             }});
     }
     
-    @Override
-    public void onTerminate()
-    {
-        okApi = null;
-        super.onTerminate();
-    }
-    
     /**
      * Returns estimated value of the lightness of the status bar
      * @return
@@ -143,6 +139,10 @@ public class Application extends android.app.Application
 
     public int getNotificationIconResid()
     {
+        if (notificationIconResid == 0){
+            int sblv = getStatusBarBackgroundLightValue();
+            notificationIconResid = sblv < 128 ? R.drawable.ic_logo_czyste_biale : R.drawable.ic_logo_czyste_czarne;
+        }
         return notificationIconResid;
     }
     
