@@ -12,6 +12,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.ref.WeakReference;
 import java.net.URLEncoder;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -1056,7 +1057,62 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
     public class LocalBinder extends Binder {
         public GpxDownloaderApi getService() 
         {
-            return GpxDownloaderService.this;
+            return new GpxDownloaderApi(){
+
+                private final WeakReference<GpxDownloaderApi> target = 
+                        new WeakReference<GpxDownloaderApi>(GpxDownloaderService.this);
+                
+                private GpxDownloaderApi getTarget()
+                {
+                    GpxDownloaderApi result = target.get();
+                    if (result == null){
+                        throw new IllegalStateException("You are storing a reference to already stopped service");
+                    }
+                    return result;
+                }
+                
+                @Override
+                public boolean cancelTask(int taskId)
+                {
+                    return getTarget().cancelTask(taskId);
+                }
+
+                @Override
+                public List<GpxTask> getTasks(int filterTaskId, boolean attachEvents)
+                {
+                    return getTarget().getTasks(filterTaskId, attachEvents);
+                }
+
+                @Override
+                public boolean removeTask(int taskId)
+                {
+                    return getTarget().removeTask(taskId);
+                }
+
+                @Override
+                public String taskToDeveloperDebugString(int taskId)
+                {
+                    return getTarget().taskToDeveloperDebugString(taskId);
+                }
+
+                @Override
+                public boolean updateCurrentCacheStatus(int taskId, GpxDownloaderListener listener)
+                {
+                    return getTarget().updateCurrentCacheStatus(taskId, listener);
+                }
+
+                @Override
+                public void registerEventListener(GpxDownloaderListener listener)
+                {
+                    getTarget().registerEventListener(listener);
+                }
+
+                @Override
+                public boolean unregisterEventListener(GpxDownloaderListener listener)
+                {
+                    return getTarget().unregisterEventListener(listener);
+                }
+            };
         }
     }    
     

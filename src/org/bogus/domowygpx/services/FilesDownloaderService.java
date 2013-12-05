@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.ref.WeakReference;
 import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -874,7 +875,73 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     public class LocalBinder extends Binder {
         public FilesDownloaderApi getService() 
         {
-            return FilesDownloaderService.this;
+            return new FilesDownloaderApi(){
+                private final WeakReference<FilesDownloaderApi> target = 
+                        new WeakReference<FilesDownloaderApi>(FilesDownloaderService.this);
+                
+                private FilesDownloaderApi getTarget()
+                {
+                    FilesDownloaderApi result = target.get();
+                    if (result == null){
+                        throw new IllegalStateException("You are storing a reference to already stopped service");
+                    }
+                    return result;
+                }
+
+                @Override
+                public int createTaskForFiles(List<FileData> filesToDownload) throws IllegalArgumentException
+                {
+                    return getTarget().createTaskForFiles(filesToDownload);
+                }
+
+                @Override
+                public boolean stopTask(int taskId)
+                {
+                    return getTarget().stopTask(taskId);
+                }
+
+                @Override
+                public boolean restartTask(int taskId, boolean restartFromScratch)
+                {
+                    return getTarget().restartTask(taskId, restartFromScratch);
+                }
+
+                @Override
+                public boolean cancelTask(int taskId)
+                {
+                    return getTarget().cancelTask(taskId);
+                }
+
+                @Override
+                public boolean removeTask(int taskId)
+                {
+                    return getTarget().removeTask(taskId);
+                }
+
+                @Override
+                public List<FilesDownloadTask> getTasks()
+                {
+                    return getTarget().getTasks();
+                }
+
+                @Override
+                public String taskToDeveloperDebugString(int taskId)
+                {
+                    return getTarget().taskToDeveloperDebugString(taskId);
+                }
+
+                @Override
+                public void registerEventListener(FilesDownloaderListener listener)
+                {
+                    getTarget().registerEventListener(listener);
+                }
+
+                @Override
+                public boolean unregisterEventListener(FilesDownloaderListener listener)
+                {
+                    return getTarget().unregisterEventListener(listener);
+                }
+            };
         }
     } 
     
