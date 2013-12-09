@@ -14,5 +14,10 @@
         android:key="imagesTargetDirName"
         android:title="@string/pref_directories_target_images"
         />
-    
+    <org.bogus.android.ButtonPreference
+        android:key="reloadTargetDirs"
+        android:title="@string/pref_directories_reload_target_dirs"
+        android:summary="@string/pref_directories_reload_target_dirs_desc"
+        android:text="@string/pref_directories_reload_target_dirs_btn"
+        />
 </PreferenceScreen>

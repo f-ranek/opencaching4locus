@@ -28,7 +28,6 @@ public class TargetDirLocator
     private final static Log logger = LogFactory.getLog(TargetDirLocator.class);
 
     private static final String LOCUS_ROOT_DIR_NAME = "Locus";
-    private static final String GPX_ROOT_DIR_NAME = "gpx";
 
     private final Pattern spacePattern = Pattern.compile("[ \t]+");
     private Set<File> mountPoints;
@@ -116,17 +115,23 @@ public class TargetDirLocator
         final File sdCardRoot = Environment.getExternalStorageDirectory();
         if (checkDirectory(sdCardRoot) && sdCardRoot.canWrite()){
             filesToSkip.add(sdCardRoot);
-            result.add(new File(sdCardRoot, GPX_ROOT_DIR_NAME));
+            result.add(sdCardRoot);
         }
+        final File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        if (checkDirectory(downloadsDir) && downloadsDir.canWrite()){
+            filesToSkip.add(downloadsDir);
+            result.add(downloadsDir);
+        }
+        
         final File dataDir = Environment.getDataDirectory();
         if (checkDirectory(dataDir) && dataDir.canWrite()){
             filesToSkip.add(dataDir);
-            result.add(new File(dataDir, GPX_ROOT_DIR_NAME));
+            result.add(dataDir);
         }
         
         for (File f : mp){
             if (!filesToSkip.contains(f) && f.canWrite()){
-                result.add(new File(f, GPX_ROOT_DIR_NAME));
+                result.add(f);
             }
         }
         return result;

@@ -13,7 +13,6 @@ import android.content.SharedPreferences.Editor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
-import android.os.Environment;
 import android.util.Log;
 
 public class Application extends android.app.Application
@@ -54,25 +53,6 @@ public class Application extends android.app.Application
         
         // TODO: cleanup gpxTargetDirNameTemp
         
-        /* SENSELESS :/
-        SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
-        if (config.getBoolean("Application_restartDownloadOnApplicationStart", true)){
-            Looper mainLooper = Looper.myLooper();
-            Handler handler = new Handler(mainLooper);
-            handler.postAtTime(new Runnable(){
-                @Override
-                public void run(){
-                    // restart downloads (i.e. after system reboot)
-                    // TODO: in case of an error, this may cause application crach
-                    // that would lead to infinite loop of 
-                    //  * user starts application -> application crach -> application stopped
-                    // then user will uninstall our application :(((
-                    final Intent intent = new Intent(FilesDownloaderService.INTENT_ACTION_START_DOWNLOAD, null, 
-                        Application.this, FilesDownloaderService.class);
-                    startService(intent);
-                }
-            }, SystemClock.uptimeMillis() + 15L*1000L);
-        }*/
         locus.api.utils.Logger.registerLogger(new locus.api.utils.Logger.ILogger(){
 
             @Override
@@ -162,10 +142,7 @@ public class Application extends android.app.Application
                     editor.putInt("configVersion", 2);
                     editor.commit();
                     
-                    createDirectories(config, "gpxTargetDirName");
-                    createDirectories(config, "gpxTargetDirNameTemp");
-                    createDirectories(config, "imagesTargetDirName");
-                    
+                    createSaveDirectories(config);
                     break;
                 case 2: 
                     break;
@@ -181,6 +158,15 @@ public class Application extends android.app.Application
             Log.e(LOG_TAG, "Failed to read config", e);
             initNewConfig();
         }
+    }
+
+    private boolean createSaveDirectories(SharedPreferences config)
+    {
+        boolean result = true;
+        result = createDirectories(config, "gpxTargetDirName") & result;
+        result = createDirectories(config, "gpxTargetDirNameTemp") & result;
+        result = createDirectories(config, "imagesTargetDirName") & result;
+        return result;
     }
     
     private void initNewConfig()
@@ -209,15 +195,10 @@ public class Application extends android.app.Application
             imagesTargetDirName = new File(loc, ".cacheImages");
         } else {
             final List<File> data = tdl.locateSaveDirectories();
-            File dir;
-            if (data == null || data.isEmpty()){
-                dir = data.get(0);
-            } else {
-                dir = Environment.getDataDirectory();
-            }
-            gpxTargetDirName = new File(dir, "kesze"); // XXX localization!!!
-            gpxTargetDirNameTemp = new File (dir, "kesze-temp");
-            imagesTargetDirName = new File(dir, ".cacheImages");
+            final File dir = data.get(0);
+            gpxTargetDirName = new File(dir, "opencaching/kesze"); // XXX localization!!!
+            gpxTargetDirNameTemp = new File (dir, "opencaching/kesze-temp");
+            imagesTargetDirName = new File(dir, "opencaching/.cacheImages");
         }
         
         editor.putString("gpxTargetDirName", gpxTargetDirName.toString());
@@ -226,12 +207,15 @@ public class Application extends android.app.Application
         
     }
     
-    private void createDirectories(SharedPreferences config, String key)
+    private boolean createDirectories(SharedPreferences config, String key)
     {
         String val = config.getString(key, null);
         if (val != null){
             File f = new File(val);
             f.mkdirs();
+            return f.exists();
+        } else {
+            return true;
         }
     }
     
@@ -255,5 +239,15 @@ public class Application extends android.app.Application
             }
             editor.remove("targetFileName");
         }
+    }
+    
+    public boolean initSaveDirectories()
+    {
+        SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
+        Editor editor = config.edit();
+        initSaveDirectories(config, editor);
+        editor.commit();
+        boolean result = createSaveDirectories(config);
+        return result;
     }
 }

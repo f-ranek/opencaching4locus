@@ -3,9 +3,11 @@ package org.bogus.domowygpx.activities;
 import java.util.Map;
 
 import org.bogus.android.AndroidUtils;
+import org.bogus.android.ButtonPreference;
 import org.bogus.android.FolderPreference;
 import org.bogus.android.FolderPreferenceHelperActivity;
 import org.bogus.android.IntListPreference;
+import org.bogus.domowygpx.application.Application;
 import org.bogus.geocaching.egpx.R;
 
 import android.content.Intent;
@@ -18,6 +20,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceGroup;
 import android.preference.PreferenceScreen;
+import android.text.TextUtils;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. 
@@ -62,8 +65,9 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
         getPreferenceScreen().addPreference(fakeHeader);
         addPreferencesFromResource(R.xml.pref_directories);
         
-        Preference pref = findPreference("downloadImagesStrategy");
-        CompoundPreferenceChangeListener.add(pref, new Preference.OnPreferenceChangeListener(){
+        Preference downloadImagesStrategyPref = findPreference("downloadImagesStrategy");
+        CompoundPreferenceChangeListener.add(downloadImagesStrategyPref, 
+            new Preference.OnPreferenceChangeListener(){
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue)
             {
@@ -73,9 +77,30 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
                 return true;
             }});
         
-        PreferenceScreen preferenceScreen = getPreferenceScreen();
+        final PreferenceScreen preferenceScreen = getPreferenceScreen();
         final Map<String, ?> allConfigValues = getPreferenceManager().getSharedPreferences().getAll();
         setupPrefereneHierarchy(preferenceScreen, allConfigValues);
+        
+        ButtonPreference reloadTargetDirsPref = (ButtonPreference)findPreference("reloadTargetDirs");
+        reloadTargetDirsPref.setOnClickListener(new ButtonPreference.OnClickListener()
+        {
+            @Override
+            public void onClick(ButtonPreference pref)
+            {
+                final Application app = (Application)getApplication();
+                app.initSaveDirectories();
+                int count = preferenceScreen.getPreferenceCount();
+                final Map<String, ?> config = getPreferenceManager().getSharedPreferences().getAll();
+                for (int i=0; i<count; i++){
+                    Preference item = preferenceScreen.getPreference(i);
+                    if (item instanceof FolderPreference){
+                        final String key = item.getKey();
+                        final Object value = config.get(key);
+                        sBindPreferenceSummaryToValueListener.onPreferenceChange(item, value);
+                    }
+                }
+            }
+        });
         
         // XXX load UI automatically!!!!
     }
@@ -90,10 +115,11 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
                 setupPrefereneHierarchy(group2, values);
             } else {
                 final String key = item.getKey();
-                CompoundPreferenceChangeListener.add(item, sBindPreferenceSummaryToValueListener);
-                Object value = values.get(key);
-                sBindPreferenceSummaryToValueListener.onPreferenceChange(item, value);
-                
+                if (TextUtils.isEmpty(item.getSummary())) {
+                    CompoundPreferenceChangeListener.add(item, sBindPreferenceSummaryToValueListener);
+                    final Object value = values.get(key);
+                    sBindPreferenceSummaryToValueListener.onPreferenceChange(item, value);
+                }
                 if (item instanceof FolderPreference){
                     ((FolderPreference)item).setFolderPreferenceHelperActivity(this);
                 }
@@ -111,7 +137,7 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
      * A preference value change listener that updates the preference's summary
      * to reflect its new value.
      */
-    static private Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = 
+    static Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = 
             new Preference.OnPreferenceChangeListener()
     {
         @Override
