@@ -15,9 +15,9 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
-import org.apache.commons.io.input.AutoCloseInputStream;
 import org.apache.commons.logging.Log;
 import org.bogus.logging.LogFactory;
 
@@ -163,13 +163,13 @@ public class TargetDirLocator
     
     protected void parseMountPoints(Set<File> result)
     {
+        InputStream is = null;
         try{
             File f = new File("/proc/mounts");
             if (!f.exists() || !f.canRead()){
                 return ;
             }
-            InputStream is = new FileInputStream(f);
-            is = new AutoCloseInputStream(is);
+            is = new FileInputStream(f);
             final BufferedReader reader = new BufferedReader(new InputStreamReader(is), 128);
             String line;
             while ((line = reader.readLine()) != null){
@@ -188,22 +188,24 @@ public class TargetDirLocator
                     }
                 }
             }
-            is.close();
+            reader.close();
         }catch(Exception e){
             logger.warn("Failed to parse /proc/mounts", e);
+        }finally{
+            IOUtils.closeQuietly(is);
         }
     }
 
 
     protected void parseVold(Set<File> result)
     {
+        InputStream is = null;
         try{
             File f = new File("/etc/vold.fstab");
             if (!f.exists() || !f.canRead()){
                 return ;
             }
-            InputStream is = new FileInputStream(f);
-            is = new AutoCloseInputStream(is);
+            is = new FileInputStream(f);
             final BufferedReader reader = new BufferedReader(new InputStreamReader(is), 128);
             String line;
             while ((line = reader.readLine()) != null){
@@ -225,9 +227,11 @@ public class TargetDirLocator
                     }
                 }
             }
-            is.close();
+            reader.close();
         }catch(Exception e){
             logger.warn("Failed to parse /etc/vold.fstab", e);
+        }finally{
+            IOUtils.closeQuietly(is);
         }
     }
 }

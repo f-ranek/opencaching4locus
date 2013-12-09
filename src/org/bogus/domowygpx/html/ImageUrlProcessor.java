@@ -30,7 +30,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.input.AutoCloseInputStream;
 import org.apache.commons.logging.Log;
 import org.bogus.domowygpx.gpx.GpxState;
 import org.bogus.domowygpx.services.downloader.FileData;
@@ -59,25 +58,28 @@ public class ImageUrlProcessor implements ImageSourceResolver
     static void loadPathPatterns(String fileName, List<Pattern> target)
     {
         String line = null;
+        InputStream is = null;
         try{
-            InputStream is = ImageUrlProcessor.class.getResourceAsStream(fileName);
-            is = new AutoCloseInputStream(is);
+            is = ImageUrlProcessor.class.getResourceAsStream(fileName);
             final BufferedReader reader = new BufferedReader(new InputStreamReader(is), 128);
             while ((line = reader.readLine()) != null){
                 if (line.length() > 0 && !line.startsWith("#")){
                     target.add(Pattern.compile(line));
                 }
             }
+            reader.close();
         }catch(Exception e){
             logger.error("Failed to read config from " + fileName + ", offending line='" + line + "'", e);
+        }finally{
+            IOUtils.closeQuietly(is);
         }
         
     }
     
     static {
+        InputStream is = null;
         try{
-            InputStream is = ImageUrlProcessor.class.getResourceAsStream("oc_domains.txt");
-            is = new AutoCloseInputStream(is);
+            is = ImageUrlProcessor.class.getResourceAsStream("oc_domains.txt");
             final BufferedReader reader = new BufferedReader(new InputStreamReader(is), 128);
             String line;
             while ((line = reader.readLine()) != null){
@@ -85,8 +87,11 @@ public class ImageUrlProcessor implements ImageSourceResolver
                     opencachingDomains.add(line);
                 }
             }
+            reader.close();
         }catch(Exception e){
             logger.error("Failed to read OpenCaching domains from config", e);
+        }finally{
+            IOUtils.closeQuietly(is);
         }
         loadPathPatterns("path_clreanups.txt", pathCleanupPatterns);
         loadPathPatterns("internal_paths.txt", internalPathPatterns);
