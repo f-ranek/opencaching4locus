@@ -34,6 +34,9 @@
 
     <string name="maxNumOfCachesDefault">50</string>
 
+    <string name="locusCommunicationError">Błąd komunikacji z Locusem</string>
+    <string name="locusCommunicationError2">Opencaching: Błąd komunikacji z Locusem</string>
+    
     <string name="history">Historia zmian:\n1.0 - pierwsza wersja, na bazie programu Awaryjny GPX.</string>
 
     <string name="errorPlaceholderText">ERROR_TEXT_GOES_HERE</string>

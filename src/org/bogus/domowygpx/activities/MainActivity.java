@@ -178,14 +178,19 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
         
         // invoked as Locus add-on?
         final Intent intent = getIntent();
-        if (LocusUtils.isIntentMainFunction(intent)){
-            locus.api.objects.extra.Location loc = 
-                    LocusUtils.getLocationFromIntent(intent, LocusConst.INTENT_EXTRA_LOCATION_MAP_CENTER);
-            if (loc != null){
-                Location loc2 = LocusUtils.convertToA(loc);
-                updateLocationInfo(loc2);
-                locationAlreadySet = true;
+        try{
+            if (LocusUtils.isIntentMainFunction(intent)){
+                locus.api.objects.extra.Location loc = 
+                        LocusUtils.getLocationFromIntent(intent, LocusConst.INTENT_EXTRA_LOCATION_MAP_CENTER);
+                if (loc != null){
+                    Location loc2 = LocusUtils.convertToA(loc);
+                    updateLocationInfo(loc2);
+                    locationAlreadySet = true;
+                }
             }
+        }catch(Exception e){
+            Log.e(LOG_TAG, "Locus communication error", e);
+            Toast.makeText(this, R.string.locusCommunicationError, Toast.LENGTH_SHORT).show();
         }
 	}
 	
