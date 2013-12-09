@@ -45,6 +45,10 @@
             android:label="@string/title_activity_settings"
             android:configChanges="keyboardHidden|orientation|screenSize" 
             android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.MANAGE_NETWORK_USAGE"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
         </activity>
         <activity
             android:name="org.bogus.domowygpx.activities.LocusSearchForCachesActivity" 
