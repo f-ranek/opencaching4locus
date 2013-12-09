@@ -20,6 +20,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -39,7 +40,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class MainActivity extends Activity
+public class MainActivity extends Activity implements OnSharedPreferenceChangeListener
 {
 	private static final String LOG_TAG = "MainActivity";
 	
@@ -171,6 +172,9 @@ public class MainActivity extends Activity
         downloadImagesFragment = new DownloadImagesFragment();
         downloadImagesFragment.onCreate(view);
         downloadImagesFragment.setWindow(getWindow());
+        
+        final boolean hasLocus = locus.api.android.utils.LocusUtils.isLocusAvailable(this, 200);
+        tableRowAutoLocusImport.setVisibility(hasLocus ? View.VISIBLE : View.GONE);
         
         // invoked as Locus add-on?
         final Intent intent = getIntent();
@@ -316,8 +320,6 @@ public class MainActivity extends Activity
         AndroidUtils.hideSoftKeyboard(this);
         validationUtils.resetViewErrors();
         
-        //SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
-        
 	    TaskConfiguration taskConfiguration = new TaskConfiguration();
         taskConfiguration.initFromConfig(this);
 
@@ -390,6 +392,7 @@ public class MainActivity extends Activity
 		super.onStart();
 		
 		final SharedPreferences config = this.getSharedPreferences("egpx", MODE_PRIVATE);
+		config.registerOnSharedPreferenceChangeListener(this);
 		try{
 		    int version = config.getInt("MainActivity.configVersion", -1);
 		    // XXX todo: migracja
@@ -412,6 +415,9 @@ public class MainActivity extends Activity
 		    editMaxNumOfCaches.setText(config.getString("maxNumOfCaches", ""));
 		    checkBoxAutoLocusImport.setChecked(config.getBoolean("autoLocusImport", true));
             
+		    downloadImagesFragment.setCurrentDownloadImagesStrategy(
+                config.getString("downloadImagesStrategy", TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI));
+		    
             updateBtnGetLocationFromGps(isGpsPending());
 		}catch(Exception e){
 		    Log.e(LOG_TAG, "Failed to read config", e);
@@ -495,19 +501,13 @@ public class MainActivity extends Activity
     }  
     
     @Override
-    protected void onResume()
-    {
-        super.onResume();
-
-        // this may change in preferences, as well as wifi state may change
-        final SharedPreferences config = this.getSharedPreferences("egpx", MODE_PRIVATE);
-        downloadImagesFragment.setCurrentDownloadImagesStrategy(
-            config.getString("downloadImagesStrategy", TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI));
-
-        final boolean hasLocus = locus.api.android.utils.LocusUtils.isLocusAvailable(this, 200);
-        tableRowAutoLocusImport.setVisibility(hasLocus ? View.VISIBLE : View.GONE);
+    public void onSharedPreferenceChanged(SharedPreferences config, String key) {    
+        if ("downloadImagesStrategy".equals(key)){
+            downloadImagesFragment.setCurrentDownloadImagesStrategy(
+                config.getString("downloadImagesStrategy", TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI));
+        }
     }
-
+    
     @TargetApi(Build.VERSION_CODES.GINGERBREAD)
     @Override
     protected void onPause()
