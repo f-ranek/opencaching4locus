@@ -1,5 +1,7 @@
 package org.bogus.domowygpx.activities;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.bogus.android.AndroidUtils;
@@ -13,13 +15,13 @@ import org.bogus.geocaching.egpx.R;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceGroup;
-import android.preference.PreferenceScreen;
 import android.text.TextUtils;
 
 /**
@@ -29,6 +31,7 @@ import android.text.TextUtils;
 public class SettingsActivity extends PreferenceActivity implements FolderPreferenceHelperActivity
 {
     private FolderPreferenceHelperActivityListener currActivityResultListener;
+    private final List<Object> preventGCStorage = new ArrayList<Object>();
     
     @SuppressWarnings("deprecation")
     @Override
@@ -49,60 +52,93 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
     private void setupSimplePreferencesScreen()
     {
         addPreferencesFromResource(R.xml.pref_header);
-        
-        PreferenceCategory fakeHeader = new PreferenceCategory(this); // o-rzesz-ku
-        fakeHeader.setTitle(R.string.pref_title_my_account);
-        getPreferenceScreen().addPreference(fakeHeader);
-        addPreferencesFromResource(R.xml.pref_my_account);
-
-        fakeHeader = new PreferenceCategory(this);
-        fakeHeader.setTitle(R.string.pref_title_downloads);
-        getPreferenceScreen().addPreference(fakeHeader);
-        addPreferencesFromResource(R.xml.pref_downloads);
-
-        fakeHeader = new PreferenceCategory(this); 
-        fakeHeader.setTitle(R.string.pref_title_directories);
-        getPreferenceScreen().addPreference(fakeHeader);
-        addPreferencesFromResource(R.xml.pref_directories);
-        
-        Preference downloadImagesStrategyPref = findPreference("downloadImagesStrategy");
-        CompoundPreferenceChangeListener.add(downloadImagesStrategyPref, 
-            new Preference.OnPreferenceChangeListener(){
-            @Override
-            public boolean onPreferenceChange(Preference preference, Object newValue)
-            {
-                Editor editor = preference.getSharedPreferences().edit();
-                editor.putString("Locus.downloadImagesStrategy", AndroidUtils.toString(newValue));
-                editor.commit();
-                return true;
-            }});
-        
-        final PreferenceScreen preferenceScreen = getPreferenceScreen();
-        final Map<String, ?> allConfigValues = getPreferenceManager().getSharedPreferences().getAll();
-        setupPrefereneHierarchy(preferenceScreen, allConfigValues);
-        
-        ButtonPreference reloadTargetDirsPref = (ButtonPreference)findPreference("reloadTargetDirs");
-        reloadTargetDirsPref.setOnClickListener(new ButtonPreference.OnClickListener()
         {
-            @Override
-            public void onClick(ButtonPreference pref)
+            PreferenceCategory fakeHeader = new PreferenceCategory(this); // o-rzesz-ku
+            fakeHeader.setTitle(R.string.pref_title_my_account);
+            getPreferenceScreen().addPreference(fakeHeader);
+            addPreferencesFromResource(R.xml.pref_my_account);
+    
+            fakeHeader = new PreferenceCategory(this);
+            fakeHeader.setTitle(R.string.pref_title_downloads);
+            getPreferenceScreen().addPreference(fakeHeader);
+            addPreferencesFromResource(R.xml.pref_downloads);
+    
+            fakeHeader = new PreferenceCategory(this); 
+            fakeHeader.setTitle(R.string.pref_title_directories);
+            getPreferenceScreen().addPreference(fakeHeader);
+            addPreferencesFromResource(R.xml.pref_directories);
+        }        
+        {
+            final Preference downloadImagesStrategyPref = findPreference("downloadImagesStrategy");
+            CompoundPreferenceChangeListener.add(downloadImagesStrategyPref, 
+                new Preference.OnPreferenceChangeListener(){
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue)
+                {
+                    Editor editor = preference.getSharedPreferences().edit();
+                    editor.putString("Locus.downloadImagesStrategy", AndroidUtils.toString(newValue));
+                    editor.commit();
+                    return true;
+                }});
+        }
+        final SharedPreferences config = getPreferenceManager().getSharedPreferences();
+        final Map<String, ?> allConfigValues = config.getAll();
+        setupPrefereneHierarchy(getPreferenceScreen(), allConfigValues);
+        
+        {
+            final ButtonPreference reloadTargetDirsPref = (ButtonPreference)findPreference("reloadTargetDirs");
+            reloadTargetDirsPref.setOnClickListener(new ButtonPreference.OnClickListener()
             {
-                final Application app = (Application)getApplication();
-                app.initSaveDirectories();
-                int count = preferenceScreen.getPreferenceCount();
-                final Map<String, ?> config = getPreferenceManager().getSharedPreferences().getAll();
-                for (int i=0; i<count; i++){
-                    Preference item = preferenceScreen.getPreference(i);
-                    if (item instanceof FolderPreference){
-                        final String key = item.getKey();
-                        final Object value = config.get(key);
-                        sBindPreferenceSummaryToValueListener.onPreferenceChange(item, value);
+                @Override
+                public void onClick(ButtonPreference pref)
+                {
+                    final Application app = (Application)getApplication();
+                    app.initSaveDirectories();
+    
+                    final PreferenceGroup preferenceScreen = getPreferenceScreen();
+                    final int count = preferenceScreen.getPreferenceCount();
+                    final Map<String, ?> allConfigValues = config.getAll();
+                    for (int i=0; i<count; i++){
+                        Preference item = preferenceScreen.getPreference(i);
+                        if (item instanceof FolderPreference){
+                            final String key = item.getKey();
+                            final Object value = allConfigValues.get(key);
+                            sBindPreferenceSummaryToValueListener.onPreferenceChange(item, value);
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
         
-        // XXX load UI automatically!!!!
+        {
+            final ButtonPreference resetLocusDontAskAgain = (ButtonPreference)findPreference("resetLocusDontAskAgain");
+            OnSharedPreferenceChangeListener spcl = new OnSharedPreferenceChangeListener()
+            {
+                
+                @Override
+                public void onSharedPreferenceChanged(SharedPreferences config, String key)
+                {
+                    resetLocusDontAskAgain.setEnabled(
+                        config.getBoolean("Locus.point_searchWithoutAsking",false) || 
+                        config.getBoolean("Locus.search_searchWithoutAsking",false));
+                }
+            };
+            config.registerOnSharedPreferenceChangeListener(spcl);
+            spcl.onSharedPreferenceChanged(config, null);
+            preventGCStorage.add(spcl); // we must keep a strong reference, since SharedPreferences keeps week refs
+            
+            resetLocusDontAskAgain.setOnClickListener(new ButtonPreference.OnClickListener(){
+    
+                @Override
+                public void onClick(ButtonPreference pref)
+                {
+                    Editor editor = config.edit();
+                    editor.remove("Locus.point_searchWithoutAsking");
+                    editor.remove("Locus.search_searchWithoutAsking");
+                    editor.commit();
+                    pref.setEnabled(false);
+                }});
+        }
     }
 
     private void setupPrefereneHierarchy(PreferenceGroup group, Map<String, ?> values)

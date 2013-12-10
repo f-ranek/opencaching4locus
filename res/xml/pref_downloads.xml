@@ -19,4 +19,11 @@
         android:title="@string/pref_download_logs_count" 
     />    
 
+    <org.bogus.android.ButtonPreference
+        android:key="resetLocusDontAskAgain"
+        android:title="@string/pref_download_reset_locus_dont_ask_again"
+        android:summary="@string/pref_download_reset_locus_dont_ask_again_desc"
+        android:text="@string/pref_download_reset_locus_dont_ask_again_btn"
+    />
+    
 </PreferenceScreen>
