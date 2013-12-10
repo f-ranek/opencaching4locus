@@ -66,6 +66,7 @@ public class ButtonPreference extends Preference
             viewGroup.addView(button);
         }
         viewGroup.setVisibility(View.VISIBLE);
+        viewGroup.setClickable(true);
     }
     
     public void setOnClickListener(final OnClickListener ocl)
@@ -73,10 +74,28 @@ public class ButtonPreference extends Preference
         this.onClickListener = ocl;
     }
 
+    @Override
+    public void setEnabled(boolean enabled)
+    {
+        super.setEnabled(enabled);
+        if (button != null){
+            button.setEnabled(enabled);
+        }
+    }
+    
+    @Override
+    public void onDependencyChanged(Preference dependency, boolean disableDependent) {
+        super.onDependencyChanged(dependency, disableDependent);
+        if (button != null){
+            button.setEnabled(isEnabled());
+        }
+    }
+    
     public Button getButton()
     {
         if (button == null){
             button = new Button(getContext());
+            button.setEnabled(isEnabled());
             button.setOnClickListener(new View.OnClickListener()
             {
                 @Override
