@@ -7,6 +7,7 @@ import java.util.Map;
 import org.bogus.domowygpx.utils.Pair;
 import org.bogus.geocaching.egpx.R;
 
+import android.content.Context;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -14,6 +15,7 @@ import android.widget.Toast;
 public class ValidationUtils
 {
     private View ownerView;
+    private final Context context;
 
     private Map<String, Integer> errorFieldsMap = new HashMap<String, Integer>();
     private Map<String, Integer> errorFieldsFocusMap = new HashMap<String, Integer>();
@@ -21,13 +23,14 @@ public class ValidationUtils
 
     private TaskConfiguration previousTaskConfiguration;
     
-    public ValidationUtils()
+    public ValidationUtils(Context context)
     {
-        
+        this.context = context;
     }
     public ValidationUtils(View ownerView)
     {
         this.ownerView = ownerView;
+        this.context = ownerView.getContext();
     }
 
     protected void resetViewError(int viewId)
@@ -35,7 +38,7 @@ public class ValidationUtils
         TextView v = (TextView)ownerView.findViewById(viewId);
         v.setText(null);
         v.setVisibility(TextView.GONE);
-        v.setTextAppearance(ownerView.getContext(), android.R.style.TextAppearance_Small);
+        v.setTextAppearance(context, android.R.style.TextAppearance_Small);
     }
     
     public void resetViewErrors()
@@ -57,16 +60,16 @@ public class ValidationUtils
         }
         
         errorControl.setVisibility(TextView.VISIBLE);
-        errorControl.setTextAppearance(ownerView.getContext(), 
+        errorControl.setTextAppearance(context, 
             isWarning ? R.style.TextAppearance_Small_Warning 
                     : R.style.TextAppearance_Small_Error);
     }
     
-    protected void processErrorsList(final List<Pair<String, String>> errors, boolean isWarning)
+    protected void processErrorsList(final List<Pair<String, Integer>> errors, boolean isWarning)
     {
-        for (Pair<String, String> error : errors){
+        for (Pair<String, Integer> error : errors){
             final String fieldCode = error.first;
-            final String errorText = error.second;
+            final int errorTextResId = error.second;
             
             int errorViewId;
             if (fieldCode != null && errorFieldsMap.containsKey(fieldCode)){
@@ -85,7 +88,7 @@ public class ValidationUtils
             View errorView = ownerView.findViewById(errorViewId);
             if (errorView instanceof TextView){
                 TextView errorTextView = (TextView)errorView;
-                markError(errorText, errorTextView, isWarning);
+                markError(context.getResources().getString(errorTextResId), errorTextView, isWarning);
             }
         }
     }
@@ -108,11 +111,11 @@ public class ValidationUtils
     public boolean checkForErrorsSilent(
         TaskConfiguration taskConfiguration)
     {
-        final List<Pair<String, String>> errors = taskConfiguration.getErrors();
+        final List<Pair<String, Integer>> errors = taskConfiguration.getErrors();
         if (!errors.isEmpty()){
             return false;
         }
-        final List<Pair<String, String>> warnings = taskConfiguration.getWarnings();
+        final List<Pair<String, Integer>> warnings = taskConfiguration.getWarnings();
         if (!warnings.isEmpty()){
             return false;
         }
@@ -127,22 +130,22 @@ public class ValidationUtils
     public boolean checkForErrors(
         TaskConfiguration taskConfiguration)
     {
-        final List<Pair<String, String>> errors = taskConfiguration.getErrors();
+        final List<Pair<String, Integer>> errors = taskConfiguration.getErrors();
         processErrorsList(errors, false);
         
         if (!errors.isEmpty()){
             previousTaskConfiguration = null;
-            Toast.makeText(ownerView.getContext(), "Przed kontynuacją popraw zaznaczone błędy", Toast.LENGTH_LONG).show();
+            Toast.makeText(context, R.string.validationErrors, Toast.LENGTH_LONG).show();
             return false;
         }
 
-        final List<Pair<String, String>> warnings = taskConfiguration.getWarnings();
+        final List<Pair<String, Integer>> warnings = taskConfiguration.getWarnings();
         processErrorsList(warnings, true);
         
         if (!warnings.isEmpty()){
             if (previousTaskConfiguration == null || !taskConfiguration.equals(previousTaskConfiguration)){
                 previousTaskConfiguration = taskConfiguration;
-                Toast.makeText(ownerView.getContext(), "Wystąpiły pewne problemy. Zweryfikuj dane, po czym ponownie kliknij 'Start'", Toast.LENGTH_LONG).show();
+                Toast.makeText(context, R.string.validationWarnings, Toast.LENGTH_LONG).show();
                 return false;
             }
         }

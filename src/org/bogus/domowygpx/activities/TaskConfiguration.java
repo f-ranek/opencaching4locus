@@ -11,6 +11,7 @@ import org.bogus.ToStringBuilder;
 import org.bogus.android.AndroidUtils;
 import org.bogus.domowygpx.utils.LocationUtils;
 import org.bogus.domowygpx.utils.Pair;
+import org.bogus.geocaching.egpx.R;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -58,13 +59,13 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
     private File outTargetFileName;
     private File outTargetDirName;
     
-    private List<Pair<String, String>> errors;
-    private List<Pair<String, String>> warnings;
+    private List<Pair<String, Integer>> errors;
+    private List<Pair<String, Integer>> warnings;
     private List<String> modifiedFields;
     
     protected boolean hasErrorInField(String code)
     {
-        for (Pair<String, String> error : errors){
+        for (Pair<String, Integer> error : errors){
             if (error.first == code || (error.first != null && error.first.equals(code))){
                 return true;
             }
@@ -88,8 +89,8 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
     @SuppressLint("SimpleDateFormat")
     public void parseAndValidate(Context context)
     {
-        errors = new ArrayList<Pair<String,String>>();
-        warnings = new ArrayList<Pair<String,String>>(2);
+        errors = new ArrayList<Pair<String,Integer>>();
+        warnings = new ArrayList<Pair<String,Integer>>(2);
         modifiedFields = new ArrayList<String>(2);
         
         boolean hasInGeoLocation = (latitude != null && latitude.length() > 0) || 
@@ -100,7 +101,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
             if ((latitude != null && latitude.length() > 0) ^ 
                 (longitude != null && longitude.length() > 0))
             {
-                errors.add(Pair.makePair("LOCATION", "Położenie geograficzne jest niepełne"));
+                errors.add(Pair.makePair("LOCATION", R.string.validationIncompleteLocation));
             } else {
                 try{
                     Pair<Integer, Double> lat = LocationUtils.parseLocation(latitude);
@@ -114,7 +115,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
                     outLongitude = lon.second;
                     hasInGeoLocationOk = true;
                 }catch(IllegalArgumentException e){
-                    errors.add(Pair.makePair("LOCATION", "Położenie geograficzne jest w niepoprwnym formacie"));
+                    errors.add(Pair.makePair("LOCATION", R.string.validationInvalidLocation));
                 }
             }
         }
@@ -124,7 +125,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         if (!hasInGeoLocationOk && !hasOutGeoLocationOk){
             outLatitude = outLongitude = Double.NaN;
             if (!hasErrorInField("LOCATION")){
-                errors.add(Pair.makePair("LOCATION", "Wprowadź lokalizację keszy"));
+                errors.add(Pair.makePair("LOCATION", R.string.validationMissingLocation));
             }
         }
         
@@ -133,7 +134,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
             try{
                 outMaxNumOfCaches = Integer.parseInt(AndroidUtils.toString(maxNumOfCaches));
                 if (outMaxNumOfCaches < 1 || outMaxNumOfCaches > 500){
-                    warnings.add(Pair.makePair("CACHE_COUNT_LIMIT", "Limit musi być w przedziale 1 do 500"));
+                    warnings.add(Pair.makePair("CACHE_COUNT_LIMIT", R.string.validationInvalidMaxCachesLimit));
                     modifiedFields.add("CACHE_COUNT_LIMIT");
                     if (outMaxNumOfCaches < 1){
                         outMaxNumOfCaches = 1;
@@ -142,7 +143,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
                     }
                 }
             }catch(NumberFormatException nfe){
-                errors.add(Pair.makePair("CACHE_COUNT_LIMIT", "Limit musi być w przedziale 1 do 500"));
+                errors.add(Pair.makePair("CACHE_COUNT_LIMIT", R.string.validationInvalidMaxCachesLimit));
             }
         }
         outMaxCacheDistance = -1;
@@ -163,21 +164,21 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
                 if (outMaxCacheDistance < 0.02){
                     outMaxCacheDistance = 0.02;
                     modifiedFields.add("MAX_CACHE_DISTANCE");
-                    warnings.add(Pair.makePair("MAX_CACHE_DISTANCE", "Minimalna odległość to 20m"));
+                    warnings.add(Pair.makePair("MAX_CACHE_DISTANCE", R.string.validationMinCacheDistanceWarning));
                 } else
                 if (outMaxCacheDistance > 10 && outMaxNumOfCaches != -1){
                     outMaxNumOfCaches = 500;
                     modifiedFields.add("CACHE_COUNT_LIMIT");
-                    warnings.add(Pair.makePair("MAX_CACHE_DISTANCE", "Ograniczono limit do 500 keszy"));
+                    warnings.add(Pair.makePair("MAX_CACHE_DISTANCE", R.string.validationMaxCachesHardLimit));
                 }
             }catch(NumberFormatException nfe){
-                errors.add(Pair.makePair("MAX_CACHE_DISTANCE", "Niepoprawna wartość odległości"));
+                errors.add(Pair.makePair("MAX_CACHE_DISTANCE", R.string.validationInvalidCacheDistance));
             }
         }
         
         if (outMaxCacheDistance <= 0 && outMaxNumOfCaches < 0)
         {
-            errors.add(Pair.makePair("CACHE_COUNT_LIMIT", "Wprowadź liczbę keszy lub dystans"));
+            errors.add(Pair.makePair("CACHE_COUNT_LIMIT", R.string.validationInvalidNoCacheDistanceNeitherLimit));
         }
         
         if (userName == null || userName.length() == 0){
@@ -211,9 +212,9 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
                 }while(true);
             } else {
                 if (hasLocus){
-                    errors.add(Pair.makePair("TARGET_FILE", "Wprowadź nazwę pliku, lub zaznacz import do Locusa"));
+                    errors.add(Pair.makePair("TARGET_FILE", R.string.validationMissingFileNameOrLocusImport));
                 } else {
-                    errors.add(Pair.makePair("TARGET_FILE", "Wprowadź nazwę pliku"));
+                    errors.add(Pair.makePair("TARGET_FILE", R.string.validationMissingFileName));
                 }
             }
         } else {
@@ -232,21 +233,24 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         if (outTargetFileName != null){
             final File _parent = outTargetFileName.getParentFile();
             if (outTargetFileName.isDirectory()){
-                errors.add(Pair.makePair("TARGET_FILE", "Docelowy plik już istnieje, i jest katalogiem"));
+                errors.add(Pair.makePair("TARGET_FILE", R.string.validationTargetFileIsDir));
             } else if (outTargetFileName.exists()){
                 if (!outTargetFileName.canWrite() || _parent != null && !_parent.canWrite()){
-                    errors.add(Pair.makePair("TARGET_FILE", "Docelowy plik już istnieje, i nie można go zastąpić"));
+                    errors.add(Pair.makePair("TARGET_FILE", R.string.validationTargetFileIsReadOnly));
                 } else {
-                    warnings.add(Pair.makePair("TARGET_FILE", "Docelowy plik już istnieje. Jeżeli chcesz go zastąpić, kliknij ponownie Start"));
+                    warnings.add(Pair.makePair("TARGET_FILE", R.string.validationTargetFileExistsWarning));
                 }
             } else {
                 if (_parent != null){
                     _parent.mkdirs();
                     if (!_parent.exists()){
-                        errors.add(Pair.makePair("TARGET_FILE", "Nie można utworzyć katalogu na docelowy plik"));
+                        errors.add(Pair.makePair("TARGET_FILE", R.string.validationCantCreateTargetDir));
                     } else
                     if (!_parent.canWrite()){
-                        errors.add(Pair.makePair("TARGET_FILE", "Nie można zapisywać w katalogu docelowym"));
+                        errors.add(Pair.makePair("TARGET_FILE", R.string.validationTargetDirIsReadOnly));
+                    } else
+                    if (!_parent.isDirectory()){
+                        errors.add(Pair.makePair("TARGET_FILE", R.string.validationTargetDirIsFile));
                     }
                 }
             }
@@ -267,7 +271,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
                 boolean hasWiFi = wifiInfo.isConnected();
                 outDownloadImages = hasWiFi;
             } else {
-                errors.add(Pair.makePair("DOWNLOAD_IMAGES_STRATEGY", "Niepoprawna wartość strategii pobierania obrazów"));
+                errors.add(Pair.makePair("DOWNLOAD_IMAGES_STRATEGY", R.string.validationInvalidImagesDownloadStrategy));
             }
         }
 
@@ -278,9 +282,11 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         }
         outTargetDirName.mkdirs();
         if (!outTargetDirName.exists()){
-            errors.add(Pair.makePair("TARGET_DIR", "Nie można utworzyć katalogu na pobierane obrazy"));                        
+            errors.add(Pair.makePair("TARGET_DIR", R.string.validationCantCreateTargetImagesDir));                        
         } else if (!outTargetDirName.canWrite()){
-            errors.add(Pair.makePair("TARGET_DIR", "Nie można zapisywać plików w katalogu obrazów"));
+            errors.add(Pair.makePair("TARGET_DIR", R.string.validationTargetImagesDirIsReadOnly));
+        } else if (!outTargetDirName.isDirectory()){
+            errors.add(Pair.makePair("TARGET_FILE", R.string.validationTargetImagesDirIsFile));
         }
     }
 
@@ -354,12 +360,12 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         return outTargetDirName;
     }
 
-    public List<Pair<String, String>> getErrors()
+    public List<Pair<String, Integer>> getErrors()
     {
         return errors;
     }
 
-    public List<Pair<String, String>> getWarnings()
+    public List<Pair<String, Integer>> getWarnings()
     {
         return warnings;
     }

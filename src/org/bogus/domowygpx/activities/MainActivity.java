@@ -263,11 +263,11 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 	        if (locman.isProviderEnabled(LocationManager.NETWORK_PROVIDER)){
 	            provider = LocationManager.NETWORK_PROVIDER;
 	            if (!initialLoading){
-	                Toast.makeText(this, "GPS wyłączony, pobieram lokalizację z sieci", Toast.LENGTH_SHORT).show();
+	                Toast.makeText(this, R.string.gpsDisabled, Toast.LENGTH_SHORT).show();
 	            }
 	        } else {
 	            if (!initialLoading){
-	                Toast.makeText(this, "Nie można pobrać informacji o lokalizacji", Toast.LENGTH_SHORT).show();
+	                Toast.makeText(this, R.string.noLocationInfo, Toast.LENGTH_SHORT).show();
 	            }
 	            return ;
 	        }
@@ -349,9 +349,9 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
             if ("MAX_CACHE_DISTANCE".equals(modifiedField)){
                 String s;
                 if (taskConfiguration.getOutMaxCacheDistance() < 1){
-                    s = Math.round(taskConfiguration.getOutMaxCacheDistance()*1000) + " m";
+                    s = Math.round(taskConfiguration.getOutMaxCacheDistance()*1000) + " " + getResources().getString(R.string.distanceUnit_m);
                 } else {
-                    s = taskConfiguration.getOutMaxCacheDistance() + " km";
+                    s = taskConfiguration.getOutMaxCacheDistance() + " " + getResources().getString(R.string.distanceUnit_km);
                 }
                 editMaxCacheDistance.setText(s);
             } 

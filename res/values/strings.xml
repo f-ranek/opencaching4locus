@@ -37,6 +37,35 @@
     <string name="locusCommunicationError">Błąd komunikacji z Locusem</string>
     <string name="locusCommunicationError2">Opencaching: Błąd komunikacji z Locusem</string>
     
+    <string name="gpsDisabled">GPS wyłączony, pobieram lokalizację z sieci</string>
+    <string name="noLocationInfo">Nie można pobrać informacji o lokalizacji</string>
+
+    <string name="distanceUnit.m">m</string>
+    <string name="distanceUnit.km">km</string>
+    
+    <string name="validationErrors">Przed kontynuacją popraw zaznaczone błędy</string>
+    <string name="validationWarnings">Wystąpiły pewne problemy. Zweryfikuj dane, po czym ponownie kliknij \'Start\'</string>
+    <string name="validationIncompleteLocation">Położenie geograficzne jest niepełne</string>
+    <string name="validationInvalidLocation">Położenie geograficzne jest w niepoprwnym formacie</string>
+    <string name="validationMissingLocation">Wprowadź lokalizację keszy</string>
+    <string name="validationInvalidMaxCachesLimit">Limit musi być w przedziale 1 do 500</string>
+    <string name="validationMinCacheDistanceWarning">Minimalna odległość to 20m</string>
+    <string name="validationMaxCachesHardLimit">Ograniczono limit do 500 keszy</string>
+    <string name="validationInvalidCacheDistance">Niepoprawna wartość odległości</string>
+    <string name="validationInvalidNoCacheDistanceNeitherLimit">Wprowadź liczbę keszy lub dystans</string>
+    <string name="validationMissingFileName">Wprowadź nazwę pliku</string>
+    <string name="validationMissingFileNameOrLocusImport">Wprowadź nazwę pliku, lub zaznacz import do Locusa</string>
+    <string name="validationTargetFileIsDir">Docelowy plik już istnieje, i jest katalogiem</string>
+    <string name="validationTargetFileIsReadOnly">Docelowy plik już istnieje, i nie można go zastąpić</string>
+    <string name="validationTargetFileExistsWarning">Docelowy plik już istnieje. Jeżeli chcesz go zastąpić, kliknij ponownie \'Start\'</string>
+    <string name="validationCantCreateTargetDir">Nie można utworzyć katalogu na docelowy plik</string>
+    <string name="validationTargetDirIsReadOnly">Nie można zapisywać w katalogu docelowym</string>
+    <string name="validationTargetDirIsFile">Katalog docelowy jest plikiem</string>
+    <string name="validationInvalidImagesDownloadStrategy">Niepoprawna wartość strategii pobierania obrazów</string>
+    <string name="validationCantCreateTargetImagesDir">Nie można utworzyć katalogu na pobierane obrazy</string>
+    <string name="validationTargetImagesDirIsReadOnly">Nie można zapisywać plików w katalogu obrazów</string>
+    <string name="validationTargetImagesDirIsFile">Katalog zapisu obrazów jest plikiem</string>
+    
     <string name="history">Historia zmian:\n1.0 - pierwsza wersja, na bazie programu Awaryjny GPX.</string>
 
     <string name="errorPlaceholderText">ERROR_TEXT_GOES_HERE</string>

@@ -133,7 +133,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
                     TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI));
 
 
-        validationUtils = new ValidationUtils();
+        validationUtils = new ValidationUtils(this);
         
         validationUtils.addErrorField("CACHE_COUNT_LIMIT", R.id.errorMaxNumOfCaches);
         validationUtils.addErrorField("MAX_CACHE_DISTANCE", R.id.errorMaxCacheDistance);
