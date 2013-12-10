@@ -2,6 +2,7 @@ package org.bogus.domowygpx.utils;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.util.Locale;
 import java.util.StringTokenizer;
 
 
@@ -211,7 +212,6 @@ public class LocationUtils
             sb.append('-');
             coordinate = -coordinate;
         }
-
         
         if (outputType == FORMAT_MINUTES || outputType == FORMAT_SECONDS) {
             int degrees = (int) Math.floor(coordinate);
@@ -228,25 +228,31 @@ public class LocationUtils
                 sb.append(':');
                 coordinate -= minutes;
                 coordinate *= 60.0;
+                if (Math.abs(coordinate) > 1e-2){ 
+                    final DecimalFormat df = getDecimalFormat("#.##");
+                    final String s = df.format(coordinate);
+                    if (!"0".equals(s)){
+                        sb.append(s);
+                    }
+                }
+            } else {
+                // MINUTES
+                final DecimalFormat df = getDecimalFormat("00.###");
+                final String s = df.format(coordinate);
+                sb.append(s);
             }
+        } else {
+            // DEGREES
+            final DecimalFormat df = getDecimalFormat("##0.#####");
+            sb.append(df.format(coordinate));
         }
-        final DecimalFormat df;
-        switch(outputType){
-            case FORMAT_DEGREES: df = getDecimalFormat("###.#####"); break;
-            case FORMAT_MINUTES: df = getDecimalFormat("##.####"); break;
-            case FORMAT_SECONDS: df = getDecimalFormat("##.##"); break;
-            default: df = null;
-        }
-        sb.append(df.format(coordinate));
+
         return sb.toString();
     }
 
     protected static DecimalFormat getDecimalFormat(String format)
     {
-        final DecimalFormat df = new DecimalFormat(format);
-        final DecimalFormatSymbols dfs = df.getDecimalFormatSymbols();
-        dfs.setDecimalSeparator('.');
-        df.setDecimalFormatSymbols(dfs);
+        final DecimalFormat df = new DecimalFormat(format, new DecimalFormatSymbols(Locale.US));
         return df;
     }
  
