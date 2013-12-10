@@ -1,6 +1,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content" 
+    xmlns:tools="http://schemas.android.com/tools">
 
     <LinearLayout
         android:layout_width="fill_parent"
@@ -24,6 +25,22 @@
             android:text="@string/infoAbout"
             android:textAppearance="?android:attr/textAppearanceMedium" />
 
+        <TextView
+            style="?android:attr/listSeparatorTextViewStyle"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:text="@string/infoHelpTitle" />
+        
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:autoLink="web"
+            android:padding="10dp"
+            android:text="https://github.com/f-ranek/opencaching4locus/wiki"
+            android:textAppearance="?android:attr/textAppearanceMedium" tools:ignore="HardcodedText"/>
+        
         <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"

@@ -132,6 +132,7 @@
     <string name="titleActivityInfo">Informacje</string>
     <string name="infoAboutTitle">Dobra, jakiś sensowny opis poproszę ;)</string>
     <string name="infoAbout">Program przygotowany został do współpracy z programami Locus i Columbus trochę też. Pozwala na pobieranie informacji o keszach z serwisu opencaching.pl. Ponadto pozwala na pobranie „z góry” dołączonych do keszy zdjęć i obrazków.</string>
+    <string name="infoHelpTitle">Pomocy!</string>
     <string name="versionInfoTitle">Informacje o wersji</string>
     <string name="versionInfo">Wersja:\t\t\t%1$s\nData:\t\t\t\t%2$s\nGit:\t\t\t\t\t%3$s</string>
     
