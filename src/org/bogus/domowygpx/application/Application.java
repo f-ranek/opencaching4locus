@@ -2,6 +2,7 @@ package org.bogus.domowygpx.application;
 
 import java.io.File;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.bogus.domowygpx.utils.TargetDirLocator;
 import org.bogus.geocaching.egpx.R;
@@ -17,7 +18,7 @@ import android.util.Log;
 
 public class Application extends android.app.Application
 {
-    private final static String LOG_TAG = "Application";
+    private final static String LOG_TAG = "Opencaching:Application";
     private volatile OKAPI okApi;
     private int notificationIconResid;
     
@@ -158,8 +159,39 @@ public class Application extends android.app.Application
             Log.e(LOG_TAG, "Failed to read config", e);
             initNewConfig();
         }
+        
+        cleanupTempGpx(config);
     }
 
+    private void cleanupTempGpx(SharedPreferences config)
+    {
+        String dir = config.getString("gpxTargetDirNameTemp", null);
+        if (dir == null){
+            return ;
+        }
+        File[] files = new File(dir).listFiles();
+        if (files == null || files.length == 0){
+            return ;
+        }
+        final Pattern pattern = Pattern.compile("20[0-9][0-9]-[0-1][0-9]-[0-3][0-9]_[0-2][0-9]\\.[0-6][0-9]\\.gpx");
+        final long tresholdTime = System.currentTimeMillis() - 3L*24L*60L*60L*1000L;
+        int count = 0;
+        for (File f : files){
+            final String name = f.getName();
+            if (pattern.matcher(name).matches()){
+                long date = f.lastModified();
+                if (date < tresholdTime){
+                    if (f.delete()){
+                        count++;
+                    }
+                }
+            }
+        }
+        if (count > 0){
+            Log.i(LOG_TAG, "Removed " + count + " temp GPX files");
+        }
+    }
+    
     private boolean createSaveDirectories(SharedPreferences config)
     {
         boolean result = true;
