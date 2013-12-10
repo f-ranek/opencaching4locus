@@ -2,7 +2,6 @@
 <resources>
 
     <string name="applicationName">Opencaching</string>
-    <string name="info1">Dobra, jakiś sensowny opis poproszę :D\nProgram przygotowany został do współpracy z programami Locus i Columbus trochę też.</string>
     <string name="latitude">Szerokość*:</string>
     <string name="longitude">Długość*:</string>
     <string name="hintGeoData">ddd:mm:ss.ssss</string>
@@ -10,13 +9,6 @@
     <string name="getLocationFromGpsCancel">Anuluj pobieranie</string>
     <string name="star">* - dozwolone formaty:\n1. [+-]ddd.ddddd\n2. [+-]ddd:mm.mmmmm\n3. [+-]ddd:mm:ss.sssss\n4. WGS84 (NSEW ddd° mm.mmm\')</string>
 
-    <!-- 
-    <string name="hintUserName">Login w serwisie OC</string>
-    <string name="foundStrategy">Skrzynki znalezione przez użytkownika zostaną:</string>
-    <string name="foundStrategyMarked">oznaczone</string>
-    <string name="foundStrategySkipped">pominięte</string>
-    -->
-    
     <string name="targetFileName">Zapisz jako:</string>
     <string name="hintTargetFileName">Ew. nazwa pliku GPX</string>
     <string name="targetAutoImportToLocus">Importuj do Locusa</string>
@@ -66,8 +58,6 @@
     <string name="validationTargetImagesDirIsReadOnly">Nie można zapisywać plików w katalogu obrazów</string>
     <string name="validationTargetImagesDirIsFile">Katalog zapisu obrazów jest plikiem</string>
     
-    <string name="history">Historia zmian:\n1.0 - pierwsza wersja, na bazie programu Awaryjny GPX.</string>
-
     <string name="errorPlaceholderText">ERROR_TEXT_GOES_HERE</string>
 
     <string name="gpxDownloaderServiceName">Usługa pobierania GPX</string>
@@ -138,5 +128,15 @@
     
     <string name="lblDevDetailsSend">Wyślij&#8230;</string>
     <string name="lblDevDetailsClose">Zamknij</string>
+
+    <string name="titleActivityInfo">Informacje</string>
+    <string name="infoAboutTitle">Dobra, jakiś sensowny opis poproszę ;)</string>
+    <string name="infoAbout">Program przygotowany został do współpracy z programami Locus i Columbus trochę też. Pozwala na pobieranie informacji o keszach z serwisu opencaching.pl. Ponadto pozwala na pobranie „z góry” dołączonych do keszy zdjęć i obrazków.</string>
+    <string name="versionInfoTitle">Informacje o wersji</string>
+    <string name="versionInfo">Wersja:\t\t\t%1$s\nData:\t\t\t\t%2$s\nGit:\t\t\t\t\t%3$s</string>
+    
+    <string name="historyTitle">Historia zmian</string>
+    <string name="history">1.0 – pierwsza wersja, na bazie programu Awaryjny GPX\n1.1 – dodano integrację z Locusem</string>
+
     
 </resources>

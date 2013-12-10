@@ -1,0 +1,59 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            style="?android:attr/listSeparatorTextViewStyle"
+            android:text="@string/infoAboutTitle"
+            />
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:autoLink="web"
+            android:padding="10dp"
+            android:text="@string/infoAbout"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:autoLink="web"
+            android:padding="10dp"
+            android:text="@string/versionInfoTitle"
+            style="?android:attr/listSeparatorTextViewStyle" />
+        
+        <TextView
+            android:id="@+id/buildInfoVersion"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:autoLink="web"
+            android:padding="10dp"
+            android:text="@string/versionInfo"
+            android:textAppearance="?android:attr/textAppearanceMedium"/>
+        
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            style="?android:attr/listSeparatorTextViewStyle"
+            android:text="@string/historyTitle"
+            />
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:text="@string/history"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+    </LinearLayout>        
+</ScrollView>

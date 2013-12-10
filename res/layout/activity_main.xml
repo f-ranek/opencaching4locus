@@ -9,13 +9,6 @@
         android:layout_height="wrap_content"
         android:orientation="vertical" >
 
-        <TextView
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:text="@string/info1"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
-
         <TableLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
@@ -322,13 +315,6 @@
             android:textAppearance="?android:attr/textAppearanceMedium" >
         </TextView>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:text="@string/history"
-            android:textAppearance="?android:attr/textAppearanceMedium" >
-        </TextView>
     </LinearLayout>
 
 </ScrollView>

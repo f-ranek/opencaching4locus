@@ -1,6 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="Opencaching4Locus-overrides">
 	
+	<target name="generate-build-info" depends="-pre-compile" />
+	
+	<target name="-pre-compile">
+        <echo>Release preprocessing</echo>
+        <xpath input="${manifest.abs.file}" expression="/manifest/@package"
+                output="release.user.application.packageName" />
+        <tstamp>
+            <format property="release.user.timestamp" pattern="yyyy-MM-dd HH:mm" />
+        </tstamp>
+		<exec executable="git" failonerror="true">
+		    <arg line="describe --tags HEAD" />
+		    <redirector outputproperty="release.user.version" logerror="true" />
+		</exec>
+		<propertybyreplace name="release.user.application.packageDir" input="${release.user.application.packageName}" 
+			replace="." with="/" />
+		<property name="release.user.infoFile" value="${gen.absolute.dir}/${release.user.application.packageDir}/BuildInfo.java" />
+		<echo append="false" file="${release.user.infoFile}">/** Automatically generated file. DO NOT MODIFY */
+</echo>
+		<echo append="true" file="${release.user.infoFile}">package ${release.user.application.packageName};
+</echo>
+		<echo append="true" file="${release.user.infoFile}">public class BuildInfo {
+</echo>
+		<echo append="true" file="${release.user.infoFile}">    public final static String TIMESTAMP="${release.user.timestamp}";
+</echo>
+	    <echo append="true" file="${release.user.infoFile}">    public final static String GIT_VERSION="${release.user.version}";
+</echo>
+		<echo append="true" file="${release.user.infoFile}">}
+</echo>
+	</target>
+	
 	<!-- 
 	   Expected key releases.dir in local.properties
 	-->

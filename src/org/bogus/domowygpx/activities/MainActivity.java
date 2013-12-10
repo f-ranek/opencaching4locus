@@ -496,6 +496,9 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
             case R.id.actionSettings:
                 intent = new Intent(this, org.bogus.domowygpx.activities.SettingsActivity.class);
                 break;
+            case R.id.actionInfo:
+                intent = new Intent(this, org.bogus.domowygpx.activities.InfoActivity.class);
+                break;
             case R.id.actionStart:
                 start();
                 break;

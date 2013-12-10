@@ -67,6 +67,12 @@
             </intent-filter>
             
         </activity>
+        <activity
+            android:name="org.bogus.domowygpx.activities.InfoActivity"
+            android:label="@string/titleActivityInfo" 
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            >
+        </activity>
         
         <service
             android:name="org.bogus.domowygpx.services.GpxDownloaderService"
