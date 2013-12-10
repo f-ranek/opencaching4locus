@@ -28,8 +28,9 @@
         android:title="@string/title_activity_settings"/>
     <item
         android:id="@+id/actionInfo"
+        android:icon="@drawable/ic_action_about"
         android:orderInCategory="130"
-        android:showAsAction="never"
+        android:showAsAction="ifRoom"
         android:title="@string/titleActivityInfo"/>
 </group>
 
