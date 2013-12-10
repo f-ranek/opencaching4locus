@@ -13,7 +13,7 @@ import android.widget.Toast;
 
 public class ValidationUtils
 {
-    private View owner;
+    private View ownerView;
 
     private Map<String, Integer> errorFieldsMap = new HashMap<String, Integer>();
     private Map<String, Integer> errorFieldsFocusMap = new HashMap<String, Integer>();
@@ -21,17 +21,21 @@ public class ValidationUtils
 
     private TaskConfiguration previousTaskConfiguration;
     
-    public ValidationUtils(View owner)
+    public ValidationUtils()
     {
-        this.owner = owner;
+        
+    }
+    public ValidationUtils(View ownerView)
+    {
+        this.ownerView = ownerView;
     }
 
     protected void resetViewError(int viewId)
     {
-        TextView v = (TextView)owner.findViewById(viewId);
+        TextView v = (TextView)ownerView.findViewById(viewId);
         v.setText(null);
         v.setVisibility(TextView.GONE);
-        v.setTextAppearance(owner.getContext(), android.R.style.TextAppearance_Small);
+        v.setTextAppearance(ownerView.getContext(), android.R.style.TextAppearance_Small);
     }
     
     public void resetViewErrors()
@@ -46,14 +50,14 @@ public class ValidationUtils
     {
         final boolean isShown = errorControl.getVisibility() == TextView.VISIBLE;
         if (isShown){
-            errorControl.append("\n\r");
+            errorControl.append("\n");
             errorControl.append(errorText);
         } else {
             errorControl.setText(errorText);
         }
         
         errorControl.setVisibility(TextView.VISIBLE);
-        errorControl.setTextAppearance(owner.getContext(), 
+        errorControl.setTextAppearance(ownerView.getContext(), 
             isWarning ? R.style.TextAppearance_Small_Warning 
                     : R.style.TextAppearance_Small_Error);
     }
@@ -74,11 +78,11 @@ public class ValidationUtils
             if (!focusedOnErrorField && fieldCode != null && errorFieldsFocusMap.containsKey(fieldCode)){
                 // Use Next Focus.. properties
                 int focusFieldId = errorFieldsFocusMap.get(fieldCode);
-                owner.findViewById(focusFieldId).requestFocus();
+                ownerView.findViewById(focusFieldId).requestFocus();
                 focusedOnErrorField = true;
             }
             
-            View errorView = owner.findViewById(errorViewId);
+            View errorView = ownerView.findViewById(errorViewId);
             if (errorView instanceof TextView){
                 TextView errorTextView = (TextView)errorView;
                 markError(errorText, errorTextView, isWarning);
@@ -96,6 +100,30 @@ public class ValidationUtils
         errorFieldsFocusMap.put(key, fieldId);
     }
     
+    /**
+     * Checks for errors, but does not show them on a view
+     * @param taskConfiguration
+     * @return true, in case of validation pass, false in case of errors
+     */
+    public boolean checkForErrorsSilent(
+        TaskConfiguration taskConfiguration)
+    {
+        final List<Pair<String, String>> errors = taskConfiguration.getErrors();
+        if (!errors.isEmpty()){
+            return false;
+        }
+        final List<Pair<String, String>> warnings = taskConfiguration.getWarnings();
+        if (!warnings.isEmpty()){
+            return false;
+        }
+        return true;
+    }
+    
+    /**
+     * Checks for errors and shows them on a view
+     * @param taskConfiguration
+     * @return true, in case of validation pass, false in case of errors
+     */
     public boolean checkForErrors(
         TaskConfiguration taskConfiguration)
     {
@@ -104,7 +132,7 @@ public class ValidationUtils
         
         if (!errors.isEmpty()){
             previousTaskConfiguration = null;
-            Toast.makeText(owner.getContext(), "Przed kontynuacją popraw zaznaczone błędy", Toast.LENGTH_LONG).show();
+            Toast.makeText(ownerView.getContext(), "Przed kontynuacją popraw zaznaczone błędy", Toast.LENGTH_LONG).show();
             return false;
         }
 
@@ -114,7 +142,7 @@ public class ValidationUtils
         if (!warnings.isEmpty()){
             if (previousTaskConfiguration == null || !taskConfiguration.equals(previousTaskConfiguration)){
                 previousTaskConfiguration = taskConfiguration;
-                Toast.makeText(owner.getContext(), "Wystąpiły pewne problemy. Zweryfikuj dane, po czym ponownie kliknij 'Start'", Toast.LENGTH_LONG).show();
+                Toast.makeText(ownerView.getContext(), "Wystąpiły pewne problemy. Zweryfikuj dane, po czym ponownie kliknij 'Start'", Toast.LENGTH_LONG).show();
                 return false;
             }
         }
@@ -122,5 +150,13 @@ public class ValidationUtils
         resetViewErrors();
         
         return true;
+    }
+    public View getOwnerView()
+    {
+        return ownerView;
+    }
+    public void setOwnerView(View ownerView)
+    {
+        this.ownerView = ownerView;
     }
 }

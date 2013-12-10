@@ -2,7 +2,6 @@ package org.bogus.domowygpx.activities;
 
 import locus.api.android.utils.LocusConst;
 import locus.api.android.utils.LocusUtils;
-import locus.api.android.utils.RequiredVersionMissingException;
 import locus.api.objects.extra.Waypoint;
 
 import org.bogus.android.AndroidUtils;
@@ -58,7 +57,9 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
             }
         }};
 
-    boolean quickSearch; 
+    boolean dontAskAgain;
+    boolean isPointTools;
+    boolean isSearchList; 
     boolean gpxTaskFinished;
  
     EditText editMaxNumOfCaches;
@@ -92,41 +93,35 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
             return ;
         }
         
-        boolean isPointTools = LocusUtils.isIntentPointTools(intent);
-        boolean isSearchList = LocusUtils.isIntentSearchList(intent);
-        if (!isPointTools && !isSearchList){
-            Log.e(LOG_TAG, "Unknown action=" + intent.getAction());
-            finish(Activity.RESULT_CANCELED);
-            return ;
-        }
-        
-        quickSearch = isPointTools;
-        if (isSearchList){
-            location = LocusUtils.getLocationFromIntent(intent, LocusConst.INTENT_EXTRA_LOCATION_MAP_CENTER);
-            if (location == null){
-                Log.e(LOG_TAG, "null location for action=" + intent.getAction());
-                finish(Activity.RESULT_CANCELED);
-                return ;
+        try{
+            isPointTools = LocusUtils.isIntentPointTools(intent);
+            isSearchList = LocusUtils.isIntentSearchList(intent);
+            if (!isPointTools && !isSearchList){
+                throw new IllegalArgumentException("Unknown action=" + intent.getAction());
             }
-        } else
-        if (isPointTools){
-            try{
+            
+            if (isSearchList){
+                location = LocusUtils.getLocationFromIntent(intent, LocusConst.INTENT_EXTRA_LOCATION_MAP_CENTER);
+                if (location == null){
+                    throw new IllegalArgumentException("null location for action=" + intent.getAction());
+                }
+            } else
+            if (isPointTools){
                 final Waypoint wpt = LocusUtils.handleIntentPointTools(this, intent);
                 if (wpt != null){
                     location = wpt.getLocation();
                 }
                 if (location == null){
-                    Log.e(LOG_TAG, "null location for action=" + intent.getAction());
-                    finish(Activity.RESULT_CANCELED);
-                    return ;
+                    throw new IllegalArgumentException("null location for action=" + intent.getAction());
                 }
-            }catch(RequiredVersionMissingException rvme){
-                Log.e(LOG_TAG, "Hmm, should not happen", rvme);
-                finish(Activity.RESULT_CANCELED);
-                return ;
             }
+        }catch(Exception e){
+            Log.e(LOG_TAG, "Locus communication error", e);
+            Toast.makeText(this, R.string.locusCommunicationError2, Toast.LENGTH_LONG).show();
+            finish(Activity.RESULT_CANCELED);
+            return ;
         }
-
+        
         final SharedPreferences config = this.getSharedPreferences("egpx", MODE_PRIVATE);
         maxCacheDistanceText = config.getString("Locus.maxCacheDistance", 
             config.getString("maxCacheDistance", ""));
@@ -136,16 +131,31 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
             config.getString("Locus.downloadImagesStrategy",
                 config.getString("downloadImagesStrategy", 
                     TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI));
-        if (quickSearch && config.getBoolean("Locus.searchWithoutAsking",false)){
-            startDownload();
-        } else {
-            showParamsDialog();
-        }
+
+
+        validationUtils = new ValidationUtils();
+        
+        validationUtils.addErrorField("CACHE_COUNT_LIMIT", R.id.errorMaxNumOfCaches);
+        validationUtils.addErrorField("MAX_CACHE_DISTANCE", R.id.errorMaxCacheDistance);
+
+        validationUtils.addErrorFocusField("CACHE_COUNT_LIMIT", R.id.editMaxNumOfCaches);
+        validationUtils.addErrorFocusField("MAX_CACHE_DISTANCE", R.id.editMaxCacheDistance);
+        
+        validationUtils.addErrorField("", R.id.errorOthers);        
      
         listItemContext.context = this;
         listItemContext.handler = new Handler(Looper.getMainLooper());
         
         bindDownloaderService();
+
+        if (isPointTools && config.getBoolean("Locus.point_searchWithoutAsking",false)
+            || isSearchList && config.getBoolean("Locus.search_searchWithoutAsking",false))
+        {
+            dontAskAgain = true;
+            startDownload();
+        } else {
+            showParamsDialog();
+        }
     }
     
     protected void showProgressDialog()
@@ -184,7 +194,6 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         progressDialog = dialogBuilder.create();
         progressDialog.show();
         
-        
         final WindowManager wm = (WindowManager)getSystemService(Context.WINDOW_SERVICE);
         final Display display = wm.getDefaultDisplay();
         final Window window = progressDialog.getWindow();
@@ -216,6 +225,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         editMaxCacheDistance = (EditText) view.findViewById(R.id.editMaxCacheDistance);
         
         checkBoxDontAskAgain = (CheckBox) view.findViewById(R.id.checkBoxDontAskAgain);
+        checkBoxDontAskAgain.setChecked(dontAskAgain);
         checkBoxDontAskAgain.setOnClickListener(new View.OnClickListener()
             {
                 @Override
@@ -239,21 +249,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
             }
         });        
         
-        if (!quickSearch){
-            View dontAskAgain = view.findViewById(R.id.tableRowDontAskAgain);
-            dontAskAgain.setVisibility(View.GONE);
-        }
-
-        validationUtils = new ValidationUtils(view);
-        
-        validationUtils.addErrorField("CACHE_COUNT_LIMIT", R.id.errorMaxNumOfCaches);
-        validationUtils.addErrorField("MAX_CACHE_DISTANCE", R.id.errorMaxCacheDistance);
-
-        validationUtils.addErrorFocusField("CACHE_COUNT_LIMIT", R.id.editMaxNumOfCaches);
-        validationUtils.addErrorFocusField("MAX_CACHE_DISTANCE", R.id.editMaxCacheDistance);
-        
-        validationUtils.addErrorField("", R.id.errorOthers);
-        
+        validationUtils.setOwnerView(view);
         validationUtils.resetViewErrors();
         
         downloadImagesFragment = new DownloadImagesFragment();
@@ -299,8 +295,11 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
                 editor.putString("Locus.maxNumOfCaches", AndroidUtils.toString(editMaxNumOfCaches.getText()));
                 editor.putString("Locus.downloadImagesStrategy", downloadImagesFragment.getCurrentDownloadImagesStrategy());
                 
-                if (quickSearch){
-                    editor.putBoolean("Locus.searchWithoutAsking", checkBoxDontAskAgain.isChecked());
+                if (isPointTools){ 
+                    editor.putBoolean("Locus.point_searchWithoutAsking", checkBoxDontAskAgain.isChecked());
+                } else 
+                if (isSearchList){
+                    editor.putBoolean("Locus.search_searchWithoutAsking", checkBoxDontAskAgain.isChecked());
                 }
                 
                 editor.commit();
@@ -362,13 +361,20 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
                 editMaxCacheDistance.setText(s);
             } 
         }
-        
-        if (!validationUtils.checkForErrors(taskConfiguration)){
-            // in case of any errors
-            showParamsDialog();
-            return ;
-        }
 
+        if (paramsDialog != null){
+            if (!validationUtils.checkForErrors(taskConfiguration)){
+                return ;
+            }
+        } else {
+            if (!validationUtils.checkForErrorsSilent(taskConfiguration)){
+                // in case of any errors
+                showParamsDialog();
+                validationUtils.checkForErrors(taskConfiguration);
+                return ;
+            }
+        }
+        
         showProgressDialog();
         
         {
