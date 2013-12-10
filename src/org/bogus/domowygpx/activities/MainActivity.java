@@ -86,7 +86,7 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
                     return null;
                 }
             }});
-		final ViewGroup view = (ViewGroup)inflater.inflate(R.layout.main, null);
+		final ViewGroup view = (ViewGroup)inflater.inflate(R.layout.activity_main, null);
 		setContentView(view);
 		
 		editLat = (EditText) findViewById(R.id.editLatitude);
@@ -481,7 +481,7 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
     public boolean onCreateOptionsMenu(Menu menu)
     {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main_menu, menu);
+        getMenuInflater().inflate(R.menu.activity_main_menu, menu);
         return true;
     }
     
