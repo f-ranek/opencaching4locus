@@ -194,6 +194,13 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
         }
 	}
 	
+	@Override
+    public void onDestroy()
+	{
+	    stopGetLocationFromGps();
+	    super.onDestroy();
+	}
+	
 	protected void updateLocationInfo(Location location)
     {
         int latFormat = Location.FORMAT_MINUTES;
@@ -231,35 +238,41 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 	        // already registered for listening
 	    }
 
-	    if (initialLoading){
-    	    Location lastKnown = locman.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            if (lastKnown == null){
-                lastKnown = locman.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        Location lastKnown = null;
+        {
+            Location gpsLastKnown = locman.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            Location networkLastKnown = locman.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+            if (gpsLastKnown != null && networkLastKnown != null){
+                lastKnown = gpsLastKnown.getTime() > networkLastKnown.getTime() ? gpsLastKnown : networkLastKnown;
+            } else 
+            if (gpsLastKnown != null){
+                lastKnown = gpsLastKnown;
+            } else {
+                lastKnown = networkLastKnown;
             }
-            if (lastKnown != null){
-                updateLocationInfo(lastKnown);
-                return ;
-            }
-	    }	    
-	    String provider = initialLoading ? LocationManager.NETWORK_PROVIDER : LocationManager.GPS_PROVIDER;
-	    boolean hasProvider = locman.isProviderEnabled(provider);
-	    if (!hasProvider && !initialLoading){
-	        provider = LocationManager.NETWORK_PROVIDER;
-	        hasProvider = locman.isProviderEnabled(provider);
-	    }
-	    
-	    if (!hasProvider){
-	        if (!initialLoading){
-	            Toast.makeText(this, "Nie można pobrać informacji o lokalizacji", Toast.LENGTH_LONG).show();
-	        }
-	        return ;
-	    }
-	    boolean hasGps = provider.equals(LocationManager.GPS_PROVIDER);
-        if (!initialLoading && !hasGps){
-            Toast.makeText(this, "GPS wyłączony, pobieram lokalizację z sieci", Toast.LENGTH_LONG).show();
+            
         }
-	    
-        final boolean fineLocation = !initialLoading && hasGps;
+        if (lastKnown != null){
+            updateLocationInfo(lastKnown);
+	    }	    
+
+        String provider;
+	    if (!initialLoading && locman.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+	        provider = LocationManager.GPS_PROVIDER;
+	    } else {
+	        if (locman.isProviderEnabled(LocationManager.NETWORK_PROVIDER)){
+	            provider = LocationManager.NETWORK_PROVIDER;
+	            if (!initialLoading){
+	                Toast.makeText(this, "GPS wyłączony, pobieram lokalizację z sieci", Toast.LENGTH_SHORT).show();
+	            }
+	        } else {
+	            if (!initialLoading){
+	                Toast.makeText(this, "Nie można pobrać informacji o lokalizacji", Toast.LENGTH_SHORT).show();
+	            }
+	            return ;
+	        }
+	    }
+        final boolean fineLocation = !initialLoading && LocationManager.GPS_PROVIDER.equals(provider);
 	    locationListener = new LocationListener()
         {
 	        @Override
@@ -275,26 +288,16 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 	        @Override
 	        public void onProviderDisabled(final String provider)
 	        {
-	            onLocationChanged(null);
+	            MainActivity.this.stopGetLocationFromGps();
 	        }
 	        
 	        @Override
 	        public void onLocationChanged(final Location location)
 	        {
-	            MainActivity.this.runOnUiThread(
-	                new Runnable(){
-	                    @Override
-	                    public void run(){
-	                        if (location != null){
-	                            MainActivity.this.updateLocationInfo(location);
-	                        }
-	                        if (location == null || !fineLocation || location.getAccuracy() < 50){
-	                            MainActivity.this.stopGetLocationFromGps();
-	                        }
-	                    }
-	                }
-	                );
-	            
+                MainActivity.this.updateLocationInfo(location);
+                if (!fineLocation || location.getAccuracy() < 50){
+                    MainActivity.this.stopGetLocationFromGps();
+                }
 	        }
 	    };
 	    
