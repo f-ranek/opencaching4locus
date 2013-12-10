@@ -762,7 +762,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 IOUtils.closeQuietly(os);
                 os = null;
                 
-                if (taskConfig.isDoLocusImport()){
+                if (taskConfig.isDoLocusImport() && taskState.totalCacheCount > 0){
                     // TODO: do not invoke Locus if no caches has been found
                     // instead, display a message -> but in UI, not service :-]
                     new Handler(Looper.getMainLooper()).postDelayed(new Runnable()
@@ -909,7 +909,11 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             final GpxTaskEvent event = taskState.createTaskEvent();
             event.eventType = GpxTaskEvent.EVENT_TYPE_FINISHED_OK;
             event.totalKB = (int)(ResponseUtils.getBytesRead(mainResponse) / 1024L);
-            event.description = "Gotowe"; 
+            if (taskState.totalCacheCount == 0){
+                event.description = "Brak keszy";
+            } else {
+                event.description = "Gotowe";
+            }
             
             taskState.stateCode = event.eventType;
             taskState.currentCacheCode = null;

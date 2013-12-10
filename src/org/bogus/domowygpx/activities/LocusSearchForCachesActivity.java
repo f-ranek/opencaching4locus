@@ -465,7 +465,9 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
             boolean prevGpxTaskFinished = gpxTaskFinished;
             int dialogTiemout = -1;
             final int stateCode = task.stateCode;
-            if (stateCode == GpxTask.STATE_ERROR)
+            final int totalCacheCount = task.totalCacheCount;
+            if (stateCode == GpxTask.STATE_ERROR || 
+                    (stateCode == GpxTask.STATE_DONE && totalCacheCount == 0))
             {
                 gpxTaskFinished = true;
                 dialogTiemout = 3000;
@@ -488,7 +490,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
                             progressDialog.dismiss();
                             progressDialog = null;
                         }
-                        finish(stateCode == GpxTask.STATE_DONE ? 
+                        finish((stateCode == GpxTask.STATE_DONE && totalCacheCount > 0) ? 
                                 Activity.RESULT_OK : Activity.RESULT_CANCELED);
                     }
                 }, dialogTiemout); 
