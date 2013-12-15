@@ -1030,66 +1030,73 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
      * runs in the same process as its clients, we don't need to deal with IPC.
      */
     public class LocalBinder extends Binder {
+        private final GpxDownloaderApi proxy = new GpxDownloaderApiProxy(GpxDownloaderService.this); 
         public GpxDownloaderApi getService() 
         {
-            return new GpxDownloaderApi(){
-
-                private final WeakReference<GpxDownloaderApi> target = 
-                        new WeakReference<GpxDownloaderApi>(GpxDownloaderService.this);
-                
-                private GpxDownloaderApi getTarget()
-                {
-                    GpxDownloaderApi result = target.get();
-                    if (result == null){
-                        throw new IllegalStateException("You are storing a reference to already stopped service");
-                    }
-                    return result;
-                }
-                
-                @Override
-                public boolean cancelTask(int taskId)
-                {
-                    return getTarget().cancelTask(taskId);
-                }
-
-                @Override
-                public List<GpxTask> getTasks(int filterTaskId, boolean attachEvents)
-                {
-                    return getTarget().getTasks(filterTaskId, attachEvents);
-                }
-
-                @Override
-                public boolean removeTask(int taskId)
-                {
-                    return getTarget().removeTask(taskId);
-                }
-
-                @Override
-                public String taskToDeveloperDebugString(int taskId)
-                {
-                    return getTarget().taskToDeveloperDebugString(taskId);
-                }
-
-                @Override
-                public boolean updateCurrentCacheStatus(int taskId, GpxDownloaderListener listener)
-                {
-                    return getTarget().updateCurrentCacheStatus(taskId, listener);
-                }
-
-                @Override
-                public void registerEventListener(GpxDownloaderListener listener)
-                {
-                    getTarget().registerEventListener(listener);
-                }
-
-                @Override
-                public boolean unregisterEventListener(GpxDownloaderListener listener)
-                {
-                    return getTarget().unregisterEventListener(listener);
-                }
-            };
+            return proxy;
         }
     }    
+    
+    static class GpxDownloaderApiProxy implements GpxDownloaderApi {
+
+        private final WeakReference<GpxDownloaderApi> target;
+        
+        public GpxDownloaderApiProxy(GpxDownloaderApi target)
+        {
+            this.target = new WeakReference<GpxDownloaderApi>(target);
+        }
+        
+        private GpxDownloaderApi getTarget()
+        {
+            GpxDownloaderApi result = target.get();
+            if (result == null){
+                throw new IllegalStateException("You are storing a reference to already stopped service");
+            }
+            return result;
+        }
+        
+        @Override
+        public boolean cancelTask(int taskId)
+        {
+            return getTarget().cancelTask(taskId);
+        }
+
+        @Override
+        public List<GpxTask> getTasks(int filterTaskId, boolean attachEvents)
+        {
+            return getTarget().getTasks(filterTaskId, attachEvents);
+        }
+
+        @Override
+        public boolean removeTask(int taskId)
+        {
+            return getTarget().removeTask(taskId);
+        }
+
+        @Override
+        public String taskToDeveloperDebugString(int taskId)
+        {
+            return getTarget().taskToDeveloperDebugString(taskId);
+        }
+
+        @Override
+        public boolean updateCurrentCacheStatus(int taskId, GpxDownloaderListener listener)
+        {
+            return getTarget().updateCurrentCacheStatus(taskId, listener);
+        }
+
+        @Override
+        public void registerEventListener(GpxDownloaderListener listener)
+        {
+            getTarget().registerEventListener(listener);
+        }
+
+        @Override
+        public boolean unregisterEventListener(GpxDownloaderListener listener)
+        {
+            return getTarget().unregisterEventListener(listener);
+        }
+    };
     
     @Override
     public IBinder onBind(Intent intent)
@@ -1769,12 +1776,28 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
     }
     
     @Override
-    public synchronized void onDestroy()
+    public void onDestroy()
     {
         Log.i(LOG_TAG, "Called onDestroy, threadsCount=" + threads.size() + ", listeners=" + listeners);
-        for (WorkerThread t : threads){
-            t.interrupt();
+        synchronized(this){
+            for (WorkerThread t : threads){
+                t.interrupt();
+            }
         }
+        synchronized(this){
+            boolean interrupted = Thread.interrupted();
+            for (WorkerThread t : threads){
+                try{
+                    t.join(60000L);
+                }catch(InterruptedException ie){
+                    interrupted = true;
+                }
+            }
+            if (interrupted){
+                Thread.currentThread().interrupt();
+            }
+        }
+        
         threads.clear();
         listeners.clear();
         
