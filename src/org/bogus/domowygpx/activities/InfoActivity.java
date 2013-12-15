@@ -47,7 +47,8 @@ public class InfoActivity extends Activity
             final TextView helpInfo = (TextView) findViewById(R.id.helpInfo);
             CharSequence helpInfoText = getResources().getText(R.string.infoHelp);
             final Pattern p = Pattern.compile("\\(([^\\)]+)=%([0-9])\\)", Pattern.CASE_INSENSITIVE);
-            final String[] urls = new String[]{"https://github.com/f-ranek/opencaching4locus/wiki", "http://forum.com"};
+            final String[] urls = new String[]{"https://github.com/f-ranek/opencaching4locus/wiki", 
+                    "http://forum.opencaching.pl/viewtopic.php?f=6&t=7793"};
             
             final Matcher matcher = p.matcher(helpInfoText);
     
