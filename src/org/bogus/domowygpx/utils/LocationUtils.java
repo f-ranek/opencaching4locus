@@ -49,11 +49,13 @@ public class LocationUtils
             throw new NullPointerException("coordinate");
         }
 
+        coordinate = coordinate.toString().trim();
+        
         char startCh = coordinate.charAt(0);
-        if (startCh == 'N' || startCh == 'S'){
+        if (startCh == 'N' || startCh == 'n' || startCh == 'S' || startCh == 's'){
             return parseWgs84Latitude(coordinate);
         }
-        if (startCh == 'E' || startCh == 'W'){
+        if (startCh == 'E' || startCh == 'e' || startCh == 'W' || startCh == 'w'){
             return parseWgs84Longitude(coordinate);
         }
         
@@ -117,7 +119,7 @@ public class LocationUtils
     private static Pair<Integer, Double> parseWgs84Latitude(CharSequence coordinate)
     {
         final char startCh = coordinate.charAt(0);
-        final boolean isLat = startCh == 'N' || startCh == 'S';
+        final boolean isLat = startCh == 'N' || startCh == 'n' || startCh == 'S' || startCh == 's';
         if (!isLat){
             throw new IllegalArgumentException("coordinate=" + coordinate);
         }
@@ -129,7 +131,7 @@ public class LocationUtils
     private static Pair<Integer, Double> parseWgs84Longitude(CharSequence coordinate)
     {
         final char startCh = coordinate.charAt(0);
-        final boolean isLon = startCh == 'E' || startCh == 'W';
+        final boolean isLon = startCh == 'E' || startCh == 'e' || startCh == 'W' || startCh == 'w';
         if (!isLon){
             throw new IllegalArgumentException("coordinate=" + coordinate);
         }
@@ -141,7 +143,7 @@ public class LocationUtils
         try{
             coordinate0 = coordinate0.trim();
             char startCh = coordinate0.charAt(0);
-            boolean negative = startCh == 'W' || startCh == 'S';
+            boolean negative = startCh == 'W' || startCh == 'w' || startCh == 'S' || startCh == 's';
             String coordinate = coordinate0.substring(1).trim();
             int degIdx = coordinate.indexOf('°');
             if (degIdx == -1 || degIdx == coordinate.length()-1){
