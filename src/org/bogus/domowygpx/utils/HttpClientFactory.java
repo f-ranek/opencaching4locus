@@ -201,7 +201,7 @@ public class HttpClientFactory
         try{
             final String packageName = context.getPackageName();
             final PackageInfo packageInfo = context.getPackageManager().getPackageInfo(packageName, 0);
-            String userAgent = "Apache-HttpClient/Opencaching " + packageInfo.versionName + " (" + packageInfo.versionCode + ")";
+            String userAgent = "Apache-HttpClient/AwaryjniejszyGPX " + packageInfo.versionName + " (" + packageInfo.versionCode + ")";
             HttpProtocolParams.setUserAgent(params, userAgent);
         }catch(NameNotFoundException nnfe){
             // should not happen ;)

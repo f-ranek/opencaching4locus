@@ -80,7 +80,7 @@ public class AndroidUtils
                 final String packageName = context.getPackageName();
                 sb.append("Aplikacja: ");
                 final PackageInfo packageInfo = context.getPackageManager().getPackageInfo(packageName, 0);
-                sb.append(packageInfo.versionName).append(" (").append(packageInfo.versionCode).append(")");
+                sb.append(packageInfo.versionName).append(" (").append(org.bogus.geocaching.egpx.BuildInfo.GIT_VERSION).append(")");
             }catch(NameNotFoundException nnfe){
                 // should not happen ;)
             }

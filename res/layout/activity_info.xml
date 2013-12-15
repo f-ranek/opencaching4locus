@@ -34,12 +34,12 @@
             android:text="@string/infoHelpTitle" />
         
         <TextView
+            android:id="@+id/helpInfo"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:autoLink="web"
             android:padding="10dp"
-            android:text="https://github.com/f-ranek/opencaching4locus/wiki"
-            android:textAppearance="?android:attr/textAppearanceMedium" tools:ignore="HardcodedText"/>
+            android:text="@string/infoHelp"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
         
         <TextView
             android:layout_width="fill_parent"

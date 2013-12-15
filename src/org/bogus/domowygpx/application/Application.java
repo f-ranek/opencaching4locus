@@ -228,9 +228,9 @@ public class Application extends android.app.Application
         } else {
             final List<File> data = tdl.locateSaveDirectories();
             final File dir = data.get(0);
-            gpxTargetDirName = new File(dir, "opencaching/kesze"); // XXX localization!!!
-            gpxTargetDirNameTemp = new File (dir, "opencaching/kesze-temp");
-            imagesTargetDirName = new File(dir, "opencaching/.cacheImages");
+            gpxTargetDirName = new File(dir, "awaryjniejszy-gpx/kesze"); // XXX localization!!!
+            gpxTargetDirNameTemp = new File (dir, "awaryjniejszy-gpx/kesze-temp");
+            imagesTargetDirName = new File(dir, "awaryjniejszy-gpx/.cacheImages");
         }
         
         editor.putString("gpxTargetDirName", gpxTargetDirName.toString());
