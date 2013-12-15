@@ -8,7 +8,7 @@
     <string name="hintGeoData">ddd:mm:ss.ssss</string>
     <string name="getLocationFromGps">Pobierz z GPS</string>
     <string name="getLocationFromGpsCancel">Anuluj pobieranie</string>
-    <string name="star">* - dozwolone formaty:\n1. [+-]ddd.ddddd\n2. [+-]ddd:mm.mmmmm\n3. [+-]ddd:mm:ss.sssss\n4. WGS84 (NSEW ddd° mm.mmm\')</string>
+    <string name="star">* - dozwolone formaty:\n1. [+-]ddd.dddd\n2. [+-]ddd:mm.mmm\n3. [+-]ddd:mm:ss.ss\n4. WGS84 (NSEW ddd° mm.mmm\')</string>
 
     <string name="targetFileName">Zapisz jako:</string>
     <string name="hintTargetFileName">Ew. nazwa pliku GPX</string>
@@ -134,6 +134,7 @@
     <string name="infoAboutTitle">Dobra, jakiś sensowny opis poproszę ;)</string>
     <string name="infoAbout">Program przygotowany został do współpracy z programami Locus i Columbus trochę też. Pozwala na pobieranie informacji o keszach z serwisu opencaching.pl. Ponadto pozwala na pobranie „z góry” dołączonych do keszy zdjęć i obrazków.</string>
     <string name="infoHelpTitle">Pomocy!</string>
+    <string name="infoHelp" formatted="false">(Instrukcja obsługi=%0)\n\n(Forum=%1)</string>
     <string name="versionInfoTitle">Informacje o wersji</string>
     <string name="versionInfo">Wersja:\t\t\t%1$s\nData:\t\t\t\t%2$s\nGit:\t\t\t\t\t%3$s</string>
     
