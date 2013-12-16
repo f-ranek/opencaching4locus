@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -742,7 +743,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 checkInterrupted();
                 
                 try{
-                    setPriority(Thread.MIN_PRIORITY+1);
+                    setPriority(Thread.NORM_PRIORITY-1);
                     sendProgressInfo("Pobieram GPXa");
                     gpxProcessor.processGpx();
                     
@@ -765,8 +766,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 os = null;
                 
                 if (taskConfig.isDoLocusImport() && taskState.totalCacheCount > 0){
-                    // TODO: do not invoke Locus if no caches has been found
-                    // instead, display a message -> but in UI, not service :-]
                     new Handler(Looper.getMainLooper()).postDelayed(new Runnable()
                     {
                         @Override
@@ -786,6 +785,23 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 
                 try{
                     final List<FileData> foundImages = imageUrlProcessor.getDataFiles();
+                    final int size0 = foundImages.size();
+                    Log.i(LOG_TAG, "Found unique images count=" + size0);
+
+                    final File tempImagesFile = new File(getCacheDir(), "images_list_" + taskState.taskId + "_" + System.currentTimeMillis() + ".bin.gz");
+                    OutputStream osImagesList = null;
+                    try{
+                        osImagesList = new FileOutputStream(tempImagesFile);
+                        osImagesList = new GZIPOutputStream(osImagesList);
+                        ObjectOutputStream oos = new ObjectOutputStream(osImagesList);
+                        oos.writeObject(foundImages);
+                        osImagesList.flush();
+                        osImagesList.close();
+                    }catch(Exception e){
+                        Log.e(LOG_TAG, "Failed to dump images list to " + tempImagesFile, e);
+                    }finally{
+                        IOUtils.closeQuietly(osImagesList);
+                    }
                     
                     final Iterator<FileData> foundImagesIt = foundImages.iterator();
                     while(foundImagesIt.hasNext()){
@@ -794,14 +810,14 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                             foundImagesIt.remove();
                         }
                     }
+                    final int size1 = foundImages.size();
+                    Log.i(LOG_TAG, "Removed (existing) images count=" + (size0-size1) + ", images to download count=" + size1);
                     
-                    if (!foundImages.isEmpty()){
+                    if (size1 > 0){
                         // prepare files downloader service invocation
                         final Intent intent = new Intent(FilesDownloaderApi.INTENT_ACTION_SCHEDULE_FILES,
                             null, GpxDownloaderService.this, FilesDownloaderService.class);
-                        intent.putExtra(FilesDownloaderApi.INTENT_EXTRA_FILES,
-                            foundImages.toArray(new FileData[foundImages.size()]));
-                        
+                        FilesDownloaderUtils.setFilesInIntent(intent, foundImages);
                         intent.putExtra(FilesDownloaderApi.INTENT_EXTRA_MESSENGER, 
                             new Messenger(new Handler(Looper.getMainLooper(), new Handler.Callback()
                             {
@@ -1390,7 +1406,9 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         if (tempFiles != null){
             long timeStamp = System.currentTimeMillis() - 2L*24L*60L*60L*1000L;
             for (String f : tempFiles){
-                if (f.startsWith("gpx_") && f.endsWith(".xml.gz")){
+                boolean isMyCacheFile = f.startsWith("gpx_") && f.endsWith(".xml.gz")
+                        || f.startsWith("images_list_") && f.endsWith(".bin.gz"); 
+                if (isMyCacheFile){
                     File f2 = new File(cacheDir, f);
                     if (f2.lastModified() < timeStamp){
                         f2.delete();

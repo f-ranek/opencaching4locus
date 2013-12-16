@@ -5,6 +5,7 @@ import java.util.List;
 import org.bogus.domowygpx.services.FilesDownloaderService.FilesDownloadTask;
 import org.bogus.domowygpx.services.downloader.FileData;
 
+import android.content.Intent;
 import android.os.Messenger;
 
 /**
@@ -17,14 +18,11 @@ import android.os.Messenger;
 public interface FilesDownloaderApi
 {
     /**
-     * Intent action to submit new files to download. The intent must have {@link #INTENT_EXTRA_FILES} attached, 
-     * and optional {@link #INTENT_EXTRA_MESSENGER} 
+     * Intent action to submit new files to download. The intent must be provided with files, using
+     * {@link FilesDownloaderUtils#setFilesInIntent(Intent, List)}, and may have optional 
+     * {@link #INTENT_EXTRA_MESSENGER} 
      */
     public static final String INTENT_ACTION_SCHEDULE_FILES = "org.bogus.domowygpx.FilesDownloaderService.SCHEDULE_FILES";
-    /**
-     * An array of {@link FileData} objects to download
-     */
-    public static final String INTENT_EXTRA_FILES = "org.bogus.domowygpx.FilesDownloaderService.FILES";
     /**
      * Optional {@link Messenger}, that will be notified in response to {@link #INTENT_ACTION_SCHEDULE_FILES} with the taskId
      * of a new download task

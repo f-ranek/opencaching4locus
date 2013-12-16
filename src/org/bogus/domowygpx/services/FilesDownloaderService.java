@@ -13,7 +13,6 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -57,7 +56,6 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.MessageQueue;
 import android.os.Messenger;
-import android.os.Parcelable;
 import android.os.RemoteException;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
@@ -78,6 +76,15 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     
     private static final String INTENT_EXTRA_TAKS_ID = "org.bogus.domowygpx.FilesDownloaderService.taskId";
     private static final String INTENT_EXTRA_RESTART_FROM_SCRATCH = "org.bogus.domowygpx.FilesDownloaderService.restartFromScratch";
+    /**
+     * An array of {@link FileData} objects to download
+     */
+    static final String INTENT_EXTRA_FILES = "org.bogus.domowygpx.FilesDownloaderService.FILES";
+    /**
+     * Used internally by {@link FilesDownloaderUtils#setFilesInIntent(Intent, FileData[])}
+     */
+    static final String INTENT_EXTRA_FILES_PACK = "org.bogus.domowygpx.FilesDownloaderService.FILES_PACK";
+    static final String INTENT_EXTRA_FILES_PACK_SIZE = "org.bogus.domowygpx.FilesDownloaderService.FILES_PACK_SIZE";
     
     private ConcurrentMap<File, Boolean> filesOnHold = new ConcurrentHashMap<File, Boolean>(8);
     private FilesDownloader freeFilesDownloader;
@@ -870,7 +877,6 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
 
     /** Binder exposed to clients */
     private final IBinder mBinder = new LocalBinder();
-    //private int boundClientsCount = 0;
     
     public class LocalBinder extends Binder {
         private final FilesDownloaderApi proxy = new FilesDownloaderApiProxy(FilesDownloaderService.this);
@@ -953,28 +959,10 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     };
     
     @Override
-    public /*synchronized*/ IBinder onBind(Intent intent)
+    public IBinder onBind(Intent intent)
     {
-        //boundClientsCount++;
-        //Log.i(LOG_TAG, "Client has bound, boundClientsCount=" + boundClientsCount);
         return mBinder;
     }
-
-    /*@Override
-    public synchronized void onRebind(Intent intent)
-    {
-        boundClientsCount++;
-        Log.i(LOG_TAG, "Client has rebound, boundClientsCount=" + boundClientsCount);
-    }
-    
-    @Override
-    public synchronized boolean onUnbind(Intent intent)
-    {
-        boundClientsCount--;
-        Log.i(LOG_TAG, "Client has unbound, boundClientsCount=" + boundClientsCount);
-        shutdownSelf();
-        return true;
-    }*/
 
     private static class DatabaseHelper extends SQLiteOpenHelper {
         public DatabaseHelper(Context context, String name,
@@ -1006,12 +994,6 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                     "exception TEXT " +
                     ");"); 
             db.execSQL("CREATE INDEX files_idx1 ON files(task_id);");
-            /*db.execSQL("CREATE TABLE headers( " +
-                    "_id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                    "file_id INTEGER NOT NULL, " +
-                    "header TEXT NOT NULL, " +
-                    "value TEXT NOT NULL);");
-            db.execSQL("CREATE INDEX headers_idx1 ON headers(file_id);");*/
         }
      
         @Override
@@ -1074,20 +1056,17 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                 adjustDownloaderThreads();
             } else
             if (INTENT_ACTION_SCHEDULE_FILES.equals(intent.getAction())){
-                final Parcelable[] files = intent.getParcelableArrayExtra(INTENT_EXTRA_FILES);
+                final List<FileData> files = FilesDownloaderUtils.getFilesFromIntent(intent);
                 if (files == null){
                     Log.e(LOG_TAG, "Missing " + INTENT_EXTRA_FILES);
                     return Service.START_STICKY;
                 }                
-                if (files.length == 0){
+                if (files.size() == 0){
                     Log.e(LOG_TAG, "Empty " + INTENT_EXTRA_FILES);
                     return Service.START_STICKY;
                 }
-                final List<Parcelable> files2 = Arrays.asList(files);
 
-                // bad casting, but we do not need copying arrays
-                @SuppressWarnings("unchecked")
-                int taskId = createTaskForFiles((List<FileData>)(Object)files2);
+                int taskId = createTaskForFiles(files);
                 
                 if (taskId >= 0){
                     final Messenger messenger = intent.getExtras().getParcelable(INTENT_EXTRA_MESSENGER);
