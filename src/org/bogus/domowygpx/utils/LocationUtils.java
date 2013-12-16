@@ -100,11 +100,11 @@ public class LocationUtils
             if ((deg < 0.0) || (deg > 179 && !isNegative180)) {
                 throw new IllegalArgumentException("coordinate=" + coordinate);
             }
-            if (min < 0 || min > 59) {
+            if (min < 0 || min >= 60) {
                 throw new IllegalArgumentException("coordinate=" +
                         coordinate);
             }
-            if (sec < 0 || sec > 59) {
+            if (sec < 0 || sec >= 60) {
                 throw new IllegalArgumentException("coordinate=" +
                         coordinate);
             }
