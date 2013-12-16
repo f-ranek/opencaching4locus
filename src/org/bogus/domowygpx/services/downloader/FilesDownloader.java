@@ -288,6 +288,8 @@ public class FilesDownloader implements Closeable
     
     protected void doDownloadInThread(final FileData data, final DownloadTask downloadTask)
     {
+        logger.debug("starting file " + data.source + " --> " + data.target); 
+        
         HttpResponse response = null;
         OutputStream os = null;
         InputStream is = null;
@@ -308,6 +310,7 @@ public class FilesDownloader implements Closeable
                     }catch(Exception e2){
                     }
                 }
+                logger.debug("File has been skipped");
                 return ;
             }
         }            
@@ -487,6 +490,14 @@ public class FilesDownloader implements Closeable
             int loopAmount = 0;
             long sessionDone = 0;
             is = response.getEntity().getContent();
+            
+            if (gotPartialFile){
+                logger.debug("Reasuming download, initial size=" + data.initialSize + 
+                    ", expected size=" + data.expectedSize);
+            } else {
+                logger.debug("Downloading, expected size=" + data.expectedSize);
+            }
+            
             os = new FileOutputStream(tempFile, gotPartialFile);
             os = new BufferedOutputStream(os, buffer.length);
             
@@ -556,7 +567,10 @@ public class FilesDownloader implements Closeable
                 }
             }
             isOk = true;
+            logger.debug("Download finished, data amount=" + sessionDone);
         }catch(Exception e){
+            logger.debug("Download failed", e);
+            
             // in case of any error, or user breaking the process - don't read the input stream to the end,
             // since it may be in a corrupted state, or just be very long ;)
             ResponseUtils.abortResponse(response);
