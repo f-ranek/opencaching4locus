@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 import org.bogus.ToStringBuilder;
 import org.bogus.android.AndroidUtils;
@@ -24,6 +25,8 @@ import android.os.Parcelable;
 public class TaskConfiguration implements java.io.Serializable, Parcelable
 {
     private static final long serialVersionUID = 8437257680737553390L;
+    
+    private final static Pattern spaces = Pattern.compile("[ \t\u00A0]+");
 
     public final static String DOWNLOAD_IMAGES_STRATEGY_NEVER = "never"; 
     public final static String DOWNLOAD_IMAGES_STRATEGY_ALWAYS = "always";
@@ -130,9 +133,10 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         }
         
         outMaxNumOfCaches = -1;
-        if (maxNumOfCaches != null && maxNumOfCaches.length() > 0){
+        String mnoc = maxNumOfCaches == null ? null : spaces.matcher(maxNumOfCaches).replaceAll("");
+        if (mnoc != null && mnoc.length() > 0){
             try{
-                outMaxNumOfCaches = Integer.parseInt(AndroidUtils.toString(maxNumOfCaches));
+                outMaxNumOfCaches = Integer.parseInt(mnoc);
                 if (outMaxNumOfCaches < 1 || outMaxNumOfCaches > 500){
                     warnings.add(Pair.makePair("CACHE_COUNT_LIMIT", R.string.validationInvalidMaxCachesLimit));
                     modifiedFields.add("CACHE_COUNT_LIMIT");
@@ -147,9 +151,9 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
             }
         }
         outMaxCacheDistance = -1;
-        if (maxCacheDistance != null && maxCacheDistance.length() > 0){
+        String mcd = maxCacheDistance == null ? null : spaces.matcher(maxCacheDistance).replaceAll("");
+        if (mcd != null && mcd.length() > 0){
             boolean meters = false;
-            String mcd = AndroidUtils.toString(maxCacheDistance);
             if (mcd.endsWith("km")){
                 mcd = mcd.substring(0, maxCacheDistance.length()-2);
             } else if (mcd.endsWith("m")){

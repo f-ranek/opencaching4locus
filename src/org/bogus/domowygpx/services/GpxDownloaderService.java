@@ -614,6 +614,8 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                         searchParams.put("center", nf.format(taskConfig.getOutLatitude()) + "|" + nf.format(taskConfig.getOutLongitude()));
                         if (taskConfig.getOutMaxNumOfCaches() > 0){
                             searchParams.put("limit", taskConfig.getOutMaxNumOfCaches());
+                        } else {
+                            searchParams.put("limit", 500); // maximum allowed
                         }
                         if (taskConfig.getOutMaxCacheDistance() > 0){
                             searchParams.put("radius", taskConfig.getOutMaxCacheDistance());
