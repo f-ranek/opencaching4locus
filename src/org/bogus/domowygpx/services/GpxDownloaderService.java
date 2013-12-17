@@ -99,7 +99,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
     
     synchronized HttpClient getHttpClient(){
         if (httpClient == null){
-            HttpClient aHttpClient = HttpClientFactory.createHttpClient(true, this);
+            HttpClient aHttpClient = HttpClientFactory.createHttpClient(true, this, true);
             // aHttpClient.getParams().setIntParameter(HttpClientFactory.RAW_SOCKET_RECEIVE_BUFFER_SIZE, 32*1024);
             httpClient = aHttpClient;
         }
@@ -457,8 +457,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 }
             }
             query.append("&wrap=false");
-            final OKAPI okApi = OKAPI.getInstance(GpxDownloaderService.this); 
-            query.append("&consumer_key=").append(okApi.getAPIKey());
         }
         
         @Override
@@ -494,8 +492,8 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     String url = okApi.getAPIUrl() + 
                             "services/users/by_username?username="
                             + urlEncode(userName) + 
-                            "&fields=uuid&consumer_key=" + okApi.getAPIKey();
-                    Log.v(LOG_TAG, okApi.maskObject(url));
+                            "&fields=uuid";
+                    Log.v(LOG_TAG, url);
                     final HttpGet get = new HttpGet(url);
                     currentRequest = get;
                     resp = httpClient.execute(get);
@@ -698,7 +696,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     // execute requestURL and process response
                     sendProgressInfo("Szukam keszy"); 
                     final String url = requestURL.toString();
-                    Log.v(LOG_TAG, okApi.maskObject(url));
+                    Log.v(LOG_TAG, url);
                     final HttpGet get = new HttpGet(url);
                     currentRequest = get;
                     mainResponse = httpClient.execute(get);
@@ -1523,7 +1521,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             if (task.exception != null){
                 StringWriter sw = new StringWriter(2048);
                 task.exception.printStackTrace(new PrintWriter(sw, false));
-                updateValues.put("exception", OKAPI.getInstance(this).maskObject(sw));
+                updateValues.put("exception", sw.toString());
             }
             database.update("tasks", updateValues, "_id=" + task.taskId, null);
             

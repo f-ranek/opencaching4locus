@@ -27,6 +27,7 @@ import org.apache.http.params.HttpProtocolParams;
 import org.bogus.domowygpx.apache.http.client.entity.CountingEntityInterceptor;
 import org.bogus.domowygpx.apache.http.client.protocol.RequestAcceptEncoding;
 import org.bogus.domowygpx.apache.http.client.protocol.ResponseContentEncoding;
+import org.bogus.domowygpx.oauth.OAuthSigningInterceptor;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -147,7 +148,7 @@ public class HttpClientFactory
 
     }
     
-    public static HttpClient createHttpClient(boolean shared, final Context context)
+    public static HttpClient createHttpClient(boolean shared, final Context context, boolean authorizeRequests)
     {
         final SharedPreferences config = context.getSharedPreferences("egpx", Context.MODE_PRIVATE);
         
@@ -216,7 +217,16 @@ public class HttpClientFactory
             httpClient.addResponseInterceptor(new ResponseContentEncoding());
         } 
         httpClient.addResponseInterceptor(new CountingEntityInterceptor());
+        if (authorizeRequests){
+            httpClient.addRequestInterceptor(new OAuthSigningInterceptor(context));
+        }
         return httpClient;
+    }
+    
+    
+    public static HttpClient createHttpClient(boolean shared, final Context context)
+    {
+        return createHttpClient(shared, context, false);
     }
     
     public static void closeHttpClient(HttpClient httpClient)
