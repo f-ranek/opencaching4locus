@@ -45,7 +45,7 @@ public class OAuthSigningInterceptor implements HttpRequestInterceptor
                 }
             }
             if (uri == null || !uri.isAbsolute()){
-                throw new HttpException("The given request uri=" + uri +" is not absolute");
+                throw new HttpException("The given request uri=" + uri + " is not absolute");
             }
             
             uri = oauth.signOAuth3Uri(uri);
@@ -60,7 +60,7 @@ public class OAuthSigningInterceptor implements HttpRequestInterceptor
             if (request instanceof RequestWrapper){
                 ((RequestWrapper)request).setURI(uri);
             } else {
-                throw new IllegalStateException("Unknown request typr=" + request.getClass().getName());
+                throw new IllegalStateException("Unknown request type=" + request.getClass().getName());
             }
         }catch(URISyntaxException use){
             throw new HttpException("Failed to construct URI", use);
@@ -90,7 +90,7 @@ public class OAuthSigningInterceptor implements HttpRequestInterceptor
             if (request instanceof RequestWrapper){
                 ((RequestWrapper)request).setURI(uri2);
             } else {
-                throw new IllegalStateException("Unknown request typr=" + request.getClass().getName());
+                throw new IllegalStateException("Unknown request type=" + request.getClass().getName());
             }
         }catch(URISyntaxException use){
             throw new HttpException("Failed to construct URI", use);
