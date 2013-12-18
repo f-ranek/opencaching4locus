@@ -2,7 +2,6 @@ package org.bogus.domowygpx.services.downloader;
 
 import java.io.File;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 
 import org.bogus.ToStringBuilder;
@@ -180,11 +179,7 @@ public class FileData implements java.io.Serializable, Cloneable, Parcelable {
             dest.cacheCode = source.readString();
             String uri = source.readString();
             if (uri != null){
-                try{
-                    dest.source = new URI(uri);
-                }catch(URISyntaxException usi){
-                    throw new IllegalStateException("Can not deserialize URI = " + uri, usi);
-                }
+                dest.source = URI.create(uri);
             }
             String file = source.readString();
             if (file != null){
