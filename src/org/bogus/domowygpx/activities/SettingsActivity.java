@@ -10,6 +10,8 @@ import org.bogus.android.FolderPreference;
 import org.bogus.android.FolderPreferenceHelperActivity;
 import org.bogus.android.IntListPreference;
 import org.bogus.domowygpx.application.Application;
+import org.bogus.domowygpx.oauth.OAuth;
+import org.bogus.domowygpx.oauth.OKAPI;
 import org.bogus.geocaching.egpx.R;
 
 import android.content.Intent;
@@ -137,6 +139,56 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
                     editor.remove("Locus.search_searchWithoutAsking");
                     editor.commit();
                     pref.setEnabled(false);
+                }});
+        }
+
+        {
+            final Preference userName = findPreference("userName");
+            
+            // yes, I know about preference dependencies
+            CompoundPreferenceChangeListener.add(userName, 
+                new Preference.OnPreferenceChangeListener(){
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue)
+                {
+                    final Preference foundStrategy = findPreference("foundStrategy");
+                    foundStrategy.setEnabled(newValue != null && ((String)newValue).length() > 0);
+                    return true;
+                }});
+            
+            final ButtonPreference signToService = (ButtonPreference)findPreference("signToService");
+            OnSharedPreferenceChangeListener spcl = new OnSharedPreferenceChangeListener()
+            {
+                
+                @Override
+                public void onSharedPreferenceChanged(SharedPreferences config, String key)
+                {
+                    final OAuth oauth = OKAPI.getInstance(SettingsActivity.this).getOAuth();
+                    boolean signed = oauth.hasOAuth3();
+                    if (signed){
+                        signToService.setTitle(R.string.pref_my_account_sign_forget);
+                        signToService.setSummary(R.string.pref_my_account_sign_forget_desc);
+                        signToService.getButton().setText(R.string.pref_my_account_sign_forget_btn);
+                    } else {
+                        signToService.setTitle(R.string.pref_my_account_sign);
+                        signToService.setSummary(R.string.pref_my_account_sign_desc);
+                        signToService.getButton().setText(R.string.pref_my_account_sign_btn);
+                    }
+                    userName.setEnabled(!signed);
+                    userName.getOnPreferenceChangeListener().onPreferenceChange(userName, config.getString("userName", ""));
+                }
+            };
+            config.registerOnSharedPreferenceChangeListener(spcl);
+            spcl.onSharedPreferenceChanged(config, null);
+            preventGCStorage.add(spcl); // we must keep a strong reference, since SharedPreferences keeps week refs
+            userName.getOnPreferenceChangeListener().onPreferenceChange(userName, config.getString("userName", null));
+            signToService.setOnClickListener(new ButtonPreference.OnClickListener(){
+    
+                @Override
+                public void onClick(ButtonPreference pref)
+                {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, null, SettingsActivity.this, OAuthSigningActivity.class);
+                    SettingsActivity.this.startActivityForResult(intent, 0);
                 }});
         }
     }

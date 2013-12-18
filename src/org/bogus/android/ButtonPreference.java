@@ -57,7 +57,6 @@ public class ButtonPreference extends Preference
         super.onBindView(view);
         final ViewGroup viewGroup = (ViewGroup)view.findViewById(android.R.id.widget_frame);
         final Button button = getButton();
-        button.setText(buttonText);
         ViewParent buttonParent = button.getParent();  
         if (buttonParent != viewGroup){
             if (buttonParent != null){
@@ -96,6 +95,7 @@ public class ButtonPreference extends Preference
         if (button == null){
             button = new Button(getContext());
             button.setEnabled(isEnabled());
+            button.setText(buttonText);
             button.setOnClickListener(new View.OnClickListener()
             {
                 @Override

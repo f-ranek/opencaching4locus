@@ -1,12 +1,27 @@
 package org.bogus.domowygpx.apache.http.client.utils;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.http.Header;
+import org.apache.http.HeaderElement;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.conn.ConnectionReleaseTrigger;
 import org.apache.http.entity.HttpEntityWrapper;
 import org.bogus.domowygpx.apache.http.client.entity.CountingEntity;
+import org.bogus.domowygpx.utils.HttpException;
+import org.json.JSONException;
+import org.json.JSONTokener;
+
+import android.util.Log;
 
 public class ResponseUtils
 {
@@ -126,5 +141,72 @@ public class ResponseUtils
             }
         }
         return null;
+    }
+    
+
+    public static String getContentEncoding(final HttpResponse resp, final String defaultValue)
+    {
+        if (resp.getEntity() == null){
+            return null;
+        }
+        final Header contentType = resp.getEntity().getContentType();
+        if (contentType != null){
+            final HeaderElement[] elems = contentType.getElements();
+            if (elems != null && elems.length > 0){
+                final NameValuePair nvp = elems[0].getParameterByName("charset");
+                if (nvp != null){
+                    return nvp.getValue();
+                }
+            }
+        }
+        return defaultValue;
+    }    
+
+    public static void logResponseContent(final String logTag, final HttpResponse resp)
+    {
+        Log.i(logTag, String.valueOf(resp.getStatusLine()));
+        try{
+            if (resp.getEntity() == null){
+                return;
+            }
+            String charset = ResponseUtils.getContentEncoding(resp, "US-ASCII");
+            InputStream is = resp.getEntity().getContent();
+            BufferedReader br = new BufferedReader(new InputStreamReader(is, charset));
+            String line;
+            while ((line = br.readLine()) != null){
+                Log.i(logTag, line);
+            }
+            IOUtils.closeQuietly(is);
+        }catch(Exception e){
+            Log.i(logTag, "Failed to dump response", e);
+        }
+        ResponseUtils.closeResponse(resp);
+    }
+
+    public static Object getJSONObjectFromResponse(final String logTag, final HttpUriRequest request, final HttpResponse resp)
+    throws IOException, JSONException
+    {
+        InputStream is = null;
+        try{
+            final int statusCode = resp.getStatusLine().getStatusCode(); 
+            if (statusCode == 200){
+                is = resp.getEntity().getContent();
+                final String charset = ResponseUtils.getContentEncoding(resp, "UTF-8");
+                final String data = IOUtils.toString(is, charset);
+                final JSONTokener jr = new JSONTokener(data);
+                final Object result = jr.nextValue();
+                return result;
+            } else 
+            if (statusCode == 404 || statusCode == 204){
+                ResponseUtils.logResponseContent(logTag, resp);
+                throw new FileNotFoundException("Got " + statusCode + " for " + request.getURI());
+            } else {
+                ResponseUtils.logResponseContent(logTag, resp);
+                throw HttpException.fromHttpResponse(resp, request);
+            }
+        }finally{
+            IOUtils.closeQuietly(is);
+            ResponseUtils.closeResponse(resp);
+        }
     }
 }

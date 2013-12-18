@@ -7,7 +7,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -31,10 +30,7 @@ import locus.api.android.ActionFiles;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.TeeInputStream;
-import org.apache.http.Header;
-import org.apache.http.HeaderElement;
 import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -44,20 +40,20 @@ import org.bogus.domowygpx.activities.DownloadListActivity;
 import org.bogus.domowygpx.activities.TaskConfiguration;
 import org.bogus.domowygpx.apache.http.client.utils.ResponseUtils;
 import org.bogus.domowygpx.application.Application;
-import org.bogus.domowygpx.application.OKAPI;
 import org.bogus.domowygpx.gpx.GpxProcessMonitor;
 import org.bogus.domowygpx.gpx.GpxProcessor;
 import org.bogus.domowygpx.html.HTMLProcessor;
 import org.bogus.domowygpx.html.ImageUrlProcessor;
+import org.bogus.domowygpx.oauth.OKAPI;
 import org.bogus.domowygpx.services.downloader.FileData;
 import org.bogus.domowygpx.utils.HttpClientFactory;
+import org.bogus.domowygpx.utils.HttpClientFactory.CreateHttpClientConfig;
 import org.bogus.domowygpx.utils.HttpException;
 import org.bogus.domowygpx.utils.InputStreamHolder;
 import org.bogus.geocaching.egpx.BuildConfig;
 import org.bogus.geocaching.egpx.R;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.json.JSONTokener;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
@@ -69,6 +65,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
@@ -99,7 +96,11 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
     
     synchronized HttpClient getHttpClient(){
         if (httpClient == null){
-            HttpClient aHttpClient = HttpClientFactory.createHttpClient(true, this, true);
+            final CreateHttpClientConfig ccc = new CreateHttpClientConfig(this);
+            ccc.authorizeRequests = true;
+            ccc.shared = true;
+            ccc.preventCaching = true;
+            final HttpClient aHttpClient = HttpClientFactory.createHttpClient(ccc);
             // aHttpClient.getParams().setIntParameter(HttpClientFactory.RAW_SOCKET_RECEIVE_BUFFER_SIZE, 32*1024);
             httpClient = aHttpClient;
         }
@@ -317,6 +318,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
     }
     
 
+    OKAPI okApi;
     
     class WorkerThread extends Thread implements GpxProcessMonitor 
     {
@@ -335,78 +337,8 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             this.taskConfig = taskConfiguration;
             this.taskState = taskState;
         }
-
-        protected final String getContentEncoding(final HttpResponse resp, final String defaultValue)
-        {
-            if (resp.getEntity() == null){
-                return null;
-            }
-            final Header contentType = resp.getEntity().getContentType();
-            if (contentType != null){
-                final HeaderElement[] elems = contentType.getElements();
-                if (elems != null && elems.length > 0){
-                    final NameValuePair nvp = elems[0].getParameterByName("charset");
-                    if (nvp != null){
-                        return nvp.getValue();
-                    }
-                }
-            }
-            return defaultValue;
-        }
         
-        private void logResponseContent(final HttpResponse resp)
-        {
-            if (Log.isLoggable(LOG_TAG, Log.VERBOSE) || BuildConfig.DEBUG){
-                Log.v(LOG_TAG, String.valueOf(resp.getStatusLine()));
-                try{
-                    if (resp.getEntity() == null){
-                        return;
-                    }
-                    String charset = getContentEncoding(resp, "US-ASCII");
-                    InputStream is = resp.getEntity().getContent();
-                    char[] buffer = new char[1024];
-                    InputStreamReader isr = new InputStreamReader(is, charset);
-                    int len = isr.read(buffer);
-                    IOUtils.closeQuietly(is);
-                    if (len > 0){
-                        Log.v(LOG_TAG, new String(buffer, 0, len));
-                        if (len == buffer.length){
-                            Log.v(LOG_TAG, "...");
-                        }
-                    }
-                }catch(Exception e){
-                    Log.v(LOG_TAG, "Failed to dump response", e);
-                }
-            }
-            ResponseUtils.closeResponse(resp);
-        }
         
-        protected final Object getJSONObjectFromResponse(final HttpUriRequest request, final HttpResponse resp)
-        throws IOException, JSONException
-        {
-            InputStream is = null;
-            try{
-                final int statusCode = resp.getStatusLine().getStatusCode(); 
-                if (statusCode == 200){
-                    is = resp.getEntity().getContent();
-                    final String charset = getContentEncoding(resp, "UTF-8");
-                    final String data = IOUtils.toString(is, charset);
-                    final JSONTokener jr = new JSONTokener(data);
-                    final Object result = jr.nextValue();
-                    return result;
-                } else 
-                if (statusCode == 404 || statusCode == 204){
-                    logResponseContent(resp);
-                    throw new FileNotFoundException("Got " + statusCode + " for " + request.getURI());
-                } else {
-                    logResponseContent(resp);
-                    throw HttpException.fromHttpResponse(resp, request);
-                }
-            }finally{
-                IOUtils.closeQuietly(is);
-                ResponseUtils.closeResponse(resp);
-            }
-        }
         
         protected final void appendReturnParameters(StringBuilder query, String userUUID, boolean searchAndRetrieve) 
         throws JSONException
@@ -428,8 +360,10 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             retrParams.put("attrs", "gc:attrs|desc:text|gc_ocde:attrs"); // do I need ox:tags ?
             retrParams.put("alt_wpts", "true");
             
-            // ("my_notes", "desc:text"); -> Auth Level 3
-
+            if (okApi.getOAuth().hasOAuth3()){
+                retrParams.put("my_notes", "desc:text");
+            }
+            
             if (taskConfig.getMaxCacheLogs() != 0){
                 retrParams.put("latest_logs", "true");
                 if (taskConfig.getMaxCacheLogs() > 0){
@@ -440,7 +374,9 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             }
                 
             if (userUUID != null &&  TaskConfiguration.FOUND_STRATEGY_MARK.equals(taskConfig.getFoundStrategy())){
-                retrParams.put("user_uuid", userUUID);
+                if (!okApi.getOAuth().hasOAuth3()){
+                    retrParams.put("user_uuid", userUUID);
+                }
                 retrParams.put("mark_found", "true");
             }
 
@@ -476,36 +412,64 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             }
         }
         
-        private String getUserUuid(String userName)
+        private String getUserUuid(String userName) 
         throws Exception
         {
-            if (userName == null){
-                return null;
+            final SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
+            String userUuid = config.getString("userUuid", null);
+            if (userUuid != null){
+                return userUuid;
             }
+            
+            final boolean hasOAuth3 = okApi.getOAuth().hasOAuth3();
+            
             HttpResponse resp = null;
             try{
-                final SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
-                final String key = "userUUID:" + userName;
-                String userUuid = config.getString(key, null);
-                if (userUuid == null){
-                    final OKAPI okApi = OKAPI.getInstance(GpxDownloaderService.this); 
+                if (hasOAuth3){
                     String url = okApi.getAPIUrl() + 
-                            "services/users/by_username?username="
-                            + urlEncode(userName) + 
-                            "&fields=uuid";
+                            "services/users/user?fields=uuid%7Cusername";
                     Log.v(LOG_TAG, url);
                     final HttpGet get = new HttpGet(url);
                     currentRequest = get;
                     resp = httpClient.execute(get);
-                    final JSONObject obj = (JSONObject)getJSONObjectFromResponse(get, resp);
+                    final JSONObject obj = (JSONObject)ResponseUtils.getJSONObjectFromResponse(LOG_TAG, get, resp);
                     userUuid = (String)obj.opt("uuid");
-                    if (userUuid == null){
-                        sendWarnErrorInfo("Brak użytkownika " + userName, GpxTaskEvent.EVENT_TYPE_WARN); 
-                    } else {
-                        config.edit().putString(key, userUuid).commit();
+                    userName = (String)obj.opt("username"); 
+                    if (userUuid == null || userUuid.length() == 0){
+                        throw new IllegalStateException("Błąd pobierania danych użytkownika");
+                    } 
+                    Editor editor = config.edit();
+                    editor.putString("userName", userName);
+                    editor.putString("userUuid", userUuid);
+                    editor.putString("userUUID:" + userName, userUuid);
+                    editor.commit();
+                   
+                    return userUuid;
+                } else {
+                    if (userName == null){
+                        return null;
                     }
+                    final String key = "userUUID:" + userName;
+                    userUuid = config.getString(key, null);
+                    if (userUuid == null){
+                        String url = okApi.getAPIUrl() + 
+                                "services/users/by_username?username="
+                                + urlEncode(userName) + 
+                                "&fields=uuid";
+                        Log.v(LOG_TAG, url);
+                        final HttpGet get = new HttpGet(url);
+                        currentRequest = get;
+                        resp = httpClient.execute(get);
+                        final JSONObject obj = (JSONObject)ResponseUtils.getJSONObjectFromResponse(LOG_TAG, get, resp);
+                        userUuid = (String)obj.opt("uuid");
+                        if (userUuid == null){
+                            sendWarnErrorInfo("Brak użytkownika " + userName, GpxTaskEvent.EVENT_TYPE_WARN); 
+                        } else {
+                            config.edit().putString(key, userUuid).commit();
+                        }
+                    }
+                    return userUuid;
                 }
-                return userUuid;
             }catch(Exception e){
                 Log.e(LOG_TAG, "Failed to get user UUID for userName=" + userName);
                 // setErrorDescription("Nie udało się pobrać danych użytkownika", e);
@@ -544,6 +508,21 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 setErrorDescription("Błąd SSL", e); 
                 return true;
             }
+            if (e instanceof HttpException){
+                HttpException he = (HttpException)e;
+                if (he.isCustomErrorCode()){
+                    setErrorDescription(he.httpMessage, e);
+                    return true;
+                }
+                if (he.httpCode == 400){
+                    setErrorDescription("Serwer nie zrozumiał żądania", e); 
+                    return true;
+                }
+                if (he.httpCode == 401 && okApi.getOAuth().hasOAuth3()){
+                    setErrorDescription("Błąd logowania do serwera", e); 
+                    return true;
+                }
+            }   
             if (e instanceof HttpException || 
                     e instanceof FileNotFoundException)
             {
@@ -601,7 +580,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 
                 HttpResponse resp = null;
                 try{
-                    final OKAPI okApi = OKAPI.getInstance(GpxDownloaderService.this); 
                     StringBuilder requestURL = new StringBuilder(256);
                     requestURL.append(okApi.getAPIUrl());
                     
@@ -704,10 +682,10 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     final StatusLine statusLine = mainResponse.getStatusLine();
                     final int statusCode = statusLine.getStatusCode();
                     if (statusCode == 404 || statusCode == 204){
-                        logResponseContent(mainResponse);
+                        ResponseUtils.logResponseContent(LOG_TAG, mainResponse);
                         throw new FileNotFoundException("Got " + statusCode + " for " + url);
                     } else if (statusCode != 200){
-                        logResponseContent(mainResponse);
+                        ResponseUtils.logResponseContent(LOG_TAG, mainResponse);
                         throw HttpException.fromHttpResponse(mainResponse, get);
                     }
                     
@@ -849,6 +827,9 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     + ", dir=" + taskConfig.getOutTargetDirName()
                     , exception);
                 
+                if (taskState.exception == null){
+                    taskState.exception = exception;
+                }
                 finishTaskWithError(exception, interruptionFlag);
             }finally{
                 currentRequest = null;
@@ -1380,6 +1361,8 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
     {
         Log.i(LOG_TAG, "Called onCreate");
         super.onCreate();
+        
+        okApi = OKAPI.getInstance(this);
         
         try{
             databaseHelper = new DatabaseHelper(this, "GpxDownloaderDatabase.db", null, 2);

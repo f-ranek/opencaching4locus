@@ -73,6 +73,12 @@
             android:configChanges="keyboardHidden|orientation|screenSize"
             >
         </activity>
+        <activity
+            android:name="org.bogus.domowygpx.activities.OAuthSigningActivity" 
+            android:label="@string/title_activity_oauth_signing" 
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:theme="@style/Theme.Transparent"
+            />
         
         <service
             android:name="org.bogus.domowygpx.services.GpxDownloaderService"

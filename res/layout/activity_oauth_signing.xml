@@ -1,0 +1,49 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content" 
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:autoLink="web"
+            android:paddingTop="10dp"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:gravity="fill_horizontal"
+            android:text="@string/infoOAuthInstruction" />
+        
+        <Button
+            android:id="@+id/oauthBtnAuthorize"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/btnOAuthAuthorize" />
+
+        <Button
+            android:id="@+id/oauthBtnRelaunchAuthorizationPage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/btnOAuthRelaunchAuthorizationPage" />
+
+        <EditText
+            android:id="@+id/oauthEditNip"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="@string/editOAuthPINHint"
+            android:inputType="number" >
+        </EditText>
+
+        <Button
+            android:id="@+id/oauthBtnDone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/btnOAuthFinish" />
+        
+    </LinearLayout>        
+</ScrollView>

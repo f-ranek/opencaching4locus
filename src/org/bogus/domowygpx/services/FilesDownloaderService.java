@@ -29,6 +29,7 @@ import org.bogus.domowygpx.services.downloader.DownloadProgressMonitor;
 import org.bogus.domowygpx.services.downloader.FileData;
 import org.bogus.domowygpx.services.downloader.FilesDownloader;
 import org.bogus.domowygpx.utils.HttpClientFactory;
+import org.bogus.domowygpx.utils.HttpClientFactory.CreateHttpClientConfig;
 import org.bogus.domowygpx.utils.HttpException;
 import org.bogus.geocaching.egpx.BuildConfig;
 import org.bogus.geocaching.egpx.R;
@@ -565,7 +566,9 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         }
         if (fd == null || fd.isClosed()){
             if (httpClient == null){
-                httpClient = HttpClientFactory.createHttpClient(true, this);
+                final CreateHttpClientConfig ccc = new CreateHttpClientConfig(this);
+                ccc.shared = true;
+                httpClient = HttpClientFactory.createHttpClient(ccc);
             }
             fd = new FilesDownloader(httpClient, 1, filesOnHold);
         }

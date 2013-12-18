@@ -7,6 +7,9 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.List;
 
+import org.apache.http.HttpException;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.params.ClientPNames;
 import org.apache.http.conn.ClientConnectionManager;
@@ -24,9 +27,11 @@ import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
+import org.apache.http.protocol.HttpContext;
 import org.bogus.domowygpx.apache.http.client.entity.CountingEntityInterceptor;
 import org.bogus.domowygpx.apache.http.client.protocol.RequestAcceptEncoding;
 import org.bogus.domowygpx.apache.http.client.protocol.ResponseContentEncoding;
+import org.bogus.domowygpx.oauth.OAuthRevocationDetectorInterceptor;
 import org.bogus.domowygpx.oauth.OAuthSigningInterceptor;
 
 import android.content.Context;
@@ -37,6 +42,23 @@ import android.net.http.AndroidHttpClient;
 
 public class HttpClientFactory
 {
+    public static class CreateHttpClientConfig
+    {
+        public final Context context;
+
+        /** Returns shared client, which means it can be used by differet threads simultaneously */
+        public boolean shared;
+        /** Add interceptor to preemptively add OAuth headers */
+        public boolean authorizeRequests;
+        /** Prevents HTTP caching */
+        public boolean preventCaching;
+
+        public CreateHttpClientConfig(Context context)
+        {
+            this.context = context;
+        }
+    }    
+    
     /**
      * Size in bytes (integer), of the receive buffer size passed to the operating system
      */
@@ -148,9 +170,9 @@ public class HttpClientFactory
 
     }
     
-    public static HttpClient createHttpClient(boolean shared, final Context context, boolean authorizeRequests)
+    public static HttpClient createHttpClient(CreateHttpClientConfig cfg)
     {
-        final SharedPreferences config = context.getSharedPreferences("egpx", Context.MODE_PRIVATE);
+        final SharedPreferences config = cfg.context.getSharedPreferences("egpx", Context.MODE_PRIVATE);
         
         if (config.getBoolean("HttpClientFactory_enableHeadersLogging", false)){
             java.util.logging.Logger.getLogger("org.apache.http.headers").setLevel(java.util.logging.Level.FINEST);
@@ -160,7 +182,7 @@ public class HttpClientFactory
 
         final HttpParams params = httpClient.getParams();
        
-        if (shared){
+        if (cfg.shared){
             // max connections per route
             final int maxConnectionsPerHost = config.getInt("HttpClientFactory_maxConnectionsPerHost", 4);
             // total max connections per HttpClient
@@ -200,8 +222,8 @@ public class HttpClientFactory
         HttpConnectionParams.setSocketBufferSize(params, socketBufferSize);
         
         try{
-            final String packageName = context.getPackageName();
-            final PackageInfo packageInfo = context.getPackageManager().getPackageInfo(packageName, 0);
+            final String packageName = cfg.context.getPackageName();
+            final PackageInfo packageInfo = cfg.context.getPackageManager().getPackageInfo(packageName, 0);
             String userAgent = "Apache-HttpClient/AwaryjniejszyGPX " + packageInfo.versionName + " (" + packageInfo.versionCode + ")";
             HttpProtocolParams.setUserAgent(params, userAgent);
         }catch(NameNotFoundException nnfe){
@@ -217,16 +239,20 @@ public class HttpClientFactory
             httpClient.addResponseInterceptor(new ResponseContentEncoding());
         } 
         httpClient.addResponseInterceptor(new CountingEntityInterceptor());
-        if (authorizeRequests){
-            httpClient.addRequestInterceptor(new OAuthSigningInterceptor(context));
+        if (cfg.authorizeRequests){
+            httpClient.addRequestInterceptor(new OAuthSigningInterceptor(cfg.context));
+            httpClient.addResponseInterceptor(new OAuthRevocationDetectorInterceptor(cfg.context));
+        }
+        if (cfg.preventCaching){
+            httpClient.addRequestInterceptor(new HttpRequestInterceptor(){
+                @Override
+                public void process(HttpRequest request, HttpContext context) throws HttpException, IOException
+                {
+                    request.setHeader("Cache-Control", "no-cache");
+                    request.addHeader("Pragma", "no-cache");
+                }});
         }
         return httpClient;
-    }
-    
-    
-    public static HttpClient createHttpClient(boolean shared, final Context context)
-    {
-        return createHttpClient(shared, context, false);
     }
     
     public static void closeHttpClient(HttpClient httpClient)

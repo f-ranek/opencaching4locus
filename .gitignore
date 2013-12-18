@@ -9,4 +9,4 @@ TestResults
 /proguard
 /local.properties
 /temp
-/src/org/bogus/domowygpx/application/dc
+/src/org/bogus/domowygpx/oauth/dc

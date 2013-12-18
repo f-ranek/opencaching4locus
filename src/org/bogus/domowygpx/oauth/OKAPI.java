@@ -1,34 +1,26 @@
-package org.bogus.domowygpx.application;
+package org.bogus.domowygpx.oauth;
+
+import org.bogus.domowygpx.application.Application;
 
 import android.app.Activity;
-import android.app.Application;
 import android.app.Service;
 import android.content.Context;
 
 public class OKAPI
 {
-    private final Context ctx;
-    private String key;
-    private String secret;
+    private volatile static boolean created;
     
-    OKAPI(Context ctx)
-    {
-        this.ctx = ctx;
-    }
+    final Context ctx;
+    final OAuth oauth;
     
-    public String getAPIKey()
+    public OKAPI(Application ctx)
     {
-        if (key == null){
-            final String apiSecret = OKAPISecrets.getApiKey(ctx);
-            int idx = apiSecret.indexOf('|');
-            if (idx > 0){
-                key = apiSecret.substring(0, idx);
-                secret = apiSecret.substring(idx+1);
-            } else {
-                key = apiSecret;
-            }
+        if (created){
+            throw new IllegalStateException();
         }
-        return key;
+        created = true;
+        this.ctx = ctx;
+        this.oauth = new OAuth(ctx, this);
     }
     
     public String getAPIUrl()
@@ -36,21 +28,6 @@ public class OKAPI
         return "http://opencaching.pl/okapi/";
     }
     
-    public String getOAuthAuthorizeUrl()
-    {
-        return getAPIUrl() + "services/oauth/request_token";   
-    }
-   
-    public String getOAuthRequestTokenUrl()
-    {
-        return getAPIUrl() + "services/oauth/authorize";
-    }
-    
-    public String getOAuthAccessTokenUrl()
-    {
-        return getAPIUrl() + "services/oauth/access_token";
-    }
-
     /*public String maskObject(Object obj)
     {
         if (obj == null){
@@ -59,9 +36,9 @@ public class OKAPI
         return obj.toString().replace(getAPIKey(), "xxxxxxxxxx");
     }*/
     
-    public static OKAPI getInstance(Application application)
+    public static OKAPI getInstance(android.app.Application application)
     {
-        return ((org.bogus.domowygpx.application.Application)application).getOkApi();
+        return ((Application)application).getOkApi();
     }
 
     public static OKAPI getInstance(Service service)
@@ -87,5 +64,10 @@ public class OKAPI
         } else {
             throw new IllegalStateException("Unknow context class=" + context.getClass().getName());
         }
+    }
+
+    public OAuth getOAuth()
+    {
+        return oauth;
     }
 }

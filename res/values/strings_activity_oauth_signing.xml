@@ -1,0 +1,19 @@
+<resources>
+
+    <string name="title_activity_oauth_signing">Logowanie w oc.pl</string>
+    <string name="msgLogoutInfo">Czy na pewno chcesz się wylogować?</string>
+    <string name="btnLogout">Wyloguj</string>
+    <string name="btnCancel">Anuluj</string>
+    
+    <string name="infoOAuthNetworkFailure">Błąd sieci</string>
+    <string name="infoOAuthServerFailure">Błąd serwera</string>
+    <string name="infoOAuthServerFailure2">Serwer zwrócił nieprawdiłową odpowiedź</string>
+    <string name="infoOAuthWorkInProgress">Czekaj, pracuję&#8230;</string>
+    <string name="infoOAuthDone">Zostałeś zalogowany do opencaching.pl</string>
+    
+    <string name="infoOAuthInstruction">1. Uderz przycisk „Rozpocznij autoryzację”, aby pozwolić Awaryjniejszemu GPXowi na dostęp do Twojego konta.\n2. Otwarta zostanie strona opencaching.pl, na której należy się zalogować, i zezwolić aplikacji na dostęp do swojego konta.\n3. Po autoryzacji na stronie pokazany zostanie PIN, który należy skopiować, oraz wkleić w pole poniżej.\n4.Następnie należy uderzyć przycisk „Zakończ proces”. To wszystko.\n5. Jeżeli w międzyczasie coś pójdzie nie tak, możesz uderzyć „Otwórz stronę autoryzacji ponownie”, lub rozpocząć cały proces od początku.</string>
+    <string name="btnOAuthAuthorize">Rozpocznij autoryzację</string>
+    <string name="btnOAuthRelaunchAuthorizationPage">Otwórz stronę autoryzacji ponownie</string>
+    <string name="editOAuthPINHint">Tu wklej PIN</string>
+    <string name="btnOAuthFinish">Zakończ proces</string>
+</resources>

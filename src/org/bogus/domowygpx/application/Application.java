@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.bogus.domowygpx.oauth.OKAPI;
 import org.bogus.domowygpx.utils.TargetDirLocator;
 import org.bogus.geocaching.egpx.R;
 
