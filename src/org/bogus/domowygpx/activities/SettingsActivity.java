@@ -53,6 +53,8 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
     @SuppressWarnings("deprecation")
     private void setupSimplePreferencesScreen()
     {
+        final OAuth oauth = OKAPI.getInstance(SettingsActivity.this).getOAuth();
+
         addPreferencesFromResource(R.xml.pref_header);
         {
             PreferenceCategory fakeHeader = new PreferenceCategory(this); // o-rzesz-ku
@@ -145,14 +147,15 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
         {
             final Preference userName = findPreference("userName");
             
-            // yes, I know about preference dependencies
             CompoundPreferenceChangeListener.add(userName, 
                 new Preference.OnPreferenceChangeListener(){
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue)
                 {
-                    final Preference foundStrategy = findPreference("foundStrategy");
-                    foundStrategy.setEnabled(newValue != null && ((String)newValue).length() > 0);
+                    final boolean hasLogin = newValue != null && ((String)newValue).length() > 0;
+                    // yes, I know about preference dependencies
+                    findPreference("foundStrategy").setEnabled(hasLogin);
+                    findPreference("excludeMyOwn").setEnabled(hasLogin);
                     return true;
                 }});
             
@@ -163,8 +166,7 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
                 @Override
                 public void onSharedPreferenceChanged(SharedPreferences config, String key)
                 {
-                    final OAuth oauth = OKAPI.getInstance(SettingsActivity.this).getOAuth();
-                    boolean signed = oauth.hasOAuth3();
+                    final boolean signed = oauth.hasOAuth3();
                     if (signed){
                         signToService.setTitle(R.string.pref_my_account_sign_forget);
                         signToService.setSummary(R.string.pref_my_account_sign_forget_desc);
@@ -174,8 +176,10 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
                         signToService.setSummary(R.string.pref_my_account_sign_desc);
                         signToService.getButton().setText(R.string.pref_my_account_sign_btn);
                     }
+                    signToService.setShouldDisableDependents(!signed);
                     userName.setEnabled(!signed);
                     userName.getOnPreferenceChangeListener().onPreferenceChange(userName, config.getString("userName", ""));
+                    
                 }
             };
             config.registerOnSharedPreferenceChangeListener(spcl);

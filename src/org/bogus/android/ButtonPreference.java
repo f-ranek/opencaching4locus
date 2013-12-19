@@ -23,6 +23,7 @@ public class ButtonPreference extends Preference
     OnClickListener onClickListener;
     private Button button;
     private String buttonText;
+    private boolean shouldDisableDependents; 
     
     public interface OnClickListener
     {
@@ -109,4 +110,20 @@ public class ButtonPreference extends Preference
         }
         return button;
     }
+    
+    @Override
+    public boolean shouldDisableDependents() {
+        return shouldDisableDependents;
+    }
+
+    public void setShouldDisableDependents(boolean shouldDisableDependents)
+    {
+        if (this.shouldDisableDependents != shouldDisableDependents){
+            this.shouldDisableDependents = shouldDisableDependents;
+            notifyDependencyChange(shouldDisableDependents());
+            notifyChanged();
+        }
+    }
+    
+    
 }

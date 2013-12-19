@@ -25,6 +25,12 @@
     <string name="pref_my_account_sign_forget_desc">Wylogowuje z serwisu</string>
     <string name="pref_my_account_sign_forget_btn">Zapomnij</string>
     
+    <string name="pref_my_account_exclude_my_own">Pomijaj własne skrzynki</string>
+    <string name="pref_my_account_exclude_my_own_desc">Gdy zaznaczone, własne skrzynki są pomijane</string>
+    
+    <string name="pref_my_account_exclude_ignored">Pomijaj ignorowane skrzynki</string>
+    <string name="pref_my_account_exclude_ignored_desc">Gdy zaznaczone, ignorowane skrzynki są pomijane</string>
+    
     <!-- Directories -->
     <string name="pref_title_directories">Katalogi zapisu</string>
     <string name="pref_directories_target_dir">Katalog na GPXy</string>

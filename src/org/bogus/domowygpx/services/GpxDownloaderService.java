@@ -549,6 +549,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             // cos = new CountingInputStream(mis);
             touchedFiles = new ArrayList<File>();
             try{
+                final SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
                 sendProgressInfo("Przygotowuję parametry"); 
                 final String userUuid = getUserUuid(taskConfig.getUserName());
                 final File cacheDir = GpxDownloaderService.this.getCacheDir();
@@ -597,9 +598,17 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                         if (taskConfig.getOutMaxCacheDistance() > 0){
                             searchParams.put("radius", taskConfig.getOutMaxCacheDistance());
                         }
-                        if (userUuid != null && TaskConfiguration.FOUND_STRATEGY_SKIP.equals(taskConfig.getFoundStrategy())){
-                            searchParams.put("not_found_by", userUuid);
-                            searchParams.put("owner_uuid", "-" + userUuid);
+                        if (userUuid != null){
+                            if (TaskConfiguration.FOUND_STRATEGY_SKIP.equals(taskConfig.getFoundStrategy())){
+                                searchParams.put("not_found_by", userUuid);
+                            }
+                            if (config.getBoolean("excludeMyOwn", true)){
+                                searchParams.put("owner_uuid", "-" + userUuid);
+                            }
+                        }
+                        final boolean hasOAuth3 = okApi.getOAuth().hasOAuth3();
+                        if (hasOAuth3 && config.getBoolean("excludeIgnored", true)){
+                            searchParams.put("exclude_ignored", "true");
                         }
                         
                         searchParams.put("status", "Available");

@@ -24,5 +24,18 @@
         android:positiveButtonText="@null"
         android:title="@string/pref_my_account_found_strategy" 
         />
+    <CheckBoxPreference 
+        android:key="excludeMyOwn"
+        android:title="@string/pref_my_account_exclude_my_own"
+        android:summary="@string/pref_my_account_exclude_my_own_desc"
+        android:defaultValue="true"
+        />
+    <CheckBoxPreference 
+        android:key="excludeIgnored"
+        android:title="@string/pref_my_account_exclude_ignored"
+        android:summary="@string/pref_my_account_exclude_ignored_desc"
+        android:defaultValue="true"
+        android:dependency="signToService"
+        />
     
 </PreferenceScreen>

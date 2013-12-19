@@ -339,7 +339,7 @@ public class OAuth
     public synchronized void forgetOAuthCredentials()
     {
         Editor editor = config.edit();
-        editor.remove("user_uuid");
+        editor.remove("userUuid");
         editor.remove("oauth2_token");
         editor.remove("oauth2_token_secret");
         editor.remove("oauth3_token");
