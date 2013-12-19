@@ -127,6 +127,10 @@
         <item quantity="other">%d plików</item>
     </plurals>
     
+    <string name="okapiErrorInvalidToken">Użytkownik odwołał dostęp aplikacji do serwisu</string>
+    <string name="okapiErrorInvalidTimestamp">Sprawdź czas na urządzeniu</string>
+    
+    
     <string name="lblDevDetailsSend">Wyślij&#8230;</string>
     <string name="lblDevDetailsClose">Zamknij</string>
 

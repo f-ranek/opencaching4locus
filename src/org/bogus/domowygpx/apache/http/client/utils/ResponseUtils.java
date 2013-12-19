@@ -5,7 +5,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
+import java.net.URLDecoder;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
@@ -15,9 +20,11 @@ import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.conn.ConnectionReleaseTrigger;
+import org.apache.http.entity.AbstractHttpEntity;
 import org.apache.http.entity.HttpEntityWrapper;
 import org.bogus.domowygpx.apache.http.client.entity.CountingEntity;
 import org.bogus.domowygpx.utils.HttpException;
+import org.bogus.utils.io.MemoryBufferStream;
 import org.json.JSONException;
 import org.json.JSONTokener;
 
@@ -208,5 +215,115 @@ public class ResponseUtils
             IOUtils.closeQuietly(is);
             ResponseUtils.closeResponse(resp);
         }
+    }
+    
+    public static Map<String, String> parseFormUrlEncoded(HttpResponse response)
+    throws IOException
+    {
+        final InputStream content = response.getEntity().getContent();
+        try{
+            final String charset = ResponseUtils.getContentEncoding(response, "UTF-8");
+            final Map<String, String> result = new HashMap<String, String>();
+            {
+                int b;
+                StringBuilder temp = new StringBuilder(32);
+                String name = null, value = null;
+                int state = 1; // 1 - name, 2 - value
+                while ((b = content.read()) >= 0){
+                    if (b == '='){
+                        if (state == 1){
+                            name = temp.toString();
+                            temp.setLength(0);
+                            state = 2;
+                        }
+                    } else
+                    if (b == '&'){
+                        if (state == 2 || temp.length() > 0){
+                            value = temp.toString();
+                            temp.setLength(0);
+                            result.put(name, value);
+                        }
+                        state = 1;
+                        name = value = null;
+                    } else {
+                        temp.append((char)b);
+                    }
+                }
+                if (temp.length() > 0){
+                    if (state == 1){
+                        result.put(temp.toString(), null);
+                    } else {
+                        result.put(name, temp.toString());
+                    }
+                }
+            }
+            // unescape
+            Map<String, String> result2 = new HashMap<String, String>(result.size());
+            for (Entry<String, String> e : result.entrySet()){
+                String name = e.getKey();
+                String value = e.getValue();
+                name = URLDecoder.decode(name, charset);
+                if (value != null){
+                    value = URLDecoder.decode(value, charset);
+                }
+                result2.put(name, value);
+            }
+            return result2;
+        }finally{
+            IOUtils.closeQuietly(content);
+        }
+    }
+    
+    public static void makeRepetable(HttpResponse response)
+    throws IOException
+    {
+        final HttpEntity entity = response.getEntity();
+        if (entity == null){
+            return;
+        }
+        
+        if (!entity.isRepeatable()){
+            final MemoryBufferStream mbs = new MemoryBufferStream();
+            InputStream is2 = entity.getContent();
+            IOUtils.copy(is2, mbs);
+            IOUtils.closeQuietly(is2);
+            AbstractHttpEntity entity2 = new AbstractHttpEntity(){
+
+                @Override
+                public boolean isRepeatable()
+                {
+                    return true;
+                }
+
+                @Override
+                public long getContentLength()
+                {
+                    return mbs.length();
+                }
+
+                @Override
+                public InputStream getContent() throws IOException, IllegalStateException
+                {
+                    return mbs.getInputStream();
+                }
+
+                @Override
+                public void writeTo(OutputStream outstream) throws IOException
+                {
+                    mbs.writeTo(outstream);
+                }
+
+                @Override
+                public boolean isStreaming()
+                {
+                    return false;
+                }
+                
+            };
+            entity2.setChunked(false);
+            entity2.setContentEncoding(entity.getContentEncoding());
+            entity2.setContentType(entity.getContentType());
+            response.setEntity(entity2);
+        } 
     }
 }

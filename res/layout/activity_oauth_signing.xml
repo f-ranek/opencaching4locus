@@ -24,12 +24,6 @@
             android:layout_height="wrap_content"
             android:text="@string/btnOAuthAuthorize" />
 
-        <Button
-            android:id="@+id/oauthBtnRelaunchAuthorizationPage"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/btnOAuthRelaunchAuthorizationPage" />
-
         <EditText
             android:id="@+id/oauthEditNip"
             android:layout_width="match_parent"

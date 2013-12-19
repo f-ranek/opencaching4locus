@@ -1,12 +1,9 @@
 package org.bogus.domowygpx.activities;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
-import java.net.URLDecoder;
-import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
@@ -18,11 +15,13 @@ import org.bogus.domowygpx.oauth.OAuth;
 import org.bogus.domowygpx.oauth.OKAPI;
 import org.bogus.domowygpx.utils.HttpClientFactory;
 import org.bogus.domowygpx.utils.HttpClientFactory.CreateHttpClientConfig;
+import org.bogus.domowygpx.utils.Pair;
 import org.bogus.geocaching.egpx.R;
 import org.json.JSONObject;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -54,15 +53,15 @@ public class OAuthSigningActivity extends Activity
     };
     
     AlertDialog dialog;
+    ProgressDialog progress;
     OKAPI okApi;
     OAuth oauth;
     HttpClient httpClient;
 
     volatile OAuthHttpRequest currentTask; 
     volatile HttpUriRequest currentRequest;
-    volatile boolean cancelled;
     
-    Button btnAuthorize, btnRelaunchAuthorizationPage, btnDone;
+    Button btnAuthorize, btnDone;
     EditText edtPin; 
     
     void showToast(final int textResId)
@@ -90,12 +89,26 @@ public class OAuthSigningActivity extends Activity
         @Override
         protected void onPreExecute()
         {
-            cancelled = false;
-            btnAuthorize.setEnabled(false);
-            btnRelaunchAuthorizationPage.setEnabled(false); 
-            btnDone.setEnabled(false);
-            edtPin.setEnabled(false);
-            Toast.makeText(OAuthSigningActivity.this, R.string.infoOAuthWorkInProgress, Toast.LENGTH_SHORT).show();
+            progress = ProgressDialog.show(OAuthSigningActivity.this, null,
+                OAuthSigningActivity.this.getText(R.string.infoOAuthWorkInProgress), 
+                true, true);
+            progress.setOnCancelListener(new DialogInterface.OnCancelListener()
+            {
+                
+                @Override
+                public void onCancel(DialogInterface dialog)
+                {
+                    cancelNetworkRequest();
+                    finish(Activity.RESULT_CANCELED);
+                }
+            });
+        }
+        
+        @Override
+        protected void onPostExecute(Map<String, String> result)
+        {
+            progress.dismiss();
+            progress = null;
         }
         
         @Override
@@ -110,64 +123,37 @@ public class OAuthSigningActivity extends Activity
                 StatusLine statusLine = response.getStatusLine();
                 if (statusLine.getStatusCode() != 200 || response.getEntity() == null){
                     Log.w(LOG_TAG, "Failed to query=" + uri + ", " + statusLine);
+                    int resId = -1;
+                    try{
+                        Pair<String,String> errorCode = null;
+                        if (statusLine.getStatusCode() == 401 || statusLine.getStatusCode() == 400){
+                            errorCode = okApi.getErrorReason(response, true);
+                        }
+                        if (errorCode != null){
+                            if ("bad_request".equals(errorCode.first) && 
+                                    errorCode.second.toLowerCase(Locale.US).contains("invalid verifier"))
+                            {
+                                resId = R.string.infoOAuthInvalidVerifier;
+                            } else {
+                                resId = okApi.mapErrorCodeToMessage(errorCode.first);
+                            }
+                        }
+                        if (resId == -1){
+                            resId = R.string.infoOAuthUnknownFailure;
+                        } 
+                    }catch(Exception e){
+                        resId = R.string.infoOAuthUnknownFailure;
+                        Log.e(LOG_TAG, "Can not parse response", e);
+                    }
+                    showToast(resId);
                     ResponseUtils.logResponseContent(LOG_TAG, response);
-                    // XXX customize message, how about bad PIN? - 401 ?
-                    showToast(R.string.infoOAuthServerFailure);
                     return null;
                 }
                 
-                final String charset = ResponseUtils.getContentEncoding(response, "UTF-8");
-                final InputStream content = response.getEntity().getContent();
-                final Map<String, String> result = new HashMap<String, String>();
-                
-                {
-                    int b;
-                    StringBuilder temp = new StringBuilder(32);
-                    String name = null, value = null;
-                    int state = 1; // 1 - name, 2 - value
-                    while ((b = content.read()) >= 0){
-                        if (b == '='){
-                            if (state == 1){
-                                name = temp.toString();
-                                temp.setLength(0);
-                                state = 2;
-                            }
-                        } else
-                        if (b == '&'){
-                            if (state == 2 || temp.length() > 0){
-                                value = temp.toString();
-                                temp.setLength(0);
-                                result.put(name, value);
-                            }
-                            state = 1;
-                            name = value = null;
-                        } else {
-                            temp.append((char)b);
-                        }
-                    }
-                    if (temp.length() > 0){
-                        if (state == 1){
-                            result.put(temp.toString(), null);
-                        } else {
-                            result.put(name, temp.toString());
-                        }
-                    }
-                }
-                // unescape
-                Map<String, String> result2 = new HashMap<String, String>(result.size());
-                for (Entry<String, String> e : result.entrySet()){
-                    String name = e.getKey();
-                    String value = e.getValue();
-                    name = URLDecoder.decode(name, charset);
-                    if (value != null){
-                        value = URLDecoder.decode(value, charset);
-                    }
-                    result2.put(name, value);
-                }
-                content.close();
-                return result2;
+                final Map<String, String> result = ResponseUtils.parseFormUrlEncoded(response);
+                return result;
             } catch (IOException e) {
-                if (!cancelled){
+                if (!isCancelled()){
                     showToast(R.string.infoOAuthNetworkFailure);
                 }
                 Log.e(LOG_TAG, "Failed to query=" + uri, e);
@@ -182,7 +168,6 @@ public class OAuthSigningActivity extends Activity
     
     void cancelNetworkRequest()
     {
-        cancelled = true;
         final HttpUriRequest currentRequest = this.currentRequest;
         if (currentRequest != null){
             try{
@@ -216,6 +201,7 @@ public class OAuthSigningActivity extends Activity
                     @Override
                     protected void onPostExecute(Map<String, String> result)
                     {
+                        super.onPostExecute(result);
                         try{
                             if (result != null){
                                 oauth.gotRequestToken1Response(result);
@@ -234,24 +220,6 @@ public class OAuthSigningActivity extends Activity
                     }
                 };
                 currentTask.execute(uri1);
-            }
-        });
-        btnRelaunchAuthorizationPage = (Button)view.findViewById(R.id.oauthBtnRelaunchAuthorizationPage);
-        btnRelaunchAuthorizationPage.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                try{
-                    final URI uri2 = oauth.getAuthorize2Uri();
-                    Log.i(LOG_TAG, "OAuth URI 2 " + uri2);
-                    Intent intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(uri2.toString()));
-                    OAuthSigningActivity.this.startActivity(intent);
-                }catch(IllegalStateException ise){
-                    Log.e(LOG_TAG, "OAuth 2 expired", ise);
-                }finally{
-                    refreshSigninDialogControls();
-                }
             }
         });
         edtPin = (EditText)view.findViewById(R.id.oauthEditNip);
@@ -280,7 +248,7 @@ public class OAuthSigningActivity extends Activity
             @Override
             public void onClick(View v)
             {
-                final String pin = edtPin.getText().toString();
+                final String pin = edtPin.getText().toString().trim();
                 final URI uri3 = oauth.gotAuthorize2Pin(pin);
                 Log.i(LOG_TAG, "OAuth URI 3 " + uri3);
                 currentTask = new OAuthHttpRequest(){
@@ -296,6 +264,9 @@ public class OAuthSigningActivity extends Activity
                         HttpResponse response = null;
                         try {
                             currentRequest = get;
+                            if (isCancelled()){
+                                return ;
+                            }
                             response = httpClient.execute(get);
                             StatusLine statusLine = response.getStatusLine();
                             if (statusLine.getStatusCode() != 200 || response.getEntity() == null){
@@ -346,6 +317,7 @@ public class OAuthSigningActivity extends Activity
                     @Override
                     protected void onPostExecute(Map<String, String> result)
                     {
+                        super.onPostExecute(result);
                         if (result != null){
                             finish(Activity.RESULT_OK);
                         }
@@ -359,7 +331,6 @@ public class OAuthSigningActivity extends Activity
         
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
         dialogBuilder.setTitle(R.string.title_activity_oauth_signing);
-        //dialogBuilder.setOnCancelListener(cancelListener);
         dialogBuilder.setView(view);
         
         dialog = dialogBuilder.create();
@@ -373,7 +344,6 @@ public class OAuthSigningActivity extends Activity
     {
         boolean hasOAuth2 = oauth.hasOAuth2();
         btnAuthorize.setEnabled(true);
-        btnRelaunchAuthorizationPage.setEnabled(hasOAuth2);
         edtPin.setEnabled(hasOAuth2);
         btnDone.setEnabled(hasOAuth2 && edtPin.getText() != null && edtPin.getText().length() > 0);
     }
@@ -430,6 +400,9 @@ public class OAuthSigningActivity extends Activity
         
         if (dialog != null){
             dialog.dismiss();
+        }
+        if (progress != null){
+            progress.dismiss();
         }
         super.onDestroy();
     }
