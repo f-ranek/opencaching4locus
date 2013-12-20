@@ -143,7 +143,7 @@
     <string name="versionInfo">Wersja:\t\t\t%1$s\nData:\t\t\t\t%2$s\nGit:\t\t\t\t\t%3$s</string>
     
     <string name="historyTitle">Historia zmian</string>
-    <string name="history">1.0 – pierwsza wersja, na bazie programu Awaryjny GPX\n1.1 – dodano integrację z Locusem</string>
+    <string name="history">1.0 – pierwsza wersja, na bazie programu Awaryjny GPX\n1.1 – dodano integrację z Locusem\n1.2 – dodano możliwość logowania do oc.pl</string>
 
     
 </resources>

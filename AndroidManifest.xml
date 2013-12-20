@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.bogus.geocaching.egpx"
-    android:versionCode="15"
-    android:versionName="1.1a The Rolling Stone">
+    android:versionCode="16"
+    android:versionName="1.2 Burning Pipers Hul">
 
     <uses-sdk
         android:minSdkVersion="8"
