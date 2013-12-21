@@ -54,10 +54,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.os.Message;
 import android.os.MessageQueue;
-import android.os.Messenger;
-import android.os.RemoteException;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.util.Pair;
@@ -77,15 +74,6 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     
     private static final String INTENT_EXTRA_TAKS_ID = "org.bogus.domowygpx.FilesDownloaderService.taskId";
     private static final String INTENT_EXTRA_RESTART_FROM_SCRATCH = "org.bogus.domowygpx.FilesDownloaderService.restartFromScratch";
-    /**
-     * An array of {@link FileData} objects to download
-     */
-    static final String INTENT_EXTRA_FILES = "org.bogus.domowygpx.FilesDownloaderService.FILES";
-    /**
-     * Used internally by {@link FilesDownloaderUtils#setFilesInIntent(Intent, FileData[])}
-     */
-    static final String INTENT_EXTRA_FILES_PACK = "org.bogus.domowygpx.FilesDownloaderService.FILES_PACK";
-    static final String INTENT_EXTRA_FILES_PACK_SIZE = "org.bogus.domowygpx.FilesDownloaderService.FILES_PACK_SIZE";
     
     private ConcurrentMap<File, Boolean> filesOnHold = new ConcurrentHashMap<File, Boolean>(8);
     private FilesDownloader freeFilesDownloader;
@@ -520,15 +508,13 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     {
         database.beginTransaction();
         try{
-            /*if(includeHeaders){
-                Cursor cursor = database.query("files", new String[]{"headers"}, "_id=" + fileData.fileDataId, null, null, null, null);
+            if(!includeHeaders){
+                Cursor cursor = database.rawQuery("select 1 from files where headers is null and _id=" + fileData.fileDataId, null);
                 if (cursor.moveToFirst()){
-                    if (!cursor.isNull(0)){
-                        includeHeaders = false;
-                    }
+                    includeHeaders = true;
                 }
                 cursor.close();
-            }*/
+            }
             ContentValues cv = new ContentValues(5);
             if (includeHeaders){
                 if (fileData.headers != null){
@@ -1057,31 +1043,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                     }
                 }
                 adjustDownloaderThreads();
-            } else
-            if (INTENT_ACTION_SCHEDULE_FILES.equals(intent.getAction())){
-                final List<FileData> files = FilesDownloaderUtils.getFilesFromIntent(intent);
-                if (files == null){
-                    Log.e(LOG_TAG, "Missing " + INTENT_EXTRA_FILES);
-                    return Service.START_STICKY;
-                }                
-                if (files.size() == 0){
-                    Log.e(LOG_TAG, "Empty " + INTENT_EXTRA_FILES);
-                    return Service.START_STICKY;
-                }
-
-                int taskId = createTaskForFiles(files);
-                
-                if (taskId >= 0){
-                    final Messenger messenger = intent.getExtras().getParcelable(INTENT_EXTRA_MESSENGER);
-                    if (messenger != null){
-                        try{
-                            messenger.send(Message.obtain(null, 0, taskId, 0));
-                        }catch(RemoteException re){
-                            
-                        }
-                    }
-                }
-            }
+            } 
         }finally{
             shutdownSelf();
         }

@@ -119,6 +119,11 @@ public class ImageUrlProcessor implements ImageSourceResolver
         }
     }
 
+    public int getRawSize()
+    {
+        return queue.size();
+    }
+    
     public List<FileData> getDataFiles()
     {
         final Map<URI, FileData> deduplicator = new LinkedHashMap<URI, FileData>(queue.size());
