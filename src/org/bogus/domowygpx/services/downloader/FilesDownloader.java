@@ -497,8 +497,24 @@ public class FilesDownloader implements Closeable
             } else {
                 logger.debug("Downloading, expected size=" + data.expectedSize);
             }
+
+            // why do we still got this FileNotFoundException ENOENT exceptions?
+            int attemptCount = 5;
+            do{
+                try{
+                    synchronized(filesOnHold){
+                        targetDir.mkdirs();
+                        os = new FileOutputStream(tempFile, gotPartialFile);
+                    }
+                    break;
+                }catch(FileNotFoundException fnfe){
+                    if (attemptCount-- <= 0){
+                        throw fnfe;
+                    }
+                    Thread.sleep(250 - 30*attemptCount + Math.abs(System.identityHashCode(this)) % 50);
+                }
+            }while(true);
             
-            os = new FileOutputStream(tempFile, gotPartialFile);
             os = new BufferedOutputStream(os, buffer.length);
             
             boolean breakRequest = false;;
