@@ -17,7 +17,6 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -46,7 +45,7 @@ public class FilesDownloader implements Closeable
         "keep-alive", "connection", "proxy-connection"));
     
     private final static Log logger = LogFactory.getLog(FilesDownloader.class);
-    private final List<DownloadProgressMonitor> observers = new CopyOnWriteArrayList<DownloadProgressMonitor>();
+    private DownloadProgressMonitor downloadProgressMonitor;
     final Thread constructingThread;
     private volatile boolean abortFlag;
     private final ConcurrentMap<File, Boolean> filesOnHold;
@@ -232,14 +231,14 @@ public class FilesDownloader implements Closeable
         stopDownload(true);
     }
 
-    public void addObserver(DownloadProgressMonitor dpm)
+    public void setDownloadProgressMonitor(DownloadProgressMonitor dpm)
     {
-        observers.add(dpm);
+        this.downloadProgressMonitor = dpm;
     }
 
-    public void removeObserver(DownloadProgressMonitor dpm)
+    public DownloadProgressMonitor getDownloadProgressMonitor()
     {
-        observers.remove(dpm);
+        return this.downloadProgressMonitor;
     }
 
     /**
@@ -257,12 +256,8 @@ public class FilesDownloader implements Closeable
             if (currentlyRunningTasks.isEmpty() && executorService.getQueue().isEmpty())
             {
                 final boolean hasBeenShutDown = isClosed();
-                for (DownloadProgressMonitor o : observers){
-                    try{
-                        o.notifyTasksFinished(hasBeenShutDown);
-                    }catch(Exception e2){
-                        
-                    }
+                if (downloadProgressMonitor != null){
+                    downloadProgressMonitor.notifyTasksFinished(hasBeenShutDown);
                 }
             }
         }
@@ -304,11 +299,8 @@ public class FilesDownloader implements Closeable
                 skipped = true;
             }
             if (skipped){
-                for (DownloadProgressMonitor o : observers){
-                    try{
-                        o.notifyFileSkipped(data);
-                    }catch(Exception e2){
-                    }
+                if (downloadProgressMonitor != null){
+                    downloadProgressMonitor.notifyFileSkipped(data);
                 }
                 logger.debug("File has been skipped");
                 return ;
@@ -320,12 +312,8 @@ public class FilesDownloader implements Closeable
             data.initialSize = 0;
             data.expectedSize = -1;
             
-            for (DownloadProgressMonitor o : observers){
-                try{
-                    o.notifyFileStarting(data);
-                }catch(Exception e2){
-                    
-                }
+            if (downloadProgressMonitor != null){
+                downloadProgressMonitor.notifyFileStarting(data);
             }
 
             boolean acceptByteRanges = false;
@@ -473,12 +461,8 @@ public class FilesDownloader implements Closeable
                 data.initialSize = currentFileSize;
                 data.expectedSize = expectedFileSize;
     
-                for (DownloadProgressMonitor o : observers){
-                    try{
-                        o.notifyFileStarted(data, currentFileSize, expectedFileSize);
-                    }catch(Exception e2){
-                        
-                    }
+                if (downloadProgressMonitor != null){
+                    downloadProgressMonitor.notifyFileStarted(data, currentFileSize, expectedFileSize);
                 }
             }
             
@@ -529,11 +513,8 @@ public class FilesDownloader implements Closeable
                 final long now = System.currentTimeMillis();
                 if ((loopAmount > 1024) || (loopAmount > 0) && (lastProgressUpdateCall+1000L < now)){
                     lastProgressUpdateCall = now;
-                    for (DownloadProgressMonitor o : observers){
-                        try{
-                            o.notifyFileProgress(data, loopAmount, sessionDone);
-                        }catch(Exception e2){
-                        }
+                    if (downloadProgressMonitor != null){
+                        downloadProgressMonitor.notifyFileProgress(data, loopAmount, sessionDone);
                     }
                     loopAmount = 0;
                 }
@@ -544,11 +525,8 @@ public class FilesDownloader implements Closeable
             }
 
             if (loopAmount > 0){
-                for (DownloadProgressMonitor o : observers){
-                    try{
-                        o.notifyFileProgress(data, loopAmount, sessionDone);
-                    }catch(Exception e2){
-                    }
+                if (downloadProgressMonitor != null){
+                    downloadProgressMonitor.notifyFileProgress(data, loopAmount, sessionDone);
                 }
             }
             
@@ -591,12 +569,8 @@ public class FilesDownloader implements Closeable
             // since it may be in a corrupted state, or just be very long ;)
             ResponseUtils.abortResponse(response);
             data.exception = e;
-            for (DownloadProgressMonitor o : observers){
-                try{
-                    o.notifyFileFinished(data, e);
-                }catch(Exception e2){
-                    
-                }
+            if (downloadProgressMonitor != null){
+                downloadProgressMonitor.notifyFileFinished(data, e);
             }
         }finally{
             filesOnHold.remove(data.target);
@@ -605,12 +579,8 @@ public class FilesDownloader implements Closeable
             IOUtils.closeQuietly(is);
             ResponseUtils.closeResponse(response);
             if (isOk){
-                for (DownloadProgressMonitor o : observers){
-                    try{
-                        o.notifyFileFinished(data, null);
-                    }catch(Exception e2){
-                        
-                    }
+                if (downloadProgressMonitor != null){
+                    downloadProgressMonitor.notifyFileFinished(data, null);
                 }
             }
             

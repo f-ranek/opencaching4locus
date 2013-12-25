@@ -221,7 +221,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         try{
             final FilesDownloadTask task = caller.downloadTask;
             synchronized(task){
-                task.filesDownloader.removeObserver(caller);
+                task.filesDownloader.setDownloadProgressMonitor(null);
                 if (!shutdownEvent && !task.filesDownloader.isClosed()){
                     if (freeFilesDownloader == null){
                         // recycle downloader
@@ -996,7 +996,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                             final FilesDownloader filesDownloader = createFilesDownloader();
                             task.filesDownloader = filesDownloader;
                             final DownloadProgressMonitorImpl dpm = new DownloadProgressMonitorImpl(task); 
-                            filesDownloader.addObserver(dpm);
+                            filesDownloader.setDownloadProgressMonitor(dpm);
                             final boolean restartFromScratch = intent == null ? false : 
                                 intent.getBooleanExtra(INTENT_EXTRA_RESTART_FROM_SCRATCH, false); 
                             boolean started = startTaskFromDatabase(task, restartFromScratch);
