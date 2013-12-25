@@ -71,6 +71,11 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
             fakeHeader.setTitle(R.string.pref_title_directories);
             getPreferenceScreen().addPreference(fakeHeader);
             addPreferencesFromResource(R.xml.pref_directories);
+
+            fakeHeader = new PreferenceCategory(this); 
+            fakeHeader.setTitle(R.string.pref_title_advanced);
+            getPreferenceScreen().addPreference(fakeHeader);
+            addPreferencesFromResource(R.xml.pref_advanced);
         }        
         {
             final Preference downloadImagesStrategyPref = findPreference("downloadImagesStrategy");

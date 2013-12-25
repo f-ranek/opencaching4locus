@@ -75,4 +75,31 @@
     <string name="pref_download_reset_locus_dont_ask_again">Pytaj wyszukując z Locusa</string>
     <string name="pref_download_reset_locus_dont_ask_again_desc">Przywraca okienko parametrów wyszukiwania keszy z Locusa</string>
     <string name="pref_download_reset_locus_dont_ask_again_btn">Przywróć!</string>
+
+    <string name="pref_title_advanced">Zaawansowane</string>
+    <string name="pref_advanced_download_thread_pool_size">Liczba wątków pobierania plików</string>
+    <string-array name="pref_advanced_download_tps_titles">
+        <item>1</item>
+        <item>2</item>
+        <item>4</item>
+    </string-array>
+    <integer-array name="pref_advanced_download_tps_values">
+        <item>1</item>
+        <item>2</item>
+        <item>4</item>
+    </integer-array>
+
+    <string name="pref_advanced_http_timeout">Czas oczekiwania na połączenie sieciowe</string>
+    <string-array name="pref_advanced_http_timeout_titles">
+        <item>30 sekund</item>
+        <item>1 minuta</item>
+        <item>2 minuty</item>
+        <item>4 minuty</item>
+    </string-array>
+    <integer-array name="pref_advanced_http_timeout_values">
+        <item>30</item>
+        <item>60</item>
+        <item>120</item>
+        <item>240</item>
+    </integer-array>
 </resources>

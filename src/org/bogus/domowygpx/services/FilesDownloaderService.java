@@ -658,10 +658,9 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         
         SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
         
-        final int threadPool = Math.max(config.getInt("FilesDownloaderService_threadPoolSize", 4), 1);
-        final boolean stopIfThreadPoolExhausted = config.getBoolean("FilesDownloaderService_stopIfThreadPoolExhausted", false);
+        final int threadPool = Math.max(config.getInt("FilesDownloaderService_threadPoolSize", 2), 1);
         int threadsPerTask = threadPool / runningTasks;
-        if (threadsPerTask == 0 && !stopIfThreadPoolExhausted){
+        if (threadsPerTask == 0){
             threadsPerTask = 1;
         }
         int extra = threadPool - runningTasks*threadsPerTask;
