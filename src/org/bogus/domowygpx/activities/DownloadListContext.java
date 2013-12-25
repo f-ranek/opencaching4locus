@@ -332,10 +332,6 @@ public abstract class DownloadListContext
                 case R.id.actionDownloadItemCancel:
                     cancel();
                     return true;
-                case R.id.actionDownloadItemDevDetails:
-                    String devDetails = gpxDownloader.taskToDeveloperDebugString(taskId);
-                    AndroidUtils.showDeveloperDetailsInfo(context, devDetails);
-                    return true;
             }
             return super.onContextMenuItemSelected(item);
         }
@@ -614,10 +610,6 @@ public abstract class DownloadListContext
                     return true;
                 case R.id.actionDownloadItemCancel:
                     filesDownloader.cancelTask(taskId);
-                    return true;
-                case R.id.actionDownloadItemDevDetails:
-                    String devDetails = filesDownloader.taskToDeveloperDebugString(taskId);
-                    AndroidUtils.showDeveloperDetailsInfo(context, devDetails);
                     return true;
             }
             return super.onContextMenuItemSelected(item);

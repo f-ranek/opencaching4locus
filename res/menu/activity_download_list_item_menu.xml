@@ -28,10 +28,4 @@
             android:orderInCategory="5"
             android:title="@string/btnDownloadItemRemove"/>
     </group>
-    <group android:orderInCategory="3">
-        <item
-            android:id="@+id/actionDownloadItemDevDetails"
-            android:orderInCategory="5"
-            android:title="@string/btnDownloadItemDevDetails"/>
-    </group>
 </menu>

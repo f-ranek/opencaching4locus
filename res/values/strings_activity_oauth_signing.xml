@@ -14,7 +14,6 @@
     
     <string name="infoOAuthInstruction" tools:ignore="Typos">1. Uderz przycisk „Rozpocznij autoryzację”, aby pozwolić Awaryjniejszemu GPXowi na dostęp do Twojego konta.\n2. Otwarta zostanie strona opencaching.pl, na której należy się zalogować, i zezwolić aplikacji na dostęp do swojego konta.\n3. Po autoryzacji na stronie pokazany zostanie PIN, który należy skopiować, oraz wkleić w pole poniżej.\n4.Następnie należy uderzyć przycisk „Zakończ proces”. To wszystko.</string>
     <string name="btnOAuthAuthorize">Rozpocznij autoryzację</string>
-    <string name="btnOAuthRelaunchAuthorizationPage">Otwórz stronę autoryzacji ponownie</string>
     <string name="editOAuthPINHint">Tu wklej PIN</string>
     <string name="btnOAuthFinish" tools:ignore="Typos">Zakończ proces</string>
 </resources>

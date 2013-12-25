@@ -434,12 +434,12 @@ public class ImageUrlProcessor implements ImageSourceResolver
                 imageData.source = resolvedUri;
                 imageData.priority = 15 + 10 * sourcePlaceCode;
             }
-            imageData.virtualTarget = virtualLocation + localPath;
+            final String virtualTarget = virtualLocation + localPath;
             imageData.target = new File(targetBase, localPath);
             
             queue.add(imageData);
             //logger.debug("-> " + imageData.virtualTarget);
-            return imageData.virtualTarget;
+            return virtualTarget;
         }catch(Exception use){
             logger.warn(currentCacheCode + ": Invalid src attribute=" + src, use);
             return src;

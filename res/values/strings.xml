@@ -74,7 +74,6 @@
     <string name="btnDownloadItemRestart">Uruchom ponownie</string>
     <string name="btnDownloadItemCancel">Zatrzymaj</string>
     <string name="btnDownloadItemRemove">Usuń</string>
-    <string name="btnDownloadItemDevDetails">Szczegóły techniczne</string>
     
     <string name="btnDownloadItemStopDescription">Wstrzymuje zadanie</string>
     <string name="btnDownloadItemPlayDescription">Wznawia zadanie</string>

@@ -1,23 +1,14 @@
 package org.bogus.android;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import org.bogus.geocaching.egpx.R;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.graphics.Color;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.drawable.Drawable;
-import android.provider.Settings.Secure;
 import android.view.View;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
@@ -63,6 +54,7 @@ public class AndroidUtils
     }
     
     @SuppressLint("SimpleDateFormat")
+    /*
     public static void showDeveloperDetailsInfo(final Context context, String devDetails)
     {
         final boolean canShare;
@@ -114,6 +106,7 @@ public class AndroidUtils
         }
         builder.show(); 
     }
+    */
     
     /**
      * Sets the specified image buttonto the given state, while modifying or

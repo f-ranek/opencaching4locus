@@ -56,13 +56,6 @@ public interface GpxDownloaderApi
     boolean removeTask(int taskId);
     
     /**
-     * Returns string helping developer diagnose application state
-     * @param taskId
-     * @return
-     */
-    public String taskToDeveloperDebugString(int taskId);
-    
-    /**
      * Gets current GPX processing status (cache code, cache name, total kb, etc),
      * packs them into <ul>
      * <li>{@link GpxTaskEvent} with {@link GpxTaskEvent#eventType eventType} of <code>EVENT_TYPE_CACHE_CODE</code>,

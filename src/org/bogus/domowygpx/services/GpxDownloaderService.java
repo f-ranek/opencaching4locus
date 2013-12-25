@@ -16,7 +16,6 @@ import java.net.URLEncoder;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -55,7 +54,6 @@ import org.bogus.geocaching.egpx.R;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -230,32 +228,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 return super.toString();
             }
         }
-        @SuppressLint("SimpleDateFormat")
-        public StringBuilder toDeveloperDebugString(StringBuilder sb)
-        {
-            sb.append("GPX ID: ").append(taskId).append('\n');
-            sb.append("STATUS: ");
-            switch(stateCode){
-                case STATE_RUNNING: sb.append("RUNNING"); break; 
-                case STATE_DONE: sb.append("DONE"); break;
-                case STATE_CANCELED: sb.append("CANCELED"); break;
-                case STATE_ERROR: sb.append("ERROR"); break;
-                default: sb.append(stateCode); break;
-            }
-            sb.append('\n');
-            sb.append("DATA: ").append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(createdDate))).append('\n');
-            sb.append("OPIS: ").append(stateDescription).append('\n');
-            sb.append("LICZBA KESZY: ").append(totalCacheCount).append('\n');
-            sb.append("ROZMIAR: ").append(totalKB).append('/').append(expectedTotalKB).append('\n');
-            if (downloaderTaskId > 0){
-                sb.append("ID POBIERANIA PLIKÓW: ").append(downloaderTaskId).append('\n');
-            }
-            if (exceptionString != null){
-                sb.append("BŁĄD: ").append(exceptionString).append('\n');
-            }
-            sb.append(taskDescription).append('\n');
-            return sb;
-        }
     }
     
     public static class GpxTaskEvent implements Cloneable {
@@ -307,32 +279,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             } else {
                 return super.toString();
             }
-        }
-        
-        @SuppressLint("SimpleDateFormat")
-        public StringBuilder toDeveloperDebugString(StringBuilder sb)
-        {
-            if (eventId > 0){
-                sb.append("ID: ").append(eventId).append('\n');
-            }
-            sb.append("TYP: ");
-            switch(eventType){
-                case EVENT_TYPE_LOG : sb.append("LOG"); break;
-                case EVENT_TYPE_WARN : sb.append("WARN"); break;
-                case EVENT_TYPE_ERROR : sb.append("ERROR"); break;
-                case EVENT_TYPE_FINISHED_OK : sb.append("FIN_OK"); break;
-                case EVENT_TYPE_FINISHED_ERROR : sb.append("FIN_ERROR"); break;
-                case EVENT_TYPE_FINISHED_CANCEL : sb.append("FIN_CANCEL"); break;
-                case EVENT_TYPE_CACHE_CODE : sb.append("CACHE_CODE"); break;
-                default: sb.append(eventType); break;
-            }            
-            sb.append('\n');
-            sb.append("DATA: ").append(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(createdDate))).append('\n');
-            sb.append("OPIS: ").append(description).append('\n');
-            if (currentCacheCode != null){
-                sb.append("KESZ: ").append(currentCacheCode).append('\n');
-            }
-            return sb;
         }
         
         @Override
@@ -1092,12 +1038,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         }
 
         @Override
-        public String taskToDeveloperDebugString(int taskId)
-        {
-            return getTarget().taskToDeveloperDebugString(taskId);
-        }
-
-        @Override
         public boolean updateCurrentCacheStatus(int taskId, GpxDownloaderListener listener)
         {
             return getTarget().updateCurrentCacheStatus(taskId, listener);
@@ -1355,7 +1295,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     "task_id INTEGER NOT NULL, " +
                     "created_date LONG NOT NULL, " +
                     "event_type INTEGER NOT NULL, " +
-                    "current_cache_code TEXT, " +
                     "description TEXT);");
             db.execSQL("CREATE INDEX events_idx1 ON events(task_id);");
         }
@@ -1475,7 +1414,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         insertValues.put("created_date", event.createdDate);
         insertValues.put("event_type", event.eventType);
         insertValues.put("description", event.description); 
-        insertValues.put("current_cache_code", event.currentCacheCode);
         long eventId = database.insert("events", null, insertValues);
         if (eventId == -1){
             Log.e(LOG_TAG, "Failed to insert event to DB"); 
@@ -1599,7 +1537,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
     
             if (attachEvents){
                 final Cursor cursor2 = database.query("events", 
-                    new String[]{"_id", "task_id", "created_date", "event_type", "description", "current_cache_code"}, 
+                    new String[]{"_id", "task_id", "created_date", "event_type", "description"}, 
                     (filterTaskId == -1 ? null : "task_id=" + filterTaskId), null, null, null, "created_date");
                 
                 if (cursor2.moveToFirst()){
@@ -1611,7 +1549,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                                 event.eventId = cursor2.getInt(0);
                                 event.eventType = cursor2.getInt(3);
                                 event.description = cursor2.getString(4);
-                                event.currentCacheCode = cursor2.getString(5);
                                 if (task.events == null){
                                     task.events = new ArrayList<GpxTaskEvent>();
                                 }
@@ -1757,28 +1694,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             }
         }
         return false;
-    }
-    
-    @Override
-    public String taskToDeveloperDebugString(int taskId)
-    {
-        if (taskId < 0){
-            return null;
-        }
-        List<GpxTask> tasks = getTasks(taskId, true);
-        if (tasks.isEmpty()){
-            return null;
-        }
-        GpxTask task = tasks.get(0);
-        StringBuilder sb = new StringBuilder(1024);
-        task.toDeveloperDebugString(sb);
-        if (task.events != null && !task.events.isEmpty()){
-            for (GpxTaskEvent event : task.events){
-                sb.append("--------------------\n");
-                event.toDeveloperDebugString(sb);
-            }
-        }
-        return sb.toString();
     }
     
     @Override
