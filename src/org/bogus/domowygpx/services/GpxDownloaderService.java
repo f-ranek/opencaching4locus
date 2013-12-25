@@ -536,7 +536,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 gpxProcessor.setTempDir(cacheDir);
                 gpxProcessor.setDestFileBaseName(taskConfig.getOutTargetFileName());
                 gpxProcessor.setSourceStream(mis);
-                gpxProcessor.addObserver(this);
+                gpxProcessor.setGpxProcessMonitor(this);
                 
                 try{
                     gpxProcessor.preCreateOutputStream();

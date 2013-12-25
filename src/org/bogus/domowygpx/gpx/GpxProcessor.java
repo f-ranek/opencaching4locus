@@ -11,7 +11,6 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.CountingOutputStream;
@@ -45,7 +44,7 @@ public class GpxProcessor implements GpxState, Closeable
     private File destFileBaseName;
     private long maxFileSize;
     
-    private List<GpxProcessMonitor> observers = new CopyOnWriteArrayList<GpxProcessMonitor>();
+    private GpxProcessMonitor gpxProcessMonitor;
     
     private File tempDir;
     
@@ -325,12 +324,8 @@ public class GpxProcessor implements GpxState, Closeable
                         writeCurrentEvent();
                         currentCacheName = parser.nextText();
                         serializeText(currentCacheName);
-                        for (GpxProcessMonitor gpm : observers){
-                            try{
-                                gpm.onStartedCacheCode(currentCacheCode, currentCacheName);
-                            }catch(Exception e){
-                                
-                            }
+                        if (gpxProcessMonitor != null){
+                            gpxProcessMonitor.onStartedCacheCode(currentCacheCode, currentCacheName);
                         }
                         continue;
                     } else 
@@ -368,12 +363,8 @@ public class GpxProcessor implements GpxState, Closeable
                 if (eventType == XmlPullParser.END_TAG){
                     final String localName = parser.getName(); 
                     if ("wpt".equals(localName)){
-                        for (GpxProcessMonitor gpm : observers){
-                            try{
-                                gpm.onEndedCacheCode(currentCacheCode);
-                            }catch(Exception e){
-                                
-                            }
+                        if (gpxProcessMonitor != null){
+                            gpxProcessMonitor.onEndedCacheCode(currentCacheCode);
                         }
                         currentCacheName = currentCacheCode = null;
                         wptDepth = -1;
@@ -392,12 +383,8 @@ public class GpxProcessor implements GpxState, Closeable
                                 final File dest = getFileName(destFileBaseName, 1);
                                 dest.delete();
                                 destFileBaseName.renameTo(dest);
-                                for (GpxProcessMonitor gpm : observers){
-                                    try{
-                                        gpm.onNewFile(fileCount, dest);
-                                    }catch(Exception e){
-                                        
-                                    }
+                                if (gpxProcessMonitor != null){
+                                    gpxProcessMonitor.onNewFile(fileCount, dest);
                                 }
                             }
                             
@@ -408,12 +395,8 @@ public class GpxProcessor implements GpxState, Closeable
                             createOutputStream(fileCount);
                             serializer.setOutput(outputStream, "UTF-8");
 
-                            for (GpxProcessMonitor gpm : observers){
-                                try{
-                                    gpm.onNewFile(fileCount, lastCreatedFile);
-                                }catch(Exception e){
-                                    
-                                }
+                            if (gpxProcessMonitor != null){
+                                gpxProcessMonitor.onNewFile(fileCount, lastCreatedFile);
                             }
                             
                             for (XMLEvent event2 : gpxHeader){
@@ -543,14 +526,14 @@ public class GpxProcessor implements GpxState, Closeable
         IOUtils.closeQuietly(sourceStream);
     }
 
-    public void addObserver(GpxProcessMonitor gpm)
+    public void setGpxProcessMonitor(GpxProcessMonitor gpm)
     {
-        observers.add(gpm);
+        this.gpxProcessMonitor = gpm;
     }
 
-    public void removeObserver(GpxProcessMonitor gpm)
+    public GpxProcessMonitor getGpxProcessMonitor()
     {
-        observers.remove(gpm);
+        return this.gpxProcessMonitor;
     }
 
     public File getTempDir()
