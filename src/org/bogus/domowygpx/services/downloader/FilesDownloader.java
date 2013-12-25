@@ -35,6 +35,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.bogus.domowygpx.apache.http.client.utils.DateUtils;
 import org.bogus.domowygpx.apache.http.client.utils.ResponseUtils;
 import org.bogus.domowygpx.utils.HttpException;
+import org.bogus.geocaching.egpx.BuildConfig;
 import org.bogus.logging.LogFactory;
 
 public class FilesDownloader implements Closeable
@@ -283,7 +284,9 @@ public class FilesDownloader implements Closeable
     
     protected void doDownloadInThread(final FileData data, final DownloadTask downloadTask)
     {
-        logger.debug("starting file " + data.source + " --> " + data.target); 
+        if (BuildConfig.DEBUG){
+            logger.debug("starting file " + data.source + " --> " + data.target);
+        }
         
         HttpResponse response = null;
         OutputStream os = null;
@@ -302,7 +305,9 @@ public class FilesDownloader implements Closeable
                 if (downloadProgressMonitor != null){
                     downloadProgressMonitor.notifyFileSkipped(data);
                 }
-                logger.debug("File has been skipped");
+                if (BuildConfig.DEBUG){
+                    logger.debug("File has been skipped");
+                }
                 return ;
             }
         }            
@@ -475,13 +480,15 @@ public class FilesDownloader implements Closeable
             long sessionDone = 0;
             is = response.getEntity().getContent();
             
-            if (gotPartialFile){
-                logger.debug("Reasuming download, initial size=" + data.initialSize + 
-                    ", expected size=" + data.expectedSize);
-            } else {
-                logger.debug("Downloading, expected size=" + data.expectedSize);
+            if (BuildConfig.DEBUG){
+                if (gotPartialFile){
+                    logger.debug("Reasuming download, initial size=" + data.initialSize + 
+                        ", expected size=" + data.expectedSize);
+                } else {
+                    logger.debug("Downloading, expected size=" + data.expectedSize);
+                }
             }
-
+            
             // why do we still got this FileNotFoundException ENOENT exceptions?
             int attemptCount = 5;
             do{
@@ -561,9 +568,13 @@ public class FilesDownloader implements Closeable
                 }
             }
             isOk = true;
-            logger.debug("Download finished, data amount=" + sessionDone);
+            if (BuildConfig.DEBUG){
+                logger.debug("Download finished, data amount=" + sessionDone);
+            }
         }catch(Exception e){
-            logger.debug("Download failed", e);
+            if (BuildConfig.DEBUG){
+                logger.debug("Download failed", e);
+            }
             
             // in case of any error, or user breaking the process - don't read the input stream to the end,
             // since it may be in a corrupted state, or just be very long ;)

@@ -34,6 +34,7 @@ import org.apache.commons.logging.Log;
 import org.bogus.domowygpx.gpx.GpxState;
 import org.bogus.domowygpx.services.downloader.FileData;
 import org.bogus.domowygpx.utils.Hex;
+import org.bogus.geocaching.egpx.BuildConfig;
 import org.bogus.logging.LogFactory;
 
 import android.util.Base64InputStream;
@@ -338,7 +339,7 @@ public class ImageUrlProcessor implements ImageSourceResolver
             targetFile.delete();
             tempFile.renameTo(targetFile);
             
-            if (logger.isDebugEnabled()){
+            if (BuildConfig.DEBUG){
                 logger.debug(currentCacheCode + ": saved data: at " + targetFile);
             }
 

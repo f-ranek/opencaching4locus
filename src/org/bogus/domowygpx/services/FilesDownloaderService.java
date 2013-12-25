@@ -441,7 +441,9 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             fileData.state = FileData.FILE_STATE_PERMANENT_ERROR;  
         }
         
-        Log.i(LOG_TAG, "onFileFinished, file=" + fileData.fileDataId + ", " + fileData.source);
+        if (BuildConfig.DEBUG){
+            Log.d(LOG_TAG, "onFileFinished, file=" + fileData.fileDataId + ", " + fileData.source);
+        }
         
         updateFileInDatabase(fileData, false);
         

@@ -22,14 +22,17 @@ import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.bogus.geocaching.egpx.BuildConfig;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.util.Base64;
+import android.util.Log;
 
 public class OAuth
 {
-    // private final static String LOG_TAG = "OAuth";
+    private final static String LOG_TAG = "OAuth";
     
     private final static Charset UTF_8 = Charset.forName("UTF-8");
     private final static Pattern AMPERSAND = Pattern.compile("\\Q&");
@@ -120,7 +123,9 @@ public class OAuth
 
     protected String signUrl(String url, String secret)
     {
-        //Log.d(LOG_TAG, "signUrl, url=" + url + ", secret=" + secret);
+        if (BuildConfig.DEBUG){
+            Log.d(LOG_TAG, "signUrl, url=" + url + ", secret=" + secret);
+        }
         final URI uri = URI.create(url);
         final StringBuilder signatureBase0 = new StringBuilder(128);
         signatureBase0.append("GET");
@@ -195,7 +200,9 @@ public class OAuth
                 throw new IllegalStateException(usee);
             }
         }
-        //Log.d(LOG_TAG, "signUrl, string to sign=" + signatureBase0);
+        if (BuildConfig.DEBUG){
+            Log.d(LOG_TAG, "signUrl, string to sign=" + signatureBase0);
+        }
         String signature = getSignature(signatureBase0, secret);
         
         StringBuilder signedUrl = new StringBuilder(url.length() + 17 + signature.length());
@@ -203,7 +210,9 @@ public class OAuth
         signedUrl.append("&oauth_signature=");
         signedUrl.append(oauthEncode(signature));
         
-        //Log.d(LOG_TAG, "signUrl, signature=" + signature);
+        if (BuildConfig.DEBUG){
+            Log.d(LOG_TAG, "signUrl, signature=" + signature);
+        }
         
         return signedUrl.toString();
     }
@@ -241,7 +250,9 @@ public class OAuth
     public synchronized void gotRequestToken1Response(Map<String, String> parameters)
     throws IllegalArgumentException
     {
-        //Log.d(LOG_TAG, "gotRequestToken1Response, parameters=" + parameters);
+        if (BuildConfig.DEBUG){
+            Log.d(LOG_TAG, "gotRequestToken1Response, parameters=" + parameters);
+        }
         final String token = parameters.get("oauth_token");
         final String secret = parameters.get("oauth_token_secret");
         if (token == null || token.length() == 0){
@@ -284,7 +295,9 @@ public class OAuth
     public synchronized URI gotAuthorize2Pin(String verifierValue)
     throws IllegalStateException
     {
-        //Log.d(LOG_TAG, "gotAuthorize2Pin, verifierValue=" + verifierValue);
+        if (BuildConfig.DEBUG){
+            Log.d(LOG_TAG, "gotAuthorize2Pin, verifierValue=" + verifierValue);
+        }
         if (verifierValue == null || verifierValue.length() == 0){
             throw new IllegalArgumentException("No verifierValue");
         }
@@ -317,7 +330,9 @@ public class OAuth
     public synchronized void gotAccessToken3Response(Map<String, String> parameters)
             throws IllegalArgumentException
     {
-        //Log.d(LOG_TAG, "gotAccessToken3Response, parameters=" + parameters);
+        if (BuildConfig.DEBUG){
+            Log.d(LOG_TAG, "gotAccessToken3Response, parameters=" + parameters);
+        }
         final String token = parameters.get("oauth_token");
         final String secret = parameters.get("oauth_token_secret");
         if (token == null || token.length() == 0){
