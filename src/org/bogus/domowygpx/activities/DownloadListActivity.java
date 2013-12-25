@@ -5,7 +5,6 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
-import org.bogus.android.SwipeDismissListViewTouchListener;
 import org.bogus.domowygpx.activities.DownloadListContext.BaseListItem;
 import org.bogus.domowygpx.activities.DownloadListContext.FileListItem;
 import org.bogus.domowygpx.activities.DownloadListContext.GpxListItem;
@@ -25,7 +24,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -42,8 +40,6 @@ import android.widget.ListView;
 public class DownloadListActivity extends Activity implements GpxDownloaderListener, FilesDownloaderListener
 {
     private final static String LOG_TAG = "DownloadListActivity";
-    
-    private final static boolean FORCE_OLD_SWIPE_TO_REMOVE = false;
     
     final DownloadListContext listItemContext = new DownloadListContext(){
         @Override
@@ -219,31 +215,6 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
         listViewOperations = (ListView)findViewById(R.id.listViewOperations);
         
         listViewAdapter = listItemContext.new OperationsListAdapter();
-        if (!FORCE_OLD_SWIPE_TO_REMOVE && android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1){
-            SwipeDismissListViewTouchListener touchListener =
-                    new SwipeDismissListViewTouchListener(
-                        listViewOperations,
-                            new SwipeDismissListViewTouchListener.DismissCallbacks() {
-                                @Override
-                                public void onDismiss(ListView listView, int[] reverseSortedPositions) {
-                                    for (int position : reverseSortedPositions) {
-                                        final BaseListItem listItem = listViewAdapter.getItem(position);
-                                        listItem.onItemRemoval();
-                                    }
-                                }
-
-                                @Override
-                                public boolean canDismiss(int position)
-                                {
-                                    final BaseListItem listItem = listViewAdapter.getItem(position);
-                                    return listItem.canBeRemoved();
-                                }
-                            });
-            listViewOperations.setOnTouchListener(touchListener);
-            listViewOperations.setOnScrollListener(touchListener.makeScrollListener());
-            
-        }
-        
         listViewOperations.setAdapter(listViewAdapter);
         registerForContextMenu(listViewOperations);
         //setupActionBar();
