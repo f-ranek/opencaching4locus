@@ -83,6 +83,7 @@
         <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
+            android:autoLink="email"
             android:paddingBottom="5dp"
             android:paddingLeft="10dp"
             android:paddingRight="10dp"
@@ -94,7 +95,6 @@
             android:id="@+id/developerFileInfo"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:autoLink="email"
             android:paddingBottom="5dp"
             android:paddingLeft="10dp"
             android:paddingRight="10dp"

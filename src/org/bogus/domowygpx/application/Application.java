@@ -57,9 +57,32 @@ public class Application extends android.app.Application
         return okApi;
     }
     
+    protected void cleanupOfflineDumpState()
+    {
+        offlineDump = null;
+        offlineDumpPostpone = 0;
+        Editor editor = getSharedPreferences("egpx", MODE_PRIVATE).edit();
+        editor.remove("Dump.offlineDumpFile");
+        editor.remove("Dump.offlineDumpPostpone");
+        editor.commit();
+    }
+    
+    protected void postponeOfflineDumpState()
+    {
+        if (offlineDump != null){
+            offlineDumpPostpone = System.currentTimeMillis() + 15L*60L*1000L;
+            Editor editor = getSharedPreferences("egpx", MODE_PRIVATE).edit();
+            editor.putLong("Dump.offlineDumpPostpone", offlineDumpPostpone);
+            editor.commit();
+        }
+    }
+    
     public boolean showErrorDumpInfo(final Activity activity)
     {
         if (offlineDump != null && System.currentTimeMillis() > offlineDumpPostpone){
+            if (!offlineDump.exists()){
+                cleanupOfflineDumpState();
+            }
             Handler handler = new Handler(Looper.getMainLooper());
             handler.postDelayed(new Runnable()
             {
@@ -76,7 +99,7 @@ public class Application extends android.app.Application
                         @Override
                         public void onClick(DialogInterface dialog, int which)
                         {
-                            offlineDump = null;
+                            cleanupOfflineDumpState();
                         }
                     });
                     builder.setNeutralButton(R.string.infoDeveloperInfoPostpone, new DialogInterface.OnClickListener()
@@ -84,7 +107,7 @@ public class Application extends android.app.Application
                         @Override
                         public void onClick(DialogInterface dialog, int which)
                         {
-                            offlineDumpPostpone = System.currentTimeMillis() + 15L*60L*1000L;
+                            postponeOfflineDumpState();
                         }
                     });
                     builder.setPositiveButton(R.string.infoDeveloperInfoSend, new DialogInterface.OnClickListener()
@@ -93,10 +116,19 @@ public class Application extends android.app.Application
                         public void onClick(DialogInterface dialog, int which)
                         {
                             stateCollector.sendEmail(offlineDump);
-                            offlineDump = null;
+                            cleanupOfflineDumpState();
                         }
                     });
-                    builder.show();
+                    AlertDialog dialog = builder.show();
+                    dialog.setOnCancelListener(new DialogInterface.OnCancelListener()
+                    {
+                        
+                        @Override
+                        public void onCancel(DialogInterface dialog)
+                        {
+                            postponeOfflineDumpState();
+                        }
+                    });
                 }
             }, 1500);
             return true;
@@ -110,6 +142,8 @@ public class Application extends android.app.Application
         Log.i(LOG_TAG, "Called onCreate");
         super.onCreate();
         
+        SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
+        
         final StateCollector stateCollector = new StateCollector(this);
         long offlineDumpTimestamp = stateCollector.hasOfflineDump();
         if (offlineDumpTimestamp > 0){
@@ -118,6 +152,10 @@ public class Application extends android.app.Application
                 offlineDump = stateCollector.dumpDataOffline(offlineDumpTimestamp);
                 if (offlineDump != null){
                     Log.i(LOG_TAG, "Offline dump saved to file=" + offlineDump);
+                    Editor editor = config.edit();
+                    editor.putString("Dump.offlineDumpFile", offlineDump.toString());
+                    editor.remove("Dump.offlineDumpPostpone");
+                    editor.commit();
                     Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(offlineDump));
                     intent.setType("application/octet-stream");
                     sendBroadcast(intent);
@@ -126,6 +164,14 @@ public class Application extends android.app.Application
                 Log.e(LOG_TAG, "Failed to create offline dump", e);
             }
         }
+        if (offlineDump == null){
+            String odf = config.getString("Dump.offlineDumpFile", null);
+            if (odf != null){
+                offlineDump = new File(odf);
+                offlineDumpPostpone = config.getLong("Dump.offlineDumpPostpone", 0);
+            }
+        }
+        
         final Thread main = Thread.currentThread();
         final UncaughtExceptionHandler mueh = main.getUncaughtExceptionHandler();
         final UncaughtExceptionHandler sueh = Thread.getDefaultUncaughtExceptionHandler();
@@ -154,7 +200,7 @@ public class Application extends android.app.Application
         
         setupPreferences();
         cleanupDevDumps();
-        // TODO: cleanup gpxTargetDirNameTemp
+        cleanupTempGpx(config);
         
         locus.api.utils.Logger.registerLogger(new locus.api.utils.Logger.ILogger(){
 
@@ -290,8 +336,6 @@ public class Application extends android.app.Application
             Log.e(LOG_TAG, "Failed to read config", e);
             initNewConfig();
         }
-        
-        cleanupTempGpx(config);
     }
 
     private void cleanupTempGpx(SharedPreferences config)

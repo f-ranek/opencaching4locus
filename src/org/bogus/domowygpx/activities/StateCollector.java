@@ -323,7 +323,7 @@ public class StateCollector
         final File root = new File(context.getCacheDir(), "dump_" + System.currentTimeMillis());
         root.mkdirs();
         
-        SimpleDateFormat sdf = new SimpleDateFormat("'awaryjniejszy-gpx-state-'yyyyMMdd-hhmmss'.tgz'");
+        SimpleDateFormat sdf = new SimpleDateFormat("'awaryjniejszy-gpx-state-'yyyyMMdd-HHmmss'.tgz'");
         final String name = sdf.format(new Date());
 
         final List<File> files = new ArrayList<File>();
@@ -438,7 +438,7 @@ public class StateCollector
             return null;
         }
         
-        SimpleDateFormat sdf = new SimpleDateFormat("'awaryjniejszy-gpx-x-state-'yyyyMMdd-hhmmss'.tgz'");
+        SimpleDateFormat sdf = new SimpleDateFormat("'awaryjniejszy-gpx-x-state-'yyyyMMdd-HHmmss'.tgz'");
         final String name = sdf.format(new Date(timestamp));
 
         final List<File> files = new ArrayList<File>();
