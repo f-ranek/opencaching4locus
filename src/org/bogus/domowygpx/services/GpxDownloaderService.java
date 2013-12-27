@@ -340,16 +340,19 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 retrParams.put("my_notes", "desc:text");
             }
             
-            if (taskConfig.getMaxCacheLogs() != 0){
+            SharedPreferences config = getSharedPreferences("egpx", Context.MODE_PRIVATE);
+            int maxCacheLogs = config.getInt("limitCacheLogs", 20);
+            
+            if (maxCacheLogs != 0){
                 retrParams.put("latest_logs", "true");
-                if (taskConfig.getMaxCacheLogs() > 0){
-                    retrParams.put("lpc", String.valueOf(taskConfig.getMaxCacheLogs()));
+                if (maxCacheLogs > 0){
+                    retrParams.put("lpc", String.valueOf(maxCacheLogs));
                 } else {
                     retrParams.put("lpc", "all");
                 } 
             }
                 
-            if (userUUID != null &&  TaskConfiguration.FOUND_STRATEGY_MARK.equals(taskConfig.getFoundStrategy())){
+            if (userUUID != null && TaskConfiguration.FOUND_STRATEGY_MARK.equals(config.getString("foundStrategy", TaskConfiguration.FOUND_STRATEGY_MARK))){
                 if (!okApi.getOAuth().hasOAuth3()){
                     retrParams.put("user_uuid", userUUID);
                 }
@@ -388,7 +391,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             }
         }
         
-        private String getUserUuid(String userName) 
+        private String getUserUuid() 
         throws Exception
         {
             final SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
@@ -397,6 +400,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 return userUuid;
             }
             
+            String userName = config.getString("userName", null);
             final boolean hasOAuth3 = okApi.getOAuth().hasOAuth3();
             
             HttpResponse resp = null;
@@ -532,7 +536,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             try{
                 final SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
                 sendProgressInfo("Przygotowuję parametry"); 
-                final String userUuid = getUserUuid(taskConfig.getUserName());
+                final String userUuid = getUserUuid();
                 final File cacheDir = GpxDownloaderService.this.getCacheDir();
                 
                 touchedFiles.add(taskConfig.getOutTargetFileName());
@@ -580,7 +584,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                             searchParams.put("radius", taskConfig.getOutMaxCacheDistance());
                         }
                         if (userUuid != null){
-                            if (TaskConfiguration.FOUND_STRATEGY_SKIP.equals(taskConfig.getFoundStrategy())){
+                            if (TaskConfiguration.FOUND_STRATEGY_SKIP.equals(config.getString("foundStrategy", TaskConfiguration.FOUND_STRATEGY_MARK))){
                                 searchParams.put("not_found_by", userUuid);
                             }
                             if (config.getBoolean("excludeMyOwn", true)){

@@ -36,22 +36,18 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
     public final static String FOUND_STRATEGY_MARK = "mark";
 
     // user input
-    private CharSequence latitude;
-    private CharSequence longitude;
-    private CharSequence maxNumOfCaches;
-    private CharSequence maxCacheDistance;
+    private String latitude;
+    private String longitude;
+    private String maxNumOfCaches;
+    private String maxCacheDistance;
     private boolean doLocusImport;
-    private CharSequence targetFileName;
+    private String targetFileName;
 
     // config
     private String gpxTargetDirName;
     private String gpxTargetDirNameTemp;
     private String imagesTargetDirName;
-    private String userName;
-    private String foundStrategy;
     private String downloadImagesStrategy;
-    private int maxCacheLogs;
-
     
     private double outLatitude = Double.NaN;
     private double outLongitude = Double.NaN;
@@ -80,13 +76,10 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
     {
         SharedPreferences config = context.getSharedPreferences("egpx", Context.MODE_PRIVATE);
         
-        userName = config.getString("userName", null);
         gpxTargetDirName = config.getString("gpxTargetDirName", null);
         gpxTargetDirNameTemp = config.getString("gpxTargetDirNameTemp", null);
         imagesTargetDirName = config.getString("imagesTargetDirName", null);
-        foundStrategy = config.getString("foundStrategy", TaskConfiguration.FOUND_STRATEGY_MARK);
         downloadImagesStrategy = config.getString("downloadImagesStrategy", TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI);
-        maxCacheLogs = config.getInt("limitCacheLogs", 20);
     }
     
     @SuppressLint("SimpleDateFormat")
@@ -185,13 +178,6 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
             errors.add(Pair.makePair("CACHE_COUNT_LIMIT", R.string.validationInvalidNoCacheDistanceNeitherLimit));
         }
         
-        if (userName == null || userName.length() == 0){
-            userName = foundStrategy = null;
-        }
-        if (foundStrategy == null){
-            userName = null;
-        }
-        
         final boolean hasLocus = locus.api.android.utils.LocusUtils.isLocusAvailable(context, 200);
         if (!hasLocus){
             if (doLocusImport){
@@ -222,11 +208,10 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
                 }
             }
         } else {
-            final String tfn = AndroidUtils.toString(targetFileName);
-            if (tfn.toLowerCase(Locale.US).endsWith(".gpx")){
-                outTargetFileName = new File(tfn);
+            if (targetFileName.toLowerCase(Locale.US).endsWith(".gpx")){
+                outTargetFileName = new File(targetFileName);
             } else {
-                outTargetFileName = new File(tfn + ".gpx");
+                outTargetFileName = new File(targetFileName + ".gpx");
             }
             //final 
             if (!outTargetFileName.isAbsolute()){
@@ -314,16 +299,6 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         return maxCacheDistance;
     }
 
-    public String getUserName()
-    {
-        return userName;
-    }
-
-    public String getFoundStrategy()
-    {
-        return foundStrategy;
-    }
-
     public String getDownloadImagesStrategy()
     {
         return downloadImagesStrategy;
@@ -381,27 +356,27 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
 
     public void setLatitude(CharSequence latitude)
     {
-        this.latitude = latitude;
+        this.latitude = AndroidUtils.toString(latitude);
     }
 
     public void setLongitude(CharSequence longitude)
     {
-        this.longitude = longitude;
+        this.longitude = AndroidUtils.toString(longitude);
     }
 
     public void setMaxNumOfCaches(CharSequence maxNumOfCaches)
     {
-        this.maxNumOfCaches = maxNumOfCaches;
+        this.maxNumOfCaches = AndroidUtils.toString(maxNumOfCaches);
     }
 
     public void setMaxCacheDistance(CharSequence maxCacheDistance)
     {
-        this.maxCacheDistance = maxCacheDistance;
+        this.maxCacheDistance = AndroidUtils.toString(maxCacheDistance);
     }
 
     public void setTargetFileName(CharSequence targetFileName)
     {
-        this.targetFileName = targetFileName;
+        this.targetFileName = AndroidUtils.toString(targetFileName);
     }
 
     public boolean isOutDownloadImages()
@@ -418,20 +393,17 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
     @Override
     public void writeToParcel(Parcel dest, int flags)
     {
-        dest.writeString(AndroidUtils.toString(latitude));
-        dest.writeString(AndroidUtils.toString(longitude));
-        dest.writeString(AndroidUtils.toString(maxNumOfCaches));
-        dest.writeString(AndroidUtils.toString(maxCacheDistance));
+        dest.writeString(latitude);
+        dest.writeString(longitude);
+        dest.writeString(maxNumOfCaches);
+        dest.writeString(maxCacheDistance);
         dest.writeByte((byte)(doLocusImport ? 1 : 0));
-        dest.writeString(AndroidUtils.toString(targetFileName));
+        dest.writeString(targetFileName);
 
         dest.writeString(gpxTargetDirName);
         dest.writeString(gpxTargetDirNameTemp);
         dest.writeString(imagesTargetDirName);
-        dest.writeString(userName);
-        dest.writeString(foundStrategy);
         dest.writeString(downloadImagesStrategy);
-        dest.writeInt(maxCacheLogs);
         
         dest.writeDouble(outLatitude);
         dest.writeDouble(outLongitude);
@@ -458,10 +430,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         result.gpxTargetDirName = src.readString();
         result.gpxTargetDirNameTemp = src.readString();
         result.imagesTargetDirName = src.readString();
-        result.userName = src.readString();
-        result.foundStrategy = src.readString();
         result.downloadImagesStrategy = src.readString();
-        result.maxCacheLogs = src.readInt();
         
         result.outLatitude = src.readDouble();
         result.outLongitude = src.readDouble();
@@ -510,16 +479,6 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         this.doLocusImport = doLocusImport;
     }
 
-    public int getMaxCacheLogs()
-    {
-        return maxCacheLogs;
-    }
-
-    public void setMaxCacheLogs(int maxCacheLogs)
-    {
-        this.maxCacheLogs = maxCacheLogs;
-    }
-
     @Override
     public int hashCode()
     {
@@ -527,8 +486,6 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         int result = 1;
         result = prime * result + (doLocusImport ? 1231 : 1237);
         result = prime * result + ((downloadImagesStrategy == null) ? 0 : downloadImagesStrategy.hashCode());
-        result = prime * result + ((foundStrategy == null) ? 0 : foundStrategy.hashCode());
-        result = prime * result + maxCacheLogs;
         result = prime * result + (outDownloadImages ? 1231 : 1237);
         long temp;
         temp = Double.doubleToLongBits(outLatitude);
@@ -559,13 +516,6 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
             if (other.downloadImagesStrategy != null)
                 return false;
         } else if (!downloadImagesStrategy.equals(other.downloadImagesStrategy))
-            return false;
-        if (foundStrategy == null) {
-            if (other.foundStrategy != null)
-                return false;
-        } else if (!foundStrategy.equals(other.foundStrategy))
-            return false;
-        if (maxCacheLogs != other.maxCacheLogs)
             return false;
         if (outDownloadImages != other.outDownloadImages)
             return false;
@@ -603,10 +553,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         builder.add("gpxTargetDirName", gpxTargetDirName);
         builder.add("gpxTargetDirNameTemp", gpxTargetDirNameTemp);
         builder.add("imagesTargetDirName", imagesTargetDirName);
-        builder.add("userName", userName);
-        builder.add("foundStrategy", foundStrategy);
         builder.add("downloadImagesStrategy", downloadImagesStrategy);
-        builder.add("maxCacheLogs", maxCacheLogs);
         builder.add("outLatitude", outLatitude);
         builder.add("outLongitude", outLongitude);
         builder.add("outMaxNumOfCaches", outMaxNumOfCaches);
