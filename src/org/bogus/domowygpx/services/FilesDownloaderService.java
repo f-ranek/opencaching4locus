@@ -222,6 +222,11 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     {
         try{
             final FilesDownloadTask task = caller.downloadTask;
+            Log.i(LOG_TAG, "Task finished, shutdownEvent=" + shutdownEvent + 
+                ", id=" + task.taskId + ", state=" + task.state + 
+                ", files=" + task.totalFiles + ", " + task.finishedFiles +
+                ", " + task.skippedFiles + ", " + task.permanentErrorFiles + 
+                ", " + task.transientErrorFiles + ", size=" + task.totalDownloadSize);
             synchronized(task){
                 task.filesDownloader.setDownloadProgressMonitor(null);
                 if (!shutdownEvent && !task.filesDownloader.isClosed()){
@@ -605,6 +610,10 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                 }
                 
                 loadTaskStats(task);
+                Log.i(LOG_TAG, "Starting task, id=" + task.taskId + 
+                    ", files=" + task.totalFiles + ", " + task.finishedFiles +
+                    ", " + task.skippedFiles + ", " + task.permanentErrorFiles + 
+                    ", " + task.transientErrorFiles + ", size=" + task.totalDownloadSize);
                 // reset those, since we will process them again
                 task.skippedFiles = task.transientErrorFiles = 0;
                 
@@ -630,9 +639,9 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             @Override
             public boolean queueIdle()
             {
-                for (FileData file : files){
-                    task.filesDownloader.submit(file);
-                }
+                Log.i(LOG_TAG, "Submitting task files, id=" + task.taskId + 
+                    ", count=" + files.size());
+                task.filesDownloader.submit(files);
                 return false;
             }});
         return files.size() > 0;
