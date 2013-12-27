@@ -1,5 +1,8 @@
 package org.bogus.android;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+
 import org.bogus.geocaching.egpx.R;
 
 import android.annotation.SuppressLint;
@@ -154,4 +157,14 @@ public class AndroidUtils
         res.setColorFilter(Color.GRAY, Mode.SRC_IN);
         return res;
     } 
+    
+    public static String formatFileSize(final int sizeKB)
+        {
+        if (sizeKB <= 1024){
+            return sizeKB + " KB"; 
+        } else {
+            final NumberFormat nf = new DecimalFormat("####0.##");
+            return nf.format(sizeKB/1024.0) + " MB";
+        }
+    }
 }

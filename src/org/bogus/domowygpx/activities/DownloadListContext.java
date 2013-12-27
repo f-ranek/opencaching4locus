@@ -1,7 +1,5 @@
 package org.bogus.domowygpx.activities;
 import java.text.DateFormat;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -96,16 +94,6 @@ public abstract class DownloadListContext
             return sb.toString();
         }
 
-        String formatFileSize(final int sizeKB)
-        {
-            if (sizeKB <= 1024){
-                return sizeKB + " KB"; 
-            } else {
-                final NumberFormat nf = new DecimalFormat("####0.##"/*, new DecimalFormatSymbols(Locale.getDefault())*/);
-                return nf.format(sizeKB/1024.0) + " MB";
-            }
-        }
-        
         int stableId;
         int taskId;
         String message;
@@ -458,7 +446,7 @@ public abstract class DownloadListContext
             }
             if (totalSize > 0){
                 msg.append(", ");
-                msg.append(formatFileSize(totalSize));
+                msg.append(AndroidUtils.formatFileSize(totalSize));
             }
             details = msg.toString();
         }
@@ -649,7 +637,7 @@ public abstract class DownloadListContext
                 task.finishedFiles, task.finishedFiles, task.totalFiles));
             if (task.totalDownloadSize > 1024){
                 msg.append(", ");
-                msg.append(formatFileSize((int)(task.totalDownloadSize/1024L)));
+                msg.append(AndroidUtils.formatFileSize((int)(task.totalDownloadSize/1024L)));
             }
             int errors = task.permanentErrorFiles + task.transientErrorFiles;
             if (errors > 0){
