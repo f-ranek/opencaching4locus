@@ -161,7 +161,7 @@ public class AndroidUtils
     public static String formatFileSize(final int sizeKB)
         {
         if (sizeKB <= 1024){
-            return sizeKB + " KB"; 
+            return sizeKB + " kB"; 
         } else {
             final NumberFormat nf = new DecimalFormat("####0.##");
             return nf.format(sizeKB/1024.0) + " MB";
