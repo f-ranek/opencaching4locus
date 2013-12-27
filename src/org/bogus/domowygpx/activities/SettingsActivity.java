@@ -14,10 +14,12 @@ import org.bogus.domowygpx.oauth.OAuth;
 import org.bogus.domowygpx.oauth.OKAPI;
 import org.bogus.geocaching.egpx.R;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
@@ -38,6 +40,7 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
+        super.onCreate(savedInstanceState);
         Application.getInstance(this).showErrorDumpInfo(this);
     }
     
@@ -108,19 +111,42 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
                 public void onClick(ButtonPreference pref)
                 {
                     final Application app = (Application)getApplication();
-                    app.initSaveDirectories();
-    
-                    final PreferenceGroup preferenceScreen = getPreferenceScreen();
-                    final int count = preferenceScreen.getPreferenceCount();
-                    final Map<String, ?> allConfigValues = config.getAll();
-                    for (int i=0; i<count; i++){
-                        Preference item = preferenceScreen.getPreference(i);
-                        if (item instanceof FolderPreference){
-                            final String key = item.getKey();
-                            final Object value = allConfigValues.get(key);
-                            sBindPreferenceSummaryToValueListener.onPreferenceChange(item, value);
+                    AsyncTask<Void, Void, Void> task = new AsyncTask<Void, Void, Void>(){
+
+                        private ProgressDialog progress;
+                        @Override
+                        protected void onPreExecute()
+                        {
+                            progress = ProgressDialog.show(SettingsActivity.this, null,
+                                SettingsActivity.this.getText(R.string.infoWorkInProgress), 
+                                true, false);
                         }
-                    }
+                        
+                        @Override
+                        protected Void doInBackground(Void... params)
+                        {
+                            app.initSaveDirectories();
+                            return null;
+                        }
+                        
+                        @Override
+                        protected void onPostExecute(Void result)
+                        {
+                            progress.dismiss();
+                            final PreferenceGroup preferenceScreen = getPreferenceScreen();
+                            final int count = preferenceScreen.getPreferenceCount();
+                            final Map<String, ?> allConfigValues = config.getAll();
+                            for (int i=0; i<count; i++){
+                                Preference item = preferenceScreen.getPreference(i);
+                                if (item instanceof FolderPreference){
+                                    final String key = item.getKey();
+                                    final Object value = allConfigValues.get(key);
+                                    sBindPreferenceSummaryToValueListener.onPreferenceChange(item, value);
+                                }
+                            }
+                        }
+                    };
+                    task.execute();
                 }
             });
         }
