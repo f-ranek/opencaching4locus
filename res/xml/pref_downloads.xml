@@ -9,6 +9,13 @@
         android:title="@string/pref_download_images_strategy" 
     />    
     
+    <CheckBoxPreference
+        android:key="useExistingImages"
+        android:title="@string/pref_download_use_existing_images" 
+        android:summary="@string/pref_download_use_existing_images_desc" 
+        android:defaultValue="true"
+    />    
+    
     <org.bogus.android.IntListPreference
         android:key="limitCacheLogs"
         android:defaultValue="20"

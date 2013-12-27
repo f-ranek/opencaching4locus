@@ -101,8 +101,10 @@ public class ImageUrlProcessor implements ImageSourceResolver
     private String virtualLocation;
     private File targetBase;
     private boolean downloadImages = true;
+    private boolean useExistingImages = true;
     private boolean extractDataImages = true;
     private boolean downloadCommentImages;
+    private int totalImages;
     
     private GpxState gpxState;
     private List<FileData> queue;
@@ -359,6 +361,7 @@ public class ImageUrlProcessor implements ImageSourceResolver
     {
         final String currentCacheCode = gpxState.getCurrentCacheCode(); 
         try{
+            totalImages++;
             //logger.debug(currentCacheCode + ": found img src=" + src);
             {
                 final URI uri;
@@ -395,52 +398,57 @@ public class ImageUrlProcessor implements ImageSourceResolver
                 return src;
             }
             
-            if (!downloadImages || !downloadCommentImages && sourcePlaceCode == SOURCE_COMMENT){
-                return resolvedUri.toASCIIString();
-            }
+            final boolean downloadImage = downloadImages && 
+                    (downloadCommentImages || !(sourcePlaceCode == SOURCE_COMMENT));
             
-            if (isUriTrusted(resolvedUri)){
-                trustedUri = resolvedUri;
-            } else {
-                trustedUri = null;
-            }
-            
-            final FileData imageData = new FileData();
-            imageData.cacheCode = currentCacheCode;
-            String localPath;
-            if (trustedUri != null){
-                // tinymce images and so on
-                localPath = cleanupInternalPath(trustedUri);
-                boolean isInternal = false;
-                for (Pattern p : internalPathPatterns){
-                    if (p.matcher(trustedUri.getPath()).find()){
-                        isInternal = true;
-                        break;
-                    }
-                }
-                if (isInternal){
-                    localPath = ".shared/" + localPath;
-                    imageData.priority = 250;
+            if (downloadImage || useExistingImages){
+                if (isUriTrusted(resolvedUri)){
+                    trustedUri = resolvedUri;
                 } else {
-                    localPath = getPathForCacheCode(currentCacheCode) + "/" + localPath;
-                    imageData.priority = 10 + 10 * sourcePlaceCode;
+                    trustedUri = null;
                 }
-                localPath = doubleSlashRemovalPattern.matcher(localPath).replaceAll("/");
-                imageData.source = trustedUri;
-            } else {
-                // external resources
-                localPath = cleanupPath(resolvedUri);
-                localPath = getPathForCacheCode(currentCacheCode) + "/" + localPath;
-                localPath = doubleSlashRemovalPattern.matcher(localPath).replaceAll("/");
-                imageData.source = resolvedUri;
-                imageData.priority = 15 + 10 * sourcePlaceCode;
+                
+                final FileData imageData = new FileData();
+                imageData.cacheCode = currentCacheCode;
+                String localPath;
+                if (trustedUri != null){
+                    // tinymce images and so on
+                    localPath = cleanupInternalPath(trustedUri);
+                    boolean isInternal = false;
+                    for (Pattern p : internalPathPatterns){
+                        if (p.matcher(trustedUri.getPath()).find()){
+                            isInternal = true;
+                            break;
+                        }
+                    }
+                    if (isInternal){
+                        localPath = ".shared/" + localPath;
+                        imageData.priority = 250;
+                    } else {
+                        localPath = getPathForCacheCode(currentCacheCode) + "/" + localPath;
+                        imageData.priority = 10 + 10 * sourcePlaceCode;
+                    }
+                    localPath = doubleSlashRemovalPattern.matcher(localPath).replaceAll("/");
+                    imageData.source = trustedUri;
+                } else {
+                    // external resources
+                    localPath = cleanupPath(resolvedUri);
+                    localPath = getPathForCacheCode(currentCacheCode) + "/" + localPath;
+                    localPath = doubleSlashRemovalPattern.matcher(localPath).replaceAll("/");
+                    imageData.source = resolvedUri;
+                    imageData.priority = 15 + 10 * sourcePlaceCode;
+                }
+                final String virtualTarget = virtualLocation + localPath;
+                imageData.target = new File(targetBase, localPath);
+                if (downloadImages || useExistingImages && imageData.target.exists()){
+                    // existing images will be cleaned up in GpxDownloaderService, but we will get stats for them
+                    queue.add(imageData);
+                    return virtualTarget;
+                }
             }
-            final String virtualTarget = virtualLocation + localPath;
-            imageData.target = new File(targetBase, localPath);
-            
-            queue.add(imageData);
-            //logger.debug("-> " + imageData.virtualTarget);
-            return virtualTarget;
+
+            // no download, nor image does not exist
+            return resolvedUri.toString();
         }catch(Exception use){
             logger.warn(currentCacheCode + ": Invalid src attribute=" + src, use);
             return src;
@@ -479,4 +487,18 @@ public class ImageUrlProcessor implements ImageSourceResolver
         this.extractDataImages = extractDataImages;
     }
 
+    public boolean isUseExistingImages()
+    {
+        return useExistingImages;
+    }
+
+    public void setUseExistingImages(boolean useExistingImages)
+    {
+        this.useExistingImages = useExistingImages;
+    }
+
+    public int getTotalImages()
+    {
+        return totalImages;
+    }
 }

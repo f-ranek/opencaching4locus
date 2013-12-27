@@ -88,7 +88,10 @@
         <item>2</item>
         <item>4</item>
     </integer-array>
-
+    <string name="pref_download_use_existing_images">Użyj istniejących obrazów</string>
+    <string name="pref_download_use_existing_images_desc">Jeżeli obrazy nie są pobierane, ale plik obrazu jest już lokalnie, to zostanie użyty</string>
+    
+    <!-- Advanced -->
     <string name="pref_advanced_http_timeout">Czas oczekiwania na połączenie sieciowe</string>
     <string-array name="pref_advanced_http_timeout_titles">
         <item>30 sekund</item>
