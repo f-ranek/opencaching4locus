@@ -797,7 +797,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             try{
                 for (File touched : touchedFiles){
                     // so MTP sees our file
-                    sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.fromFile(touched)));
+                    // sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.fromFile(touched)));
                     // which code is better?
                     Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(touched));
                     intent.setType("application/gpx");
@@ -1326,7 +1326,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         okApi = OKAPI.getInstance(this);
         
         try{
-            databaseHelper = new DatabaseHelper(this, "GpxDownloaderDatabase.db", null, 2);
+            databaseHelper = new DatabaseHelper(this, "GpxDownloaderDatabase.db", null, 3);
             database = databaseHelper.getWritableDatabase();
         }catch(SQLiteException sqle){
             Log.e(LOG_TAG, "Failed to create database", sqle);
