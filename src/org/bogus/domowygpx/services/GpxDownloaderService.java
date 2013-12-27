@@ -1346,8 +1346,9 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         final File cacheDir = getCacheDir();
         final String[] tempFiles = cacheDir.list();
         if (tempFiles != null){
-            long timeStamp = System.currentTimeMillis() - 12L*60L*60L*1000L;
+            long timeStamp = System.currentTimeMillis() - 6L*60L*60L*1000L;
             for (String f : tempFiles){
+                // TODO: create a framework for such temp files keeping
                 boolean isMyCacheFile = f.startsWith("gpx_") && f.endsWith(".xml.gz")
                         || f.startsWith("images_list_") && f.endsWith(".bin.gz"); 
                 if (isMyCacheFile){
