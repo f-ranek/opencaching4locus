@@ -35,6 +35,12 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
     private FolderPreferenceHelperActivityListener currActivityResultListener;
     private final List<Object> preventGCStorage = new ArrayList<Object>();
     
+    @Override
+    protected void onCreate(Bundle savedInstanceState)
+    {
+        Application.getInstance(this).showErrorDumpInfo(this);
+    }
+    
     @SuppressWarnings("deprecation")
     @Override
     protected void onPostCreate(Bundle savedInstanceState)

@@ -7,7 +7,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -17,6 +16,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -45,6 +45,7 @@ import org.bogus.domowygpx.html.HTMLProcessor;
 import org.bogus.domowygpx.html.ImageUrlProcessor;
 import org.bogus.domowygpx.oauth.OKAPI;
 import org.bogus.domowygpx.services.downloader.FileData;
+import org.bogus.domowygpx.utils.DumpDatabase;
 import org.bogus.domowygpx.utils.HttpClientFactory;
 import org.bogus.domowygpx.utils.HttpClientFactory.CreateHttpClientConfig;
 import org.bogus.domowygpx.utils.HttpException;
@@ -466,14 +467,19 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         private boolean processDefaultException(Exception e)
         {
             if (e instanceof org.apache.http.conn.ConnectionPoolTimeoutException){
-                setErrorDescription("Za dużo połączeń wychodzących", e); 
+                setErrorDescription("Za dużo połączeń sieciowych", e); 
+                return true;
+            }
+            if (e instanceof java.net.SocketTimeoutException ||
+                    e instanceof org.apache.http.conn.ConnectTimeoutException
+            ){
+                setErrorDescription("Przekroczono czas oczekiwania na dane z sieci", e); 
                 return true;
             }
             if (e instanceof java.net.SocketException || 
                     e instanceof java.net.UnknownHostException ||
                     e instanceof java.net.SocketTimeoutException ||
                     e instanceof org.apache.http.client.ClientProtocolException ||
-                    e instanceof org.apache.http.conn.ConnectTimeoutException ||
                     e instanceof org.apache.http.ConnectionClosedException)
             {
                 setErrorDescription("Błąd komunikacji sieciowej", e); 
@@ -748,6 +754,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     final int size0 = foundImages.size();
                     Log.i(LOG_TAG, "Found unique images count=" + size0);
 
+                    /*
                     final File tempImagesFile = new File(getCacheDir(), "images_list_" + taskState.taskId + "_" + System.currentTimeMillis() + ".bin.gz");
                     OutputStream osImagesList = null;
                     try{
@@ -762,6 +769,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     }finally{
                         IOUtils.closeQuietly(osImagesList);
                     }
+                    */
                     
                     final Iterator<FileData> foundImagesIt = foundImages.iterator();
                     while(foundImagesIt.hasNext()){
@@ -993,8 +1001,9 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
      * Class used for the client Binder.  Because we know this service always
      * runs in the same process as its clients, we don't need to deal with IPC.
      */
-    public class LocalBinder extends Binder {
+    public class LocalBinder extends Binder implements LocalBinderIntf<GpxDownloaderApi>{
         private final GpxDownloaderApi proxy = new GpxDownloaderApiProxy(GpxDownloaderService.this); 
+        @Override
         public GpxDownloaderApi getService() 
         {
             return proxy;
@@ -1053,6 +1062,19 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         public boolean unregisterEventListener(GpxDownloaderListener listener)
         {
             return getTarget().unregisterEventListener(listener);
+        }
+        
+        @Override
+        public List<File> dumpDatabase(File rootDir)
+        throws IOException
+        {
+            return getTarget().dumpDatabase(rootDir);
+        }
+
+        @Override
+        public List<File> getDatabaseFileNames(Context ctx)
+        {
+            return getTarget().getDatabaseFileNames(ctx);
         }
     };
     
@@ -1352,7 +1374,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         final File cacheDir = getCacheDir();
         final String[] tempFiles = cacheDir.list();
         if (tempFiles != null){
-            long timeStamp = System.currentTimeMillis() - 2L*24L*60L*60L*1000L;
+            long timeStamp = System.currentTimeMillis() - 12L*60L*60L*1000L;
             for (String f : tempFiles){
                 boolean isMyCacheFile = f.startsWith("gpx_") && f.endsWith(".xml.gz")
                         || f.startsWith("images_list_") && f.endsWith(".bin.gz"); 
@@ -1694,6 +1716,27 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             }
         }
         return false;
+    }
+    
+    @Override
+    public List<File> dumpDatabase(File rootDir)
+    throws IOException
+    {
+        final File target = new File(rootDir, "GpxDownloader.xml");
+        final DumpDatabase dd = new DumpDatabase();
+        if (dd.dumpDatabase(database, target)){
+            return Collections.singletonList(target);
+        } else {
+            return null;
+        }
+    }
+    
+    @Override
+    public List<File> getDatabaseFileNames(Context ctx)
+    {
+        final File db = ctx.getDatabasePath("GpxDownloaderDatabase.db");
+        final DumpDatabase dd = new DumpDatabase();
+        return dd.getOfflineDatabaseFiles(db);
     }
     
     @Override

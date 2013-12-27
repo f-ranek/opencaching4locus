@@ -9,6 +9,7 @@ import org.bogus.domowygpx.activities.DownloadListContext.BaseListItem;
 import org.bogus.domowygpx.activities.DownloadListContext.FileListItem;
 import org.bogus.domowygpx.activities.DownloadListContext.GpxListItem;
 import org.bogus.domowygpx.activities.DownloadListContext.OperationsListAdapter;
+import org.bogus.domowygpx.application.Application;
 import org.bogus.domowygpx.services.FilesDownloaderListener;
 import org.bogus.domowygpx.services.FilesDownloaderService;
 import org.bogus.domowygpx.services.FilesDownloaderService.FilesDownloadTask;
@@ -97,6 +98,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             }
         }
         GpxListItem result = listItemContext.new GpxListItem();
+        result.message = getString(R.string.infoWaiting);
         result.createdDateVal = task.createdDate;
         result.taskId = taskId;
         result.stableId = ++stableIdCounter;
@@ -116,6 +118,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             }
         }
         FileListItem result = listItemContext.new FileListItem();
+        result.message = getString(R.string.infoWaiting);
         result.createdDateVal = task.createdDate;
         result.taskId = taskId;
         result.stableId = ++stableIdCounter;
@@ -188,24 +191,12 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
             }});
     }
     
-    /*
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    private void enableAcceleration()
-    {
-        if (android.os.Build.VERSION.SDK_INT >= 12){
-            getWindow().setFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED, 
-                WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);        
-        }
-    }
-    */
-    
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
-        // enableAcceleration();
         super.onCreate(savedInstanceState);
         
-        //setupActionBar();
+        Application.getInstance(this).showErrorDumpInfo(this);
         
         listItemContext.context = this;
         listItemContext.handler = new Handler(Looper.getMainLooper());
@@ -217,9 +208,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
         listViewAdapter = listItemContext.new OperationsListAdapter();
         listViewOperations.setAdapter(listViewAdapter);
         registerForContextMenu(listViewOperations);
-        //setupActionBar();
         bindDownloaderService();
-        
     }
     
     protected void bindDownloaderService()

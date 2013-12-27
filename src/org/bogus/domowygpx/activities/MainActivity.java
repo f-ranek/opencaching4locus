@@ -8,6 +8,7 @@ import locus.api.android.utils.LocusUtils;
 
 import org.bogus.android.AndroidUtils;
 import org.bogus.android.LockableScrollView;
+import org.bogus.domowygpx.application.Application;
 import org.bogus.domowygpx.services.GpxDownloaderService;
 import org.bogus.domowygpx.utils.LocationUtils;
 import org.bogus.geocaching.egpx.R;
@@ -71,6 +72,8 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 	public void onCreate(final Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
+		
+		Application.getInstance(this).showErrorDumpInfo(this);
 		
 		final LayoutInflater inflater = LayoutInflater.from(this);
 		inflater.setFactory(new LayoutInflater.Factory(){

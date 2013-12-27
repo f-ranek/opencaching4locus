@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <string name="applicationName">Awaryjniejszy GPX</string>
     <string name="applicationLabel">Awaryjniej-\nszy GPX</string>
@@ -125,14 +125,11 @@
         <item quantity="few">%d pliki</item>
         <item quantity="other">%d plików</item>
     </plurals>
+    <string name="infoWaiting">Oczekuję&#8230;</string>
     
     <string name="okapiErrorInvalidToken">Użytkownik odwołał dostęp aplikacji do serwisu</string>
     <string name="okapiErrorInvalidTimestamp">Sprawdź czas na urządzeniu</string>
     
-    
-    <string name="lblDevDetailsSend">Wyślij&#8230;</string>
-    <string name="lblDevDetailsClose">Zamknij</string>
-
     <string name="titleActivityInfo">Informacje</string>
     <string name="infoAboutTitle">Dobra, jakiś sensowny opis poproszę ;)</string>
     <string name="infoAbout">Program przygotowany został do współpracy z programami Locus i Columbus trochę też. Pozwala na pobieranie informacji o keszach z serwisu opencaching.pl. Ponadto pozwala na pobranie „z góry” dołączonych do keszy zdjęć i obrazków.</string>
@@ -144,5 +141,15 @@
     <string name="historyTitle">Historia zmian</string>
     <string name="history">1.0 – pierwsza wersja, na bazie programu Awaryjny GPX\n1.1 – dodano integrację z Locusem\n1.2 – dodano możliwość logowania do oc.pl</string>
 
-    
+    <string name="infoDeveloperInfoTitle">Informacje dla programisty</string>
+    <string name="infoDeveloperInfoDesc" tools:ignore="Typos">Generuje informacje przydatne programiście w celu diagnozowania i poprawy błędów. Wygenerowany plik zostanie zapisany na karcie pamięci, a następnie udostępniony do wysłania e-mailem. Podaj proszę również opis problemu bądź błędu.\n\nJeżeli nie masz skonfigurowanego klienta poczty, plik możesz przesłać w inny sposób na adres awaryjniejszy-gpx@10g.pl.\n\nPlik zawiera następujące dane:\n * informacje o urządzeniu (bez nr telefonu i innych wrażliwych danych)\n * konfigurację i dane programu\n * logi systemu</string>
+    <string name="infoDeveloperInfoFile">Na karcie pamięci zapisano plik %s.</string>
+    <string name="infoDeveloperEmailText">Wygenerowano informacje dla programisty, upewnij się, że wysyłany e-mail posiada załącznik. Informacje te są również zapisane na karcie pamięci, w pliku %s.\n\nPodaj proszę również opis problemu bądź błędu.</string>
+    <string name="infoDeveloperDialogTitle">Awaryjniejszy GPX - wystąpił błąd :(</string>
+    <string name="infoDeveloperDialogText" tools:ignore="Typos">Wygląda na to, że poprzednie uruchomienie aplikacji zakończyło się błędem. Wygenerowany został plik z informacjami o błędzie, oraz zapisany na karcie pamięci jako %s.\nCzy chcesz wysłać teraz ten plik do programisty, jako e-mail na adres awaryjniejszy-gpx@10g.pl?\n\nZgłoszenia i opisy błędów pomogą udoskonalać aplikację.</string>
+    <string name="infoDeveloperInfoGo">Wygeneruj</string>
+    <string name="infoDeveloperInfoSend">Wyślij</string>
+    <string name="infoDeveloperInfoPostpone">Później</string>
+    <string name="infoDeveloperInfoError">Wystąpił nieznany błąd</string>
+    <string name="infoDeveloperInfoInProgress">Czekaj, pracuję</string>
 </resources>

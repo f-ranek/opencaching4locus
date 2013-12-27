@@ -1,31 +1,37 @@
 package org.bogus.domowygpx.activities;
 
+import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.bogus.domowygpx.application.Application;
 import org.bogus.geocaching.egpx.BuildInfo;
 import org.bogus.geocaching.egpx.R;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
 import android.text.method.MovementMethod;
 import android.text.style.URLSpan;
+import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class InfoActivity extends Activity
 {
-
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_info);
+        Application.getInstance(this).showErrorDumpInfo(this);
         
+        setContentView(R.layout.activity_info);
         {
             final PackageInfo packageInfo; 
             try{
@@ -82,6 +88,59 @@ public class InfoActivity extends Activity
             }
             helpInfo.setText(helpInfoText);
         }
+        findViewById(R.id.developerFileInfo).setVisibility(View.GONE);
+        findViewById(R.id.btnGenerateDevInfo).setOnClickListener(new View.OnClickListener()
+        {
+            
+            @Override
+            public void onClick(View v)
+            {
+                dumpDataUI();
+            }
+        });
     }
 
+    
+    void dumpDataUI()
+    {
+        AsyncTask<Void, Void, File> task = new AsyncTask<Void, Void, File>()
+        {
+            ProgressDialog progress;
+            @Override
+            protected void onPreExecute()
+            {
+                findViewById(R.id.developerFileInfo).setVisibility(View.GONE); 
+                progress = ProgressDialog.show(InfoActivity.this, null,
+                    getText(R.string.infoDeveloperInfoInProgress), 
+                    true, false);
+            }
+            
+            @Override
+            protected File doInBackground(Void... params)
+            {
+                StateCollector stateCollector = new StateCollector(InfoActivity.this);
+                return stateCollector.dumpDataOnline();
+            }
+    
+            @Override
+            protected void onPostExecute(File file)
+            {
+                progress.dismiss();
+                if (file == null){
+                    Toast.makeText(InfoActivity.this, R.string.infoDeveloperInfoError, Toast.LENGTH_LONG).show();
+                } else {
+                    final StateCollector sc = new StateCollector(InfoActivity.this);
+                    
+                    TextView info = (TextView)findViewById(R.id.developerFileInfo); 
+                    info.setVisibility(View.VISIBLE);
+                    info.setText(getResources().getString(R.string.infoDeveloperInfoFile, sc.extractFileName(file)));
+                    
+                    sc.sendEmail(file);
+                }
+            }
+        };
+        task.execute();
+    }
+    
+    
 }

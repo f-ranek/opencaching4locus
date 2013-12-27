@@ -12,7 +12,7 @@ import org.bogus.domowygpx.services.downloader.FileData;
  * @author Boguś
  * 
  */
-public interface FilesDownloaderApi
+public interface FilesDownloaderApi extends DumpableDatabase
 {
     /**
      * Schedules selected files to be downloaded. This method can be invoked from any thread.

@@ -12,6 +12,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,6 +28,7 @@ import org.bogus.domowygpx.application.Application;
 import org.bogus.domowygpx.services.downloader.DownloadProgressMonitor;
 import org.bogus.domowygpx.services.downloader.FileData;
 import org.bogus.domowygpx.services.downloader.FilesDownloader;
+import org.bogus.domowygpx.utils.DumpDatabase;
 import org.bogus.domowygpx.utils.HttpClientFactory;
 import org.bogus.domowygpx.utils.HttpClientFactory.CreateHttpClientConfig;
 import org.bogus.domowygpx.utils.HttpException;
@@ -835,8 +837,9 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     /** Binder exposed to clients */
     private final IBinder mBinder = new LocalBinder();
     
-    public class LocalBinder extends Binder {
+    public class LocalBinder extends Binder implements LocalBinderIntf<FilesDownloaderApi> {
         private final FilesDownloaderApi proxy = new FilesDownloaderApiProxy(FilesDownloaderService.this);
+        @Override
         public FilesDownloaderApi getService() 
         {
             return proxy; 
@@ -906,6 +909,19 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         public boolean unregisterEventListener(FilesDownloaderListener listener)
         {
             return getTarget().unregisterEventListener(listener);
+        }
+        
+        @Override
+        public List<File> dumpDatabase(File rootDir)
+        throws IOException
+        {
+            return getTarget().dumpDatabase(rootDir);
+        }
+
+        @Override
+        public List<File> getDatabaseFileNames(Context ctx)
+        {
+            return getTarget().getDatabaseFileNames(ctx);
         }
     };
     
@@ -1499,6 +1515,27 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             result.add(task2);
         }
         return result;
+    }
+    
+    @Override
+    public List<File> dumpDatabase(File rootDir)
+    throws IOException
+    {
+        final File target = new File(rootDir, "FilesDownloader.xml");
+        final DumpDatabase dd = new DumpDatabase();
+        if (dd.dumpDatabase(database, target)){
+            return Collections.singletonList(target);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public List<File> getDatabaseFileNames(Context ctx)
+    {
+        final File db = ctx.getDatabasePath("FilesDownloaderDatabase.db");
+        final DumpDatabase dd = new DumpDatabase();
+        return dd.getOfflineDatabaseFiles(db);
     }
     
     @Override

@@ -13,7 +13,7 @@ import android.os.Messenger;
  * @author Boguś
  *
  */
-public interface GpxDownloaderApi
+public interface GpxDownloaderApi extends DumpableDatabase
 {
     
     /**

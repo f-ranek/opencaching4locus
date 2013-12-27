@@ -1,20 +1,29 @@
 package org.bogus.domowygpx.application;
 
 import java.io.File;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.bogus.domowygpx.activities.StateCollector;
 import org.bogus.domowygpx.oauth.OKAPI;
 import org.bogus.domowygpx.utils.TargetDirLocator;
 import org.bogus.geocaching.egpx.R;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Service;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 public class Application extends android.app.Application
@@ -22,6 +31,9 @@ public class Application extends android.app.Application
     private final static String LOG_TAG = "Opencaching:Application";
     private volatile OKAPI okApi;
     private int notificationIconResid;
+    
+    File offlineDump;
+    long offlineDumpPostpone;
     
     public static Application getInstance(Service context)
     {
@@ -45,14 +57,103 @@ public class Application extends android.app.Application
         return okApi;
     }
     
+    public boolean showErrorDumpInfo(final Activity activity)
+    {
+        if (offlineDump != null && System.currentTimeMillis() > offlineDumpPostpone){
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.postDelayed(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    final StateCollector stateCollector = new StateCollector(activity);
+                    AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+                    builder.setTitle(R.string.infoDeveloperDialogTitle);
+                    builder.setMessage(getResources().getString(R.string.infoDeveloperDialogText,
+                        stateCollector.extractFileName(offlineDump)));
+                    builder.setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener()
+                    {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which)
+                        {
+                            offlineDump = null;
+                        }
+                    });
+                    builder.setNeutralButton(R.string.infoDeveloperInfoPostpone, new DialogInterface.OnClickListener()
+                    {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which)
+                        {
+                            offlineDumpPostpone = System.currentTimeMillis() + 15L*60L*1000L;
+                        }
+                    });
+                    builder.setPositiveButton(R.string.infoDeveloperInfoSend, new DialogInterface.OnClickListener()
+                    {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which)
+                        {
+                            stateCollector.sendEmail(offlineDump);
+                            offlineDump = null;
+                        }
+                    });
+                    builder.show();
+                }
+            }, 1500);
+            return true;
+        }
+        return false;
+    }
+    
     @Override
     public void onCreate()
     {
         Log.i(LOG_TAG, "Called onCreate");
         super.onCreate();
         
-        setupPreferences();
+        final StateCollector stateCollector = new StateCollector(this);
+        long offlineDumpTimestamp = stateCollector.hasOfflineDump();
+        if (offlineDumpTimestamp > 0){
+            try{
+                // this could take a while, but what to do else?
+                offlineDump = stateCollector.dumpDataOffline(offlineDumpTimestamp);
+                if (offlineDump != null){
+                    Log.i(LOG_TAG, "Offline dump saved to file=" + offlineDump);
+                    Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(offlineDump));
+                    intent.setType("application/octet-stream");
+                    sendBroadcast(intent);
+                }
+            }catch(Exception e){
+                Log.e(LOG_TAG, "Failed to create offline dump", e);
+            }
+        }
+        final Thread main = Thread.currentThread();
+        final UncaughtExceptionHandler mueh = main.getUncaughtExceptionHandler();
+        final UncaughtExceptionHandler sueh = Thread.getDefaultUncaughtExceptionHandler();
+        Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler(){
+
+            @Override
+            public void uncaughtException(Thread thread, Throwable ex)
+            {
+                Thread.setDefaultUncaughtExceptionHandler(sueh);
+                if (thread == main){
+                    thread.setUncaughtExceptionHandler(mueh);
+                }
+                Log.e(LOG_TAG, "Error in threadId=" + thread.getId() + " [" + thread.getName() + "]", ex);
+                try{
+                    stateCollector.createEmergencyDump();
+                }catch(Exception e){
+                    
+                }
+                if (thread == main && mueh != null){
+                    mueh.uncaughtException(thread, ex);
+                } else 
+                if (sueh != null){
+                    sueh.uncaughtException(thread, ex);
+                }
+            }});
         
+        setupPreferences();
+        cleanupDevDumps();
         // TODO: cleanup gpxTargetDirNameTemp
         
         locus.api.utils.Logger.registerLogger(new locus.api.utils.Logger.ILogger(){
@@ -80,6 +181,35 @@ public class Application extends android.app.Application
             {
                 android.util.Log.e(tag, msg, e);
             }});
+    }
+    
+    private void cleanupDevDumps()
+    {
+        try{
+            final File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            final String[] files = dir.list();
+            if (files == null){
+                return ;
+            }
+            final long timeStamp = System.currentTimeMillis() - 7L*24L*60L*60L*1000L;
+            int count = 0;
+            for (String name : files){
+                if ((name.startsWith("awaryjniejszy-gpx-state-") || name.startsWith("awaryjniejszy-gpx-x-state-")) 
+                        && name.endsWith(".tgz")){
+                    File f2 = new File(dir, name);
+                    if (f2.lastModified() < timeStamp){
+                        if (f2.delete()){
+                            count++;
+                        }
+                    }                    
+                }
+            }
+            if (count > 0){
+                Log.i(LOG_TAG, "Removed " + count + " developer dumps");
+            }
+        }catch(Exception e){
+            Log.e(LOG_TAG, "Failed to cleanup developer dumps", e);
+        }
     }
     
     /**

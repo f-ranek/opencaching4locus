@@ -1,7 +1,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
-    android:layout_height="wrap_content" 
-    xmlns:tools="http://schemas.android.com/tools">
+    android:layout_height="wrap_content" >
 
     <LinearLayout
         android:layout_width="fill_parent"
@@ -9,13 +9,12 @@
         android:orientation="vertical" >
 
         <TextView
+            style="?android:attr/listSeparatorTextViewStyle"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:paddingLeft="10dp"
             android:paddingRight="10dp"
-            style="?android:attr/listSeparatorTextViewStyle"
-            android:text="@string/infoAboutTitle"
-            />
+            android:text="@string/infoAboutTitle" />
 
         <TextView
             android:layout_width="fill_parent"
@@ -32,7 +31,7 @@
             android:paddingLeft="10dp"
             android:paddingRight="10dp"
             android:text="@string/infoHelpTitle" />
-        
+
         <TextView
             android:id="@+id/helpInfo"
             android:layout_width="fill_parent"
@@ -40,15 +39,15 @@
             android:padding="10dp"
             android:text="@string/infoHelp"
             android:textAppearance="?android:attr/textAppearanceMedium" />
-        
+
         <TextView
+            style="?android:attr/listSeparatorTextViewStyle"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:autoLink="web"
             android:padding="10dp"
-            android:text="@string/versionInfoTitle"
-            style="?android:attr/listSeparatorTextViewStyle" />
-        
+            android:text="@string/versionInfoTitle" />
+
         <TextView
             android:id="@+id/buildInfoVersion"
             android:layout_width="fill_parent"
@@ -56,21 +55,68 @@
             android:autoLink="web"
             android:padding="10dp"
             android:text="@string/versionInfo"
-            android:textAppearance="?android:attr/textAppearanceMedium"/>
-        
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
         <TextView
+            style="?android:attr/listSeparatorTextViewStyle"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:paddingLeft="10dp"
             android:paddingRight="10dp"
-            style="?android:attr/listSeparatorTextViewStyle"
-            android:text="@string/historyTitle"
-            />
+            android:text="@string/historyTitle" />
+
         <TextView
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:padding="10dp"
             android:text="@string/history"
             android:textAppearance="?android:attr/textAppearanceMedium" />
-    </LinearLayout>        
+
+        <TextView
+            style="?android:attr/listSeparatorTextViewStyle"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:text="@string/infoDeveloperInfoTitle" />
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="5dp"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:paddingTop="10dp"
+            android:text="@string/infoDeveloperInfoDesc"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+        
+        <TextView
+            android:id="@+id/developerFileInfo"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:autoLink="email"
+            android:paddingBottom="5dp"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:paddingTop="0dp"
+            android:text="@string/infoDeveloperInfoFile"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+        
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:orientation="vertical"
+            android:paddingRight="10dp" >
+
+            <Button
+                android:id="@+id/btnGenerateDevInfo"
+                style="?android:attr/buttonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical|center_horizontal"
+                android:text="@string/infoDeveloperInfoGo" />
+        </LinearLayout>
+    </LinearLayout>
+
 </ScrollView>

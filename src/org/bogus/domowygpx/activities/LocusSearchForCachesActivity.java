@@ -7,6 +7,7 @@ import locus.api.objects.extra.Waypoint;
 import org.bogus.android.AndroidUtils;
 import org.bogus.domowygpx.activities.DownloadListContext.GpxListItem;
 import org.bogus.domowygpx.activities.DownloadListContext.ListItemViewHolder;
+import org.bogus.domowygpx.application.Application;
 import org.bogus.domowygpx.services.GpxDownloaderApi;
 import org.bogus.domowygpx.services.GpxDownloaderListener;
 import org.bogus.domowygpx.services.GpxDownloaderService;
@@ -85,6 +86,8 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
     public void onCreate(final Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+        
+        Application.getInstance(this).showErrorDumpInfo(this);
         
         final Intent intent = this.getIntent();
         if (intent == null){
