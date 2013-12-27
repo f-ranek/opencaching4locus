@@ -90,9 +90,8 @@ public class OAuthSigningActivity extends Activity
         protected void onPreExecute()
         {
             progress = ProgressDialog.show(OAuthSigningActivity.this, null,
-                OAuthSigningActivity.this.getText(R.string.infoOAuthWorkInProgress), 
-                true, true);
-            progress.setOnCancelListener(new DialogInterface.OnCancelListener()
+                OAuthSigningActivity.this.getText(R.string.infoWorkInProgress), 
+                true, true, new DialogInterface.OnCancelListener()
             {
                 
                 @Override

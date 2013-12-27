@@ -111,7 +111,7 @@ public class InfoActivity extends Activity
             {
                 findViewById(R.id.developerFileInfo).setVisibility(View.GONE); 
                 progress = ProgressDialog.show(InfoActivity.this, null,
-                    getText(R.string.infoDeveloperInfoInProgress), 
+                    getText(R.string.infoWorkInProgress), 
                     true, false);
             }
             
