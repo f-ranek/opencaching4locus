@@ -178,7 +178,8 @@ public class ToStringBuilder
 
     public ToStringBuilder add(String name, double value, double defValue)
     {
-        if (Math.abs(value - defValue) < 1e-10){
+        boolean hasValue = ((Double.isNaN(defValue) ^ Double.isNaN(value)) || Math.abs(value - defValue) > 1e-10); 
+        if (hasValue){
             processState();
             sb.append(name).append('=').append(value);
         }
@@ -189,6 +190,16 @@ public class ToStringBuilder
     {
         processState();
         sb.append(name).append('=').append(value);
+        return this;
+    }
+
+    public ToStringBuilder add(String name, float value, float defValue)
+    {
+        boolean hasValue = ((Float.isNaN(defValue) ^ Float.isNaN(value)) || Math.abs(value - defValue) > 1e-10); 
+        if (hasValue){
+            processState();
+            sb.append(name).append('=').append(value);
+        }
         return this;
     }
 

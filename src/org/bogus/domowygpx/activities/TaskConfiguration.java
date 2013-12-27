@@ -554,8 +554,8 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         builder.add("gpxTargetDirNameTemp", gpxTargetDirNameTemp);
         builder.add("imagesTargetDirName", imagesTargetDirName);
         builder.add("downloadImagesStrategy", downloadImagesStrategy);
-        builder.add("outLatitude", outLatitude);
-        builder.add("outLongitude", outLongitude);
+        builder.add("outLatitude", outLatitude, Double.NaN);
+        builder.add("outLongitude", outLongitude, Double.NaN);
         builder.add("outMaxNumOfCaches", outMaxNumOfCaches);
         builder.add("outMaxCacheDistance", outMaxCacheDistance);
         builder.add("outDownloadImages", outDownloadImages);
