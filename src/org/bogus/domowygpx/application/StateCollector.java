@@ -1,4 +1,4 @@
-package org.bogus.domowygpx.activities;
+package org.bogus.domowygpx.application;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -18,6 +18,7 @@ import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.bogus.android.AndroidUtils;
 import org.bogus.domowygpx.services.DumpableDatabase;
 import org.bogus.domowygpx.services.FilesDownloaderService;
 import org.bogus.domowygpx.services.GpxDownloaderService;
@@ -307,7 +308,7 @@ public class StateCollector
                 IOUtils.closeQuietly(is);
                 file.delete();
             }
-            Log.i(LOG_TAG, "Saved " + name);
+            Log.i(LOG_TAG, "Flushed " + name);
         }
         files.clear();
     }
@@ -355,10 +356,6 @@ public class StateCollector
             tos.flush();
             tos.close();
             Log.i(LOG_TAG, "Done");
-            
-            Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(fileName));
-            intent.setType("application/octet-stream");
-            context.sendBroadcast(intent);
             
             return fileName;
         }catch(IOException ioe){
@@ -413,22 +410,29 @@ public class StateCollector
     throws IOException
     {
         final long now = System.currentTimeMillis();
+        Log.i(LOG_TAG, "Creating emergency dump_" + now);
         final File root = new File(context.getCacheDir(), "dump_" + now);
         root.mkdirs();
-        collectLogCatOutput(new ArrayList<File>(1), root);
-        File info = new File(context.getCacheDir(), "emergency_dump.state");
+        
+        final File info = new File(context.getCacheDir(), "emergency_dump.state");
         OutputStream os = new FileOutputStream(info);
         os.write((String.valueOf(now) + '\n').getBytes());
         os.close();
+
+        collectLogCatOutput(new ArrayList<File>(1), root);
+        
+        Log.i(LOG_TAG, "Emergency dump saved to " + root);
     }
     
     /**
      * Creates and saves offline (before application start) data dump
      * @param timestamp
+     * @param semaphore Optional semaphore, which is signalled when all of the necessary (offline)
+     *          data is ready
      * @return
      */
     @SuppressLint( "SimpleDateFormat" )
-    public File dumpDataOffline(long timestamp)
+    public File dumpDataOffline(long timestamp, Semaphore semaphore)
     {
         File info = new File(context.getCacheDir(), "emergency_dump.state");
         info.delete();
@@ -466,8 +470,11 @@ public class StateCollector
                 collectLogCatOutput(files, root);
             }
             collectSharedPrefs(files, root);
-            flush(tos, files, root);
             collectOfflineServicesState(files, root);
+            if (semaphore != null){
+                semaphore.release();
+                Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
+            }
             flush(tos, files, root);
             collectTempFiles(files, root);
             flush(tos, files, root);
@@ -503,7 +510,11 @@ public class StateCollector
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.addCategory(Intent.CATEGORY_DEFAULT);
         intent.setType("application/octet-stream");
-        intent.putExtra(Intent.EXTRA_TEXT, context.getResources().getString(R.string.infoDeveloperEmailText, extractFileName(file)));
+        intent.putExtra(Intent.EXTRA_TEXT, context.getResources().getString(
+            R.string.infoDeveloperEmailText, 
+            extractFileName(file),
+            AndroidUtils.formatFileSize((int)(file.length()/1024))
+        ));
         intent.putExtra(Intent.EXTRA_EMAIL, new String[] {"awaryjniejszy-gpx@10g.pl"});
         intent.putExtra(Intent.EXTRA_SUBJECT, "Awaryjniejszy GPX - dev");
         intent.putExtra(Intent.EXTRA_STREAM, uri);

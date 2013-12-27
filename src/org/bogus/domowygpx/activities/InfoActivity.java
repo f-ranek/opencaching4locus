@@ -5,13 +5,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.bogus.domowygpx.application.Application;
+import org.bogus.domowygpx.application.StateCollector;
 import org.bogus.geocaching.egpx.BuildInfo;
 import org.bogus.geocaching.egpx.R;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
@@ -130,6 +133,10 @@ public class InfoActivity extends Activity
                     Toast.makeText(InfoActivity.this, R.string.infoDeveloperInfoError, Toast.LENGTH_LONG).show();
                 } else {
                     final StateCollector sc = new StateCollector(InfoActivity.this);
+                    Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(file));
+                    intent.setType("application/octet-stream");
+                    sendBroadcast(intent);
+                    
                     
                     TextView info = (TextView)findViewById(R.id.developerFileInfo); 
                     info.setVisibility(View.VISIBLE);

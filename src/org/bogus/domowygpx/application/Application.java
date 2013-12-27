@@ -3,9 +3,9 @@ package org.bogus.domowygpx.application;
 import java.io.File;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.List;
+import java.util.concurrent.Semaphore;
 import java.util.regex.Pattern;
 
-import org.bogus.domowygpx.activities.StateCollector;
 import org.bogus.domowygpx.oauth.OKAPI;
 import org.bogus.domowygpx.utils.TargetDirLocator;
 import org.bogus.geocaching.egpx.R;
@@ -21,6 +21,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
@@ -142,29 +143,58 @@ public class Application extends android.app.Application
         Log.i(LOG_TAG, "Called onCreate");
         super.onCreate();
         
-        SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
+        final SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
         
         final StateCollector stateCollector = new StateCollector(this);
-        long offlineDumpTimestamp = stateCollector.hasOfflineDump();
+        final long offlineDumpTimestamp = stateCollector.hasOfflineDump();
         if (offlineDumpTimestamp > 0){
             try{
+                final Semaphore offlineDumpReady = new Semaphore(0); 
                 // this could take a while, but what to do else?
-                offlineDump = stateCollector.dumpDataOffline(offlineDumpTimestamp);
-                if (offlineDump != null){
-                    Log.i(LOG_TAG, "Offline dump saved to file=" + offlineDump);
-                    Editor editor = config.edit();
-                    editor.putString("Dump.offlineDumpFile", offlineDump.toString());
-                    editor.remove("Dump.offlineDumpPostpone");
-                    editor.commit();
-                    Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(offlineDump));
-                    intent.setType("application/octet-stream");
-                    sendBroadcast(intent);
-                }
+                AsyncTask<Void, Void, File> dumpTask = new AsyncTask<Void, Void, File>(){
+
+                    @Override
+                    protected File doInBackground(Void... params)
+                    {
+                        try{
+                            File file = stateCollector.dumpDataOffline(offlineDumpTimestamp, offlineDumpReady);
+                            if (file != null){
+                                Log.i(LOG_TAG, "Offline dump saved to file=" + file);
+                            }
+                            return file;
+                        }catch(Exception e){
+                            Log.e(LOG_TAG, "Failed to create offline dump", e);
+                            return null;
+                        }
+                    }
+                    
+                    @Override
+                    protected void onPostExecute(File dumpFile)
+                    {
+                        try{
+                            offlineDump = dumpFile;
+                            if (dumpFile != null){
+                                Editor editor = config.edit();
+                                editor.putString("Dump.offlineDumpFile", dumpFile.toString());
+                                editor.remove("Dump.offlineDumpPostpone");
+                                editor.commit();
+                                Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(dumpFile));
+                                intent.setType("application/octet-stream");
+                                sendBroadcast(intent);
+                            }
+                        }catch(Exception e){
+                            Log.e(LOG_TAG, "Failed to create offline dump", e);
+                        }
+                    }
+                };
+                // don't bother with previous dump, we are preparing the next one :-]
+                cleanupOfflineDumpState();
+                dumpTask.execute();    
+                offlineDumpReady.acquireUninterruptibly();
             }catch(Exception e){
                 Log.e(LOG_TAG, "Failed to create offline dump", e);
             }
-        }
-        if (offlineDump == null){
+        } else {
             String odf = config.getString("Dump.offlineDumpFile", null);
             if (odf != null){
                 offlineDump = new File(odf);
@@ -188,13 +218,18 @@ public class Application extends android.app.Application
                 try{
                     stateCollector.createEmergencyDump();
                 }catch(Exception e){
-                    
+                    Log.e(LOG_TAG, "Failed to create emergency dump", e);
                 }
                 if (thread == main && mueh != null){
+                    Log.i(LOG_TAG, "Invoking main.uncaughtException");
                     mueh.uncaughtException(thread, ex);
                 } else 
                 if (sueh != null){
+                    Log.i(LOG_TAG, "Invoking default.uncaughtException");
                     sueh.uncaughtException(thread, ex);
+                } else {
+                    Log.i(LOG_TAG, "Invoking System.exit()");
+                    System.exit(1);
                 }
             }});
         
