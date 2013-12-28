@@ -209,6 +209,11 @@ public class ImageUrlProcessor implements ImageSourceResolver
             return false;
         }
         try{
+            final String path = uri.getPath();
+            if (path == null || path.length() == 0 || path.length() > 1500){
+                // if we get very long path, make the URI untrusted, so the path will be shrunk
+                return false;
+            }
             final String host = uri.getHost();
             for (String trustedUrl : opencachingDomains){
                 if (host.endsWith(trustedUrl)){
@@ -357,28 +362,54 @@ public class ImageUrlProcessor implements ImageSourceResolver
     }
     
     @Override
-    public String processImgSrc(String src, int sourcePlaceCode)
+    public String processImgSrc(final String orgSrc, int sourcePlaceCode)
     {
         final String currentCacheCode = gpxState.getCurrentCacheCode(); 
         try{
             totalImages++;
+            String src = orgSrc;
             //logger.debug(currentCacheCode + ": found img src=" + src);
             {
                 final URI uri;
-                if (src.startsWith("\"") && src.endsWith("\"")){
-                    uri = new URI(src.substring(1, src.length()-2));
-                } else
-                if (src.startsWith("data:")){
+                if (src.startsWith("\"") && src.endsWith("\"") && src.length() >= 3){
+                    src = src.substring(1, src.length()-2);
+                }
+                
+                {
+                    // see http://code.google.com/p/opencaching-api/issues/detail?id=283#c13
+                    // try to NOT parse the long image data with URI parser
+                    String tmpSrc = null;
+                    if (src.startsWith("http://")){
+                        tmpSrc = src.substring(7);
+                    } else
+                    if (src.startsWith("https://")){
+                        tmpSrc = src.substring(8);
+                    }
+                    if (tmpSrc != null){
+                        int slash = tmpSrc.indexOf('/');
+                        if (slash > 0){
+                            String tmpHost = tmpSrc.substring(0, slash);
+                            for (String domain : opencachingDomains){
+                                if (tmpHost.endsWith(domain)){
+                                    tmpSrc = tmpSrc.substring(slash);
+                                    if (tmpSrc.startsWith("/data:image/")){
+                                        src = tmpSrc.substring(1); 
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (src.startsWith("data:image/")){
                     if (extractDataImages){
                         String res = extractDataImage(src, currentCacheCode);
                         return res;
                     } else {
                         return src;
                     }
-                } else 
-                {
-                    uri = new URI(src);
                 }
+                uri = new URI(src);
                 if (uri.getPath() == null || uri.getPath().equals("/")){
                     logger.warn(currentCacheCode + ": no path specified: " + src);
                     return src;
@@ -450,8 +481,8 @@ public class ImageUrlProcessor implements ImageSourceResolver
             // no download, nor image does not exist
             return resolvedUri.toString();
         }catch(Exception use){
-            logger.warn(currentCacheCode + ": Invalid src attribute=" + src, use);
-            return src;
+            logger.warn(currentCacheCode + ": Invalid src attribute=" + orgSrc, use);
+            return orgSrc;
         }
          
         

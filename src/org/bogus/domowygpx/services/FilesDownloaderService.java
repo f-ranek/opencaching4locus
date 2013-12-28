@@ -546,44 +546,55 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         return fd;
     }
     
-    private List<FileData> loadTaskFiles(int taskId, String whereClause)
+    private List<FileData> loadTaskFiles(int taskId, String whereClause, int expectedCount)
     {
-        Cursor cursor = database.query("files", 
-            new String[]{"_id", "state", "source", "target", 
-                "retry_count", "headers"}, 
-            whereClause,  
-            (String[])null, null, null, "_id");
-        List<FileData> result = new ArrayList<FileData>(cursor.getCount());
-        if (cursor.moveToFirst()){
-            do{
-                final FileData file = new FileData();
-                file.fileDataId = cursor.getInt(0);
-                try {
-                    file.taskId = taskId; 
-                    file.state = cursor.getInt(1);
-                    file.source = new URI(cursor.getString(2));
-                    file.target = new File(cursor.getString(3));
-                    file.retryCount = cursor.getInt(4);
-                    String headers = cursor.getString(5);
-                    if (headers != null){
-                        String[] headers2 = headers.split("[\n\r]+");
-                        file.headers = new String[headers2.length][];
-                        for (int i=0; i<headers2.length; i++){
-                            String header = headers2[i];
-                            int idx = header.indexOf(':');
-                            String headerName = header.substring(0, idx);
-                            String headerValue = header.substring(idx+2);
-                            file.headers[i] = new String[]{headerName, headerValue};
-                        }
-                    }
-                    result.add(file);
-                } catch (URISyntaxException e) {
-                    Log.e(LOG_TAG, "Failed to read file, _id=" + file.fileDataId, e);
+        boolean loop = false;
+        ArrayList<FileData> result = new ArrayList<FileData>(expectedCount);
+        do{
+            // in case of malicious input (long URLs), we have to chunk data, otherwise strange exception happens
+            // see the reason: http://code.google.com/p/opencaching-api/issues/detail?id=283#c13
+            if (BuildConfig.DEBUG){
+                Log.d(LOG_TAG, "Loading files from offset=" + result.size());
+                if (!result.isEmpty()){
+                    Log.d(LOG_TAG, "Last _id=" + result.get(result.size()-1).fileDataId);
                 }
-            }while(cursor.moveToNext());
-            
-        }
-        cursor.close();
+            }
+            Cursor cursor = database.rawQuery(
+                "select _id, state, source, target, retry_count, headers " +
+                " from files where " + whereClause + 
+        		" order by _id limit 25 offset " + result.size(), 
+                null);
+            loop = cursor.moveToFirst(); 
+            if (loop){
+                do{
+                    final FileData file = new FileData();
+                    file.fileDataId = cursor.getInt(0);
+                    try {
+                        file.taskId = taskId; 
+                        file.state = cursor.getInt(1);
+                        file.source = new URI(cursor.getString(2));
+                        file.target = new File(cursor.getString(3));
+                        file.retryCount = cursor.getInt(4);
+                        String headers = cursor.getString(5);
+                        if (headers != null){
+                            String[] headers2 = headers.split("[\n\r]+");
+                            file.headers = new String[headers2.length][];
+                            for (int i=0; i<headers2.length; i++){
+                                String header = headers2[i];
+                                int idx = header.indexOf(':');
+                                String headerName = header.substring(0, idx);
+                                String headerValue = header.substring(idx+2);
+                                file.headers[i] = new String[]{headerName, headerValue};
+                            }
+                        }
+                        result.add(file);
+                    } catch (URISyntaxException e) {
+                        Log.e(LOG_TAG, "Failed to read file, _id=" + file.fileDataId, e);
+                    }
+                }while(cursor.moveToNext());
+            }
+            cursor.close();
+        }while(loop);
         return result;
     }
     
@@ -597,6 +608,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         final FilesDownloadTask task, 
         boolean restartFromScratch) 
     {
+        // TODO: move this method to the downloader thread... somewhere, somehow
         final List<FileData> files; 
         database.beginTransaction();
         try{
@@ -626,7 +638,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                 whereClause.append(FileData.FILE_STATE_ABORTED).append(", ");
                 whereClause.append(FileData.FILE_STATE_TRANSIENT_ERROR).append(")");
                 
-                files = loadTaskFiles( task.taskId, whereClause.toString());
+                files = loadTaskFiles( task.taskId, whereClause.toString(), task.totalFiles);
                 database.setTransactionSuccessful();
             }
         }finally{
@@ -1217,7 +1229,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             Cursor tasks = database.query("tasks", 
                 new String[]{"_id", "created_date", "state", "total_download_size", "flags"}, 
                 null, null, null, null, "created_date");
-            result = new ArrayList<FilesDownloadTask>(tasks.getCount());
+            result = new ArrayList<FilesDownloadTask>();
             if (tasks.moveToFirst()){
                 do{
                     FilesDownloadTask task = new FilesDownloadTask(tasks.getLong(1));
