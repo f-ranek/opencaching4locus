@@ -17,10 +17,16 @@
 
     <application
         android:allowBackup="true"
+        android:backupAgent="org.bogus.domowygpx.application.BackupAgent"
         android:name="org.bogus.domowygpx.application.Application"
         android:icon="@drawable/logo_straszne"
         android:label="@string/applicationName" 
         android:theme="@style/Theme.Main">
+        
+        <meta-data
+            android:name="com.google.android.backup.api_key"
+            android:value="AEdPqrEAAAAIvSIj25TCBJTvFDx6_d-dQ9oIA1DQdwOY6P9NPQ" />
+        
         <activity
             android:name="org.bogus.domowygpx.activities.MainActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"

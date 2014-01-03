@@ -13,10 +13,12 @@ import org.bogus.geocaching.egpx.R;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Service;
+import android.app.backup.BackupManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
@@ -27,7 +29,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-public class Application extends android.app.Application
+public class Application extends android.app.Application implements OnSharedPreferenceChangeListener
 {
     private final static String LOG_TAG = "Opencaching:Application";
     private volatile OKAPI okApi;
@@ -236,6 +238,8 @@ public class Application extends android.app.Application
         setupPreferences();
         cleanupDevDumps();
         cleanupTempGpx(config);
+        
+        config.registerOnSharedPreferenceChangeListener(this);
         
         locus.api.utils.Logger.registerLogger(new locus.api.utils.Logger.ILogger(){
 
@@ -491,5 +495,11 @@ public class Application extends android.app.Application
         editor.commit();
         boolean result = createSaveDirectories(config);
         return result;
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key)
+    {
+        BackupManager.dataChanged(getPackageName());
     }
 }
