@@ -85,6 +85,7 @@ public class Application extends android.app.Application implements OnSharedPref
         if (offlineDump != null && System.currentTimeMillis() > offlineDumpPostpone){
             if (!offlineDump.exists()){
                 cleanupOfflineDumpState();
+                return false;
             }
             Handler handler = new Handler(Looper.getMainLooper());
             handler.postDelayed(new Runnable()
