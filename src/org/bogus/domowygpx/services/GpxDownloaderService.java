@@ -362,6 +362,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         protected void appendReturnParameters(StringBuilder query, String userUUID) 
         throws JSONException
         {
+            final SharedPreferences config = getSharedPreferences("egpx", Context.MODE_PRIVATE);
             final boolean searchAndRetrieve = true;
             JSONObject retrParams = new JSONObject();
             
@@ -377,10 +378,9 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             retrParams.put("alt_wpts", "true");
             
             if (okApi.getOAuth().hasOAuth3()){
-                retrParams.put("my_notes", "desc:text");
+                retrParams.put("my_notes", config.getString("myNotes", "desc:text|gc:personal_note"));
             }
             
-            SharedPreferences config = getSharedPreferences("egpx", Context.MODE_PRIVATE);
             int maxCacheLogs = config.getInt("limitCacheLogs", 20);
             
             if (maxCacheLogs != 0){

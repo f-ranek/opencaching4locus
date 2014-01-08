@@ -17,6 +17,21 @@
         <item>mark</item>
     </string-array>
     
+    <string name="pref_my_account_my_notes">Własne notatki</string>
+    <string-array name="pref_my_account_my_notes_titles">
+        <item>nie pobieraj</item>
+        <item>w opisie skrzynki</item>
+        <item>w atrybutach skrzynki</item>
+        <item>w opisie i atrybutach skrzynki</item>
+    </string-array>
+    <string-array name="pref_my_account_my_notes_values">
+        <item>none</item>
+        <item>desc:text</item>
+        <item>gc:personal_note</item>
+        <item>desc:text|gc:personal_note</item>
+    </string-array>
+        
+    
     <string name="pref_my_account_sign">Zaloguj w oc.pl</string>
     <string name="pref_my_account_sign_desc">Zalogowanie w serwisie umożliwia pobieranie np. własnych notatek do skrzynek</string>
     <string name="pref_my_account_sign_btn">Zaloguj</string>
