@@ -152,7 +152,7 @@ public class AndroidUtils
         }
     }
 
-    private static Drawable getGrayscaled(Drawable src) {
+    public static Drawable getGrayscaled(Drawable src) {
         Drawable res = src.mutate();
         res.setColorFilter(Color.GRAY, Mode.SRC_IN);
         return res;

@@ -152,4 +152,15 @@
     <string name="infoDeveloperInfoSend">Wyślij</string>
     <string name="infoDeveloperInfoPostpone">Później</string>
     <string name="infoDeveloperInfoError">Wystąpił nieznany błąd</string>
+    
+    <string name="cacheTypeAll">Wszystkie</string>
+    <string name="cacheTypeEvent">Wydarzenie</string>
+    <string name="cacheTypeMoving">Mobilna</string>
+    <string name="cacheTypeMulti">Multicache</string>
+    <string name="cacheTypeOwn">Own cache</string>
+    <string name="cacheTypeQuiz">Quiz</string>
+    <string name="cacheTypeTraditional">Tradycyjna</string>
+    <string name="cacheTypeUnknown">Skrzynka nietypowa</string>
+    <string name="cacheTypeVirtual">Wirtualna</string>
+    <string name="cacheTypeWebcam">Webcam</string>
 </resources>
