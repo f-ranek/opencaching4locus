@@ -48,7 +48,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
 {
     private static final String LOG_TAG = "LocusSearch4CachesActivity";
     
-    DownloadListContext listItemContext = new DownloadListContext(){
+    final DownloadListContext listItemContext = new DownloadListContext(){
         @Override
         void notifyDataSetChanged()
         {
@@ -57,7 +57,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
                 gpxListItem.updateProgressRow(listItemViewHolder);
             }
         }};
-
+    private boolean serviceBound;    
     boolean dontAskAgain;
     boolean isPointTools;
     boolean isSearchList; 
@@ -89,14 +89,15 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         
         Application.getInstance(this).showErrorDumpInfo(this);
         
-        final Intent intent = this.getIntent();
-        if (intent == null){
-            Log.e(LOG_TAG, "null intent");
-            finish(Activity.RESULT_CANCELED);
-            return ;
-        }
+        listItemContext.context = this;
+        listItemContext.handler = new Handler(Looper.getMainLooper());
         
         try{
+            final Intent intent = this.getIntent();
+            if (intent == null){
+                throw new IllegalArgumentException("null intent");
+            }
+
             isPointTools = LocusUtils.isIntentPointTools(intent);
             isSearchList = LocusUtils.isIntentSearchList(intent);
             if (!isPointTools && !isSearchList){
@@ -121,7 +122,13 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         }catch(Exception e){
             Log.e(LOG_TAG, "Locus communication error", e);
             Toast.makeText(this, R.string.locusCommunicationError2, Toast.LENGTH_LONG).show();
-            finish(Activity.RESULT_CANCELED);
+            listItemContext.handler.postDelayed(
+                new Runnable(){
+                    @Override
+                    public void run(){
+                        finish(Activity.RESULT_CANCELED);
+                    }
+                }, 1250);
             return ;
         }
         
@@ -146,9 +153,6 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         
         validationUtils.addErrorField("", R.id.errorOthers);        
      
-        listItemContext.context = this;
-        listItemContext.handler = new Handler(Looper.getMainLooper());
-        
         bindDownloaderService();
 
         if (isPointTools && config.getBoolean("Locus.point_searchWithoutAsking",false)
@@ -415,7 +419,9 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         if (listItemContext.gpxDownloader != null){
             listItemContext.gpxDownloader.unregisterEventListener(this);
         }
-        unbindService(gpxDownloaderServiceConnection);
+        if (serviceBound){
+            unbindService(gpxDownloaderServiceConnection);
+        }
         
         gpxListItem = null;
         listItemViewHolder = null;
@@ -451,6 +457,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
     {
         if (listItemContext.gpxDownloader == null){
             bindService(new Intent(this, GpxDownloaderService.class), gpxDownloaderServiceConnection, Context.BIND_AUTO_CREATE);
+            serviceBound = true;
         }
     }
     @Override
