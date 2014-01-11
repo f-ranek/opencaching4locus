@@ -87,6 +87,9 @@
         <item>0</item>
     </integer-array>
     
+    <string name="pref_download_list_trackables">Pokaż Geokrety</string>
+    <string name="pref_download_list_trackables_desc">Pobiera listę Geokretów i umieszcza w opisie skrzynki</string>
+    
     <string name="pref_download_reset_locus_dont_ask_again">Pytaj wyszukując z Locusa</string>
     <string name="pref_download_reset_locus_dont_ask_again_desc">Przywraca okienko parametrów wyszukiwania keszy z Locusa</string>
     <string name="pref_download_reset_locus_dont_ask_again_btn">Przywróć!</string>
