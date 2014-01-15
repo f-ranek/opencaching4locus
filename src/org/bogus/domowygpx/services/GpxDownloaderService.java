@@ -354,6 +354,9 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             if (hasOAuth3 && config.getBoolean("excludeIgnored", true)){
                 searchParams.put("exclude_ignored", "true");
             }
+            if (hasOAuth3 && config.getBoolean("userCoordsAsDefault", true)){
+                searchParams.put("location_source", "alt_wpt:user-coords");
+            }
             
             searchParams.put("status", "Available");
             query.append(urlEncode(searchParams));
@@ -379,8 +382,13 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             retrParams.put("attrs", "gc:attrs|desc:text|gc_ocde:attrs"); // do I need ox:tags ?
             retrParams.put("alt_wpts", "true");
             
-            if (okApi.getOAuth().hasOAuth3()){
+            final boolean hasOAuth3 = okApi.getOAuth().hasOAuth3();
+            if (hasOAuth3){
                 retrParams.put("my_notes", config.getString("myNotes", "desc:text|gc:personal_note"));
+            }
+            if (hasOAuth3 && config.getBoolean("userCoordsAsDefault", true)){
+                retrParams.put("location_source", "alt_wpt:user-coords");
+                retrParams.put("location_change_prefix", "[F] ");
             }
             
             int maxCacheLogs = config.getInt("limitCacheLogs", 20);

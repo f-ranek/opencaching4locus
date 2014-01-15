@@ -47,5 +47,11 @@
         android:defaultValue="true"
         android:dependency="signToService"
         />
-    
+    <CheckBoxPreference
+        android:key="userCoordsAsDefault" 
+        android:title="@string/pref_my_account_user_coords_as_default"
+        android:summary="@string/pref_my_account_user_coords_as_default_desc"
+        android:defaultValue="true"
+        android:dependency="signToService"
+        />
 </PreferenceScreen>
