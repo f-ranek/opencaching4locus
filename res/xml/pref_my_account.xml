@@ -24,6 +24,16 @@
         android:positiveButtonText="@null"
         android:title="@string/pref_my_account_found_strategy" 
         />
+    <ListPreference
+        android:key="myNotes"
+        android:defaultValue="desc:text|gc:personal_note"
+        android:entries="@array/pref_my_account_my_notes_titles"
+        android:entryValues="@array/pref_my_account_my_notes_values"
+        android:negativeButtonText="@null"
+        android:positiveButtonText="@null"
+        android:title="@string/pref_my_account_my_notes" 
+        android:dependency="signToService"
+        />
     <CheckBoxPreference 
         android:key="excludeMyOwn"
         android:title="@string/pref_my_account_exclude_my_own"
@@ -37,5 +47,11 @@
         android:defaultValue="true"
         android:dependency="signToService"
         />
-    
+    <CheckBoxPreference
+        android:key="userCoordsAsDefault" 
+        android:title="@string/pref_my_account_user_coords_as_default"
+        android:summary="@string/pref_my_account_user_coords_as_default_desc"
+        android:defaultValue="true"
+        android:dependency="signToService"
+        />
 </PreferenceScreen>

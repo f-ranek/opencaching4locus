@@ -26,6 +26,13 @@
         android:title="@string/pref_download_logs_count" 
     />    
 
+    <CheckBoxPreference
+        android:key="listTrackables"
+        android:title="@string/pref_download_list_trackables" 
+        android:summary="@string/pref_download_list_trackables_desc" 
+        android:defaultValue="true"
+    />    
+    
     <org.bogus.android.ButtonPreference
         android:key="resetLocusDontAskAgain"
         android:title="@string/pref_download_reset_locus_dont_ask_again"

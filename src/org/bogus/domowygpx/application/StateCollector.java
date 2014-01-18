@@ -23,6 +23,7 @@ import org.bogus.domowygpx.services.DumpableDatabase;
 import org.bogus.domowygpx.services.FilesDownloaderService;
 import org.bogus.domowygpx.services.GpxDownloaderService;
 import org.bogus.domowygpx.services.LocalBinderIntf;
+import org.bogus.domowygpx.utils.DumpDatabase;
 import org.bogus.geocaching.egpx.R;
 import org.xeustechnologies.jtar.TarEntry;
 import org.xeustechnologies.jtar.TarOutputStream;
@@ -34,6 +35,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.IBinder;
@@ -91,10 +93,36 @@ public class StateCollector
                 Log.i(LOG_TAG, "Dumping " + services[i].getSimpleName() + " state");
                 List<File> items = dd.getDatabaseFileNames(context);
                 if (items != null){
+                    final DumpDatabase ddu = new DumpDatabase();
                     for (File file : items){
                         File target = new File(rootDir, file.getName());
                         FileUtils.copyFile(file, target, true);
                         files.add(target);
+                    }
+                    for (File file : items){
+                        if (ddu.isFileNameSuffixed(file)){
+                            continue;
+                        }
+                        SQLiteDatabase database = null;
+                        File target = new File(rootDir, file.getName() + ".xml");
+                        try{
+                            // try to open DB, and dump it's content in a human-readable format
+                            database = SQLiteDatabase.openDatabase(file.getAbsolutePath(), 
+                                null, SQLiteDatabase.OPEN_READONLY | SQLiteDatabase.NO_LOCALIZED_COLLATORS);
+                            ddu.dumpDatabase(database, target);
+                            files.add(target);
+                        }catch(Exception e){
+                            Log.e(LOG_TAG, "Failed to dump " + file + " in human-readable format");
+                            target.delete();
+                        }finally{
+                            if (database != null){
+                                try{
+                                    database.close();
+                                }catch(Exception e){
+                                    Log.e(LOG_TAG, "Failed to close database: " + file);
+                                }
+                            }
+                        }
                     }
                 }
             }catch(Exception e){

@@ -354,6 +354,9 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             if (hasOAuth3 && config.getBoolean("excludeIgnored", true)){
                 searchParams.put("exclude_ignored", "true");
             }
+            if (hasOAuth3 && config.getBoolean("userCoordsAsDefault", true)){
+                searchParams.put("location_source", "alt_wpt:user-coords");
+            }
             
             searchParams.put("status", "Available");
             query.append(urlEncode(searchParams));
@@ -362,6 +365,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         protected void appendReturnParameters(StringBuilder query, String userUUID) 
         throws JSONException
         {
+            final SharedPreferences config = getSharedPreferences("egpx", Context.MODE_PRIVATE);
             final boolean searchAndRetrieve = true;
             JSONObject retrParams = new JSONObject();
             
@@ -371,16 +375,22 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             retrParams.put("ns_ox", "true");
             retrParams.put("ns_gsak", "true");
             retrParams.put("images", "descrefs:all");
-            retrParams.put("trackables", "desc:list");
+            if (config.getBoolean("listTrackables", true)){
+                retrParams.put("trackables", "desc:list");
+            }
             retrParams.put("recommendations", "desc:count");
             retrParams.put("attrs", "gc:attrs|desc:text|gc_ocde:attrs"); // do I need ox:tags ?
             retrParams.put("alt_wpts", "true");
             
-            if (okApi.getOAuth().hasOAuth3()){
-                retrParams.put("my_notes", "desc:text");
+            final boolean hasOAuth3 = okApi.getOAuth().hasOAuth3();
+            if (hasOAuth3){
+                retrParams.put("my_notes", config.getString("myNotes", "desc:text|gc:personal_note"));
+            }
+            if (hasOAuth3 && config.getBoolean("userCoordsAsDefault", true)){
+                retrParams.put("location_source", "alt_wpt:user-coords");
+                retrParams.put("location_change_prefix", "[F] ");
             }
             
-            SharedPreferences config = getSharedPreferences("egpx", Context.MODE_PRIVATE);
             int maxCacheLogs = config.getInt("limitCacheLogs", 20);
             
             if (maxCacheLogs != 0){

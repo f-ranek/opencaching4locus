@@ -17,6 +17,21 @@
         <item>mark</item>
     </string-array>
     
+    <string name="pref_my_account_my_notes">Własne notatki</string>
+    <string-array name="pref_my_account_my_notes_titles">
+        <item>nie pobieraj</item>
+        <item>w opisie skrzynki</item>
+        <item>w atrybutach skrzynki</item>
+        <item>w opisie i atrybutach skrzynki</item>
+    </string-array>
+    <string-array name="pref_my_account_my_notes_values">
+        <item>none</item>
+        <item>desc:text</item>
+        <item>gc:personal_note</item>
+        <item>desc:text|gc:personal_note</item>
+    </string-array>
+        
+    
     <string name="pref_my_account_sign">Zaloguj w oc.pl</string>
     <string name="pref_my_account_sign_desc">Zalogowanie w serwisie umożliwia pobieranie np. własnych notatek do skrzynek</string>
     <string name="pref_my_account_sign_btn">Zaloguj</string>
@@ -30,6 +45,9 @@
     
     <string name="pref_my_account_exclude_ignored">Pomijaj ignorowane skrzynki</string>
     <string name="pref_my_account_exclude_ignored_desc">Gdy zaznaczone, ignorowane skrzynki są pomijane</string>
+    
+    <string name="pref_my_account_user_coords_as_default">Własne współrzędne jako domyślne</string>
+    <string name="pref_my_account_user_coords_as_default_desc">Gdy zaznaczone, przenosi skrzynkę pod własne współrzędne, wprowadzone przez użytkownika na stronie oc.pl</string>
     
     <!-- Directories -->
     <string name="pref_title_directories">Katalogi zapisu</string>
@@ -71,6 +89,9 @@
         <item>-1</item>
         <item>0</item>
     </integer-array>
+    
+    <string name="pref_download_list_trackables">Pokaż Geokrety</string>
+    <string name="pref_download_list_trackables_desc">Pobiera listę Geokretów i umieszcza w opisie skrzynki</string>
     
     <string name="pref_download_reset_locus_dont_ask_again">Pytaj wyszukując z Locusa</string>
     <string name="pref_download_reset_locus_dont_ask_again_desc">Przywraca okienko parametrów wyszukiwania keszy z Locusa</string>

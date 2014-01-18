@@ -15,9 +15,12 @@ import org.apache.commons.io.IOUtils;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Base64;
+import android.util.Log;
 
 public class DumpDatabase
 {
+    private final static String LOG_TAG = "DumpDatabase";
+    
     /** Value returned by {@link #getType(int)} if the specified column is null */
     static final int FIELD_TYPE_NULL = 0;
 
@@ -45,95 +48,150 @@ public class DumpDatabase
     protected void dumpTableData(SQLiteDatabase database, String tableName, PrintWriter pw)
     throws IOException
     {
-        pw.print("<table name=\"");
-        pw.print(escapeAttr(tableName));
-        pw.println("\">");
-
-        
-        Cursor meta = database.rawQuery("PRAGMA table_info(" + tableName + ")", null);
-        Cursor data = database.rawQuery("select * from " + tableName, null);
+        String sql = null;
+        int count = 0;
         try{
-            final int colCount = data.getColumnCount();
-            final String[] colNames = data.getColumnNames();
-            final int[] colTypes = new int[colCount]; 
-
-            {
-                int nameIdx = meta.getColumnIndexOrThrow("name");
-                int typeIdx = meta.getColumnIndexOrThrow("type");
-                while (meta.moveToNext()){
-                    final String colName = meta.getString(nameIdx);
-                    final String colType = meta.getString(typeIdx);
-                    pw.print("<meta name=\"");
-                    pw.print(escapeAttr(colName));
-                    pw.print("\" type=\"");
-                    pw.print(escapeAttr(colType));
-                    pw.println("\">");
-                    for (int i=0; i<colCount; i++){
-                        if (colNames[i].equals(colName)){
-                            int res = 0;
-                            if ("INTEGER".equals(colType) || "LONG".equals(colType)){
-                                res = FIELD_TYPE_INTEGER; 
-                            } else 
-                            if ("FLOAT".equals(colType)){
-                                res = FIELD_TYPE_FLOAT; 
-                            } else 
-                            if ("BLOB".equals(colType)){
-                                res = FIELD_TYPE_BLOB; 
-                            } else 
-                            if ("STRING".equals(colType) || "TEXT".equals(colType)){
-                                res = FIELD_TYPE_STRING; 
+            pw.print("<table name=\"");
+            pw.print(escapeAttr(tableName));
+            pw.println("\">");
+    
+            if (!database.isReadOnly()){
+                database.beginTransaction();
+            }
+            Cursor meta = null;
+            Cursor data = null;
+            try{
+                count = 0;
+                sql = "PRAGMA table_info(" + tableName + ")";
+                meta = database.rawQuery(sql, null);
+                //
+                final int colCount = meta.getCount();
+                final int[] colTypes = new int[colCount]; 
+                final StringBuilder pks = new StringBuilder();
+                final StringBuilder columns = new StringBuilder();
+                final String[] colNames = new String[colCount];
+                {
+                    int nameIdx = meta.getColumnIndexOrThrow("name");
+                    int typeIdx = meta.getColumnIndexOrThrow("type");
+                    int pkIdx = meta.getColumnIndexOrThrow("pk");
+                    while (meta.moveToNext()){
+                        final String colName = meta.getString(nameIdx);
+                        final String colType = meta.getString(typeIdx);
+                        final int pk = meta.getInt(pkIdx);
+                        if (pk > 0){
+                            if (pks.length() != 0){
+                                pks.append(',');
                             }
-                            colTypes[i] = res;
-                            break;
+                            pks.append(pk);
                         }
+                        pw.print("<meta name=\"");
+                        pw.print(escapeAttr(colName));
+                        pw.print("\" type=\"");
+                        pw.print(escapeAttr(colType));
+                        pw.println("\">");
+                        if (columns.length() > 0){
+                            columns.append(',');
+                        }
+                        columns.append(colName);
+                        int res = 0;
+                        if ("INTEGER".equals(colType) || "LONG".equals(colType)){
+                            res = FIELD_TYPE_INTEGER; 
+                        } else 
+                        if ("FLOAT".equals(colType)){
+                            res = FIELD_TYPE_FLOAT; 
+                        } else 
+                        if ("BLOB".equals(colType)){
+                            res = FIELD_TYPE_BLOB; 
+                        } else 
+                        if ("STRING".equals(colType) || "TEXT".equals(colType)){
+                            res = FIELD_TYPE_STRING; 
+                        }
+                        colTypes[count] = res;
+                        colNames[count] = colName;
+                        count++;
                     }
                 }
-            }
-
-            if (data.moveToFirst()){
-                do{
-                    pw.println("<row>");
-                    for (int i = 0; i<colCount; i++){
-                        pw.print("\t<column name=\"");
-                        pw.print(escapeAttr(colNames[i]));
-                        if (!data.isNull(i)){
-                            pw.print("\">");
-                            final int type = colTypes[i];
-                            switch(type){
-                                case FIELD_TYPE_BLOB:
-                                    byte[] blob = data.getBlob(i);
-                                    pw.print(Base64.encodeToString(blob, Base64.DEFAULT));
-                                    break; 
-                                case FIELD_TYPE_FLOAT:
-                                    pw.print(data.getDouble(i));
-                                    break; 
-                                case FIELD_TYPE_INTEGER: 
-                                    pw.print(data.getLong(i));
-                                    break; 
-                                case FIELD_TYPE_STRING: 
-                                    String item = data.getString(i);
-                                    pw.print(escapeData(item));
-                                    break; 
-                            }
-                            pw.println("</column>");
-                        } else {
-                            pw.println(" />");
+                
+                if (pks.length() == 0){
+                    for (int i=1; i<=colCount; i++){
+                        if (pks.length() != 0){
+                            pks.append(',');
                         }
+                        pks.append(i);
                     }
-                    pw.println("</row>");
-                }while(data.moveToNext());
+                }
+                
+                count = 0;
+                do{
+                    sql = "select " + columns + " from " + tableName + " order by " + pks
+                            + " limit 15 offset " + count;
+                    data = database.rawQuery(sql, null);
+                    if (data.moveToFirst()){
+                        do{
+                            count++;
+                            pw.println("<row>");
+                            for (int i = 0; i<colCount; i++){
+                                pw.print("\t<column name=\"");
+                                pw.print(escapeAttr(colNames[i]));
+                                if (!data.isNull(i)){
+                                    pw.print("\">");
+                                    final int type = colTypes[i];
+                                    switch(type){
+                                        case FIELD_TYPE_BLOB:
+                                            byte[] blob = data.getBlob(i);
+                                            pw.print(Base64.encodeToString(blob, Base64.DEFAULT));
+                                            break; 
+                                        case FIELD_TYPE_FLOAT:
+                                            pw.print(data.getDouble(i));
+                                            break; 
+                                        case FIELD_TYPE_INTEGER: 
+                                            pw.print(data.getLong(i));
+                                            break; 
+                                        case FIELD_TYPE_STRING: 
+                                            String item = data.getString(i);
+                                            pw.print(escapeData(item));
+                                            break; 
+                                    }
+                                    pw.println("</column>");
+                                } else {
+                                    pw.println(" />");
+                                }
+                            }
+                            pw.println("</row>");
+                        }while(data.moveToNext());
+                    } else {
+                        break;
+                    }
+                    data.close();
+                }while(true);
+                if (!database.isReadOnly()){
+                    database.setTransactionSuccessful();
+                }
+            }finally{
+                if (data != null){
+                    data.close();
+                }
+                if (meta != null){
+                    meta.close();
+                }
+                if (!database.isReadOnly()){
+                    database.endTransaction();
+                }
             }
-        }finally{
-            data.close();
-            meta.close();
+            pw.println("</table>");
+            if (pw.checkError()){
+                throw new IOException();
+            }
+        }catch(RuntimeException re){
+            Log.e(LOG_TAG, "Failure while processing '" + sql + "' row=" + count, re);
+            throw re;
         }
-        pw.println("</table>");
     }
     
     public boolean dumpDatabase(SQLiteDatabase database, File target)
     throws IOException
     {
-        Cursor tables = database.rawQuery("select name from sqlite_master where type = 'table'", null);
+        Cursor tables = database.rawQuery("select name from sqlite_master where type = 'table' order by name", null);
         if (tables.moveToFirst()){
             OutputStream os = null;
             try{
@@ -150,6 +208,9 @@ public class DumpDatabase
                 }while(tables.moveToNext());
                 pw.println("</database>");
                 pw.flush();
+                if (pw.checkError()){
+                    throw new IOException();
+                }
                 os.flush();
             }finally{
                 IOUtils.closeQuietly(os);
@@ -180,5 +241,11 @@ public class DumpDatabase
             result.add(f);
         }
         return result;
+    }
+    
+    public boolean isFileNameSuffixed(File file)
+    {
+        String name = file.getName();
+        return name.endsWith("-journal") || name.endsWith("-wal") || name.endsWith("-shm"); 
     }
 }
