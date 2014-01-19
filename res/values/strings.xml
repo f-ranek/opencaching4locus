@@ -26,6 +26,9 @@
     <string name="hintMaxCacheDistance">np. 10 km</string>
 
     <string name="maxNumOfCachesDefault">50</string>
+    
+    <string name="cacheTypes">Typy keszy:</string>
+    <string name="chooseCacheTypes">Wybierz typy keszy</string>
 
     <string name="locusCommunicationError">Błąd komunikacji z Locusem</string>
     <string name="locusCommunicationError2">Awaryjniejszy GPX: Błąd komunikacji z Locusem</string>

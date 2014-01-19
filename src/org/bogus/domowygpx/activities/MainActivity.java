@@ -53,6 +53,8 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 	
 	private EditText editMaxNumOfCaches;
 	private EditText editMaxCacheDistance;
+	private CacheTypesConfig cacheTypesConfig;
+	private CacheTypesConfigRenderer cacheTypesConfigRenderer;
 
     private EditText editTargetFileName;
 
@@ -68,7 +70,7 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
     private ValidationUtils validationUtils;
     
 	/** Called when the activity is first created. */
-	@Override
+    @Override
 	public void onCreate(final Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
@@ -138,6 +140,10 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
                 }
             }
         });
+		
+		final TextView editCacheTypes = (TextView) findViewById(R.id.editCacheTypes);
+		cacheTypesConfig = new CacheTypesConfig();
+		cacheTypesConfigRenderer = new CacheTypesConfigRenderer(this, cacheTypesConfig, editCacheTypes);
 		
 		if (hasActionBar()){
 		    ViewGroup tableRowStart = (ViewGroup) findViewById(R.id.tableRowStart);
@@ -341,6 +347,7 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 	    taskConfiguration.setTargetFileName(editTargetFileName.getText());
 	    taskConfiguration.setDownloadImagesStrategy(downloadImagesFragment.getCurrentDownloadImagesStrategy());
 	    taskConfiguration.setDoLocusImport(checkBoxAutoLocusImport.isChecked());
+	    taskConfiguration.setCacheTypes(cacheTypesConfig.serializeToWebServiceString());
 	    
 	    taskConfiguration.parseAndValidate(this);
 	    
@@ -393,6 +400,7 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
         config.putString("maxNumOfCaches", editMaxNumOfCaches.getText().toString());
         config.putString("downloadImagesStrategy", downloadImagesFragment.getCurrentDownloadImagesStrategy());
         config.putBoolean("autoLocusImport", checkBoxAutoLocusImport.isChecked());
+        config.putString("cacheTypes", cacheTypesConfig.serializeToConfigString());
 
         config.commit();
 	}
@@ -429,12 +437,15 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 		    downloadImagesFragment.setCurrentDownloadImagesStrategy(
                 config.getString("downloadImagesStrategy", TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI));
 		    
+		    cacheTypesConfig.parseFromConfigString(config.getString("cacheTypes", cacheTypesConfig.getDefaultConfig()));
+		    
             updateBtnGetLocationFromGps(isGpsPending());
 		}catch(Exception e){
 		    Log.e(LOG_TAG, "Failed to read config", e);
 		    initNewConfig();
 		}
-
+		
+		cacheTypesConfigRenderer.applyToTextView();
 	}
 	
 	@SuppressLint("SimpleDateFormat")
@@ -452,6 +463,8 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 	        editTargetFileName.setText(fileName);
 	    }
 	    downloadImagesFragment.setCurrentDownloadImagesStrategy(TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI);
+	    cacheTypesConfig.parseFromConfigString(cacheTypesConfig.getDefaultConfig());
+	    cacheTypesConfigRenderer.applyToTextView();
 	}
 
     /**

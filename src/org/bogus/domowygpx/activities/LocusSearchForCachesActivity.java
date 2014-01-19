@@ -67,6 +67,9 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
     EditText editMaxCacheDistance;
     CheckBox checkBoxDontAskAgain;
     
+    CacheTypesConfig cacheTypesConfig;
+    CacheTypesConfigRenderer cacheTypesConfigRenderer;
+    
     DownloadImagesFragment downloadImagesFragment;
     
     private ValidationUtils validationUtils;
@@ -141,8 +144,10 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
             config.getString("Locus.downloadImagesStrategy",
                 config.getString("downloadImagesStrategy", 
                     TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI));
-
-
+        cacheTypesConfig = new CacheTypesConfig();
+        cacheTypesConfig.parseFromConfigString(config.getString("Locus.cacheTypes", 
+            cacheTypesConfig.getDefaultConfig()));
+        
         validationUtils = new ValidationUtils(this);
         
         validationUtils.addErrorField("CACHE_COUNT_LIMIT", R.id.errorMaxNumOfCaches);
@@ -230,6 +235,10 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         }
         editMaxNumOfCaches = (EditText) view.findViewById(R.id.editMaxNumOfCaches);
         editMaxCacheDistance = (EditText) view.findViewById(R.id.editMaxCacheDistance);
+
+        final TextView editCacheTypes = (TextView) view.findViewById(R.id.editCacheTypes);
+        cacheTypesConfigRenderer = new CacheTypesConfigRenderer(this, cacheTypesConfig, editCacheTypes);
+        cacheTypesConfigRenderer.applyToTextView();
         
         checkBoxDontAskAgain = (CheckBox) view.findViewById(R.id.checkBoxDontAskAgain);
         checkBoxDontAskAgain.setChecked(dontAskAgain);
@@ -301,6 +310,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
                 editor.putString("Locus.maxCacheDistance", AndroidUtils.toString(editMaxCacheDistance.getText()));
                 editor.putString("Locus.maxNumOfCaches", AndroidUtils.toString(editMaxNumOfCaches.getText()));
                 editor.putString("Locus.downloadImagesStrategy", downloadImagesFragment.getCurrentDownloadImagesStrategy());
+                editor.putString("Locus.cacheTypes", cacheTypesConfig.serializeToConfigString());
                 
                 if (isPointTools){ 
                     editor.putBoolean("Locus.point_searchWithoutAsking", checkBoxDontAskAgain.isChecked());
@@ -346,6 +356,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         taskConfiguration.setMaxCacheDistance(maxCacheDistanceText);
         taskConfiguration.setDownloadImagesStrategy(downloadImagesStrategy);
         taskConfiguration.setDoLocusImport(true);
+        taskConfiguration.setCacheTypes(cacheTypesConfig.serializeToWebServiceString());
         
         taskConfiguration.parseAndValidate(this);
         

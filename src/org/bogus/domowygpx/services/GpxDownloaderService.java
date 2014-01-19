@@ -341,6 +341,9 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             if (taskConfig.getOutMaxCacheDistance() > 0){
                 searchParams.put("radius", taskConfig.getOutMaxCacheDistance());
             }
+            if (taskConfig.getCacheTypes() != null){
+                searchParams.put("type", taskConfig.getCacheTypes());
+            }
             SharedPreferences config = getSharedPreferences("egpx", Context.MODE_PRIVATE);
             if (userUuid != null){
                 if (TaskConfiguration.FOUND_STRATEGY_SKIP.equals(config.getString("foundStrategy", TaskConfiguration.FOUND_STRATEGY_MARK))){

@@ -13,10 +13,10 @@ public class CacheTypesConfig
         {R.drawable.cache_type_multi, R.string.cacheTypeMulti},
         {R.drawable.cache_type_quiz, R.string.cacheTypeQuiz},
         {R.drawable.cache_type_moving, R.string.cacheTypeMoving},
+        {R.drawable.cache_type_virtual, R.string.cacheTypeVirtual},
         {R.drawable.cache_type_unknown, R.string.cacheTypeUnknown},
         {R.drawable.cache_type_event, R.string.cacheTypeEvent},
         {R.drawable.cache_type_webcam, R.string.cacheTypeWebcam},
-        {R.drawable.cache_type_virtual, R.string.cacheTypeVirtual},
         {R.drawable.cache_type_own, R.string.cacheTypeOwn},
     };
     private final static String[] CACHE_TYPE_NAMES = new String[] {
@@ -25,15 +25,15 @@ public class CacheTypesConfig
         "Multi",
         "Quiz",
         "Moving",
+        "Virtual",
         "Other",
         "Event",
         "Webcam",
-        "Virtual",
         "Own",
     };
     private BitSet values = new BitSet(CACHE_TYPES_CONFIG.length);
     
-    public void parseFromString(String cacheTypes)
+    public void parseFromConfigString(String cacheTypes)
     {
         values.clear();
         if (cacheTypes == null || cacheTypes.length() == 0){
@@ -49,7 +49,7 @@ public class CacheTypesConfig
         }
     }
     
-    public String serializeToString()
+    public String serializeToConfigString()
     {
         StringBuilder result = new StringBuilder();
         for (int idx = 0; idx < CACHE_TYPE_NAMES.length; idx++){
@@ -63,9 +63,19 @@ public class CacheTypesConfig
         return result.toString();
     }
     
+    public String serializeToWebServiceString()
+    {
+        return isAllSet() ? null : serializeToConfigString();
+    }
+    
     public boolean isAllSet()
     {
         return values.get(0);
+    }
+    
+    public boolean isAnySet()
+    {
+        return !values.isEmpty();
     }
     
     public boolean get(int index)
@@ -86,5 +96,10 @@ public class CacheTypesConfig
     public int[][] getAndroidConfig()
     {
         return CACHE_TYPES_CONFIG;
+    }
+    
+    public String getDefaultConfig()
+    {
+        return "ALL|Traditional|Multi|Moving|Virtual|Other|Quiz";
     }
 }

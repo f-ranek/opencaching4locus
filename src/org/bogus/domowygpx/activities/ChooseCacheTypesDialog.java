@@ -1,76 +1,71 @@
 package org.bogus.domowygpx.activities;
 
-import org.bogus.android.AndroidUtils;
 import org.bogus.geocaching.egpx.R;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PorterDuff.Mode;
+import android.graphics.PorterDuffColorFilter;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.ListView;
-import android.widget.TextView;
 
 public class ChooseCacheTypesDialog
 {
     final Activity parent;
     AlertDialog dialog;
-    ListView listViewCacheTypes;
     CacheTypesListAdapter listViewAdapter;
     OnTypesChosenListener onTypesChosenListener;
 
     public interface OnTypesChosenListener {
-        void cacheTypes(String cacheTypes);
+        void cacheTypes(CacheTypesConfig config);
     }
-
-    class CacheTypeItemViewHolder {
-        
-        View viewRoot;
-        CheckBox cacheTypeItemCheckBox;
-        TextView cacheTypeItemText;
-        
-        void initialSetup(View viewRoot)
-        {
-            this.viewRoot = viewRoot;
-            cacheTypeItemCheckBox = (CheckBox)viewRoot.findViewById(R.id.cacheTypeItemCheckBox);
-            cacheTypeItemText = (TextView)viewRoot.findViewById(R.id.cacheTypeItemText);
-            cacheTypeItemText.setOnClickListener(new View.OnClickListener()
-            {
-                @Override
-                public void onClick(View v)
-                {
-                    cacheTypeItemCheckBox.toggle();
-                }
-            });
-        }
-        
-    }    
     
-    CacheTypesConfig cacheTypesConfig = new CacheTypesConfig();
+    class CacheTypeItem {
+        final int position;
+        Drawable normalIcon;
+        Drawable disabledIcon;
+        String label;
+        CompoundButton.OnCheckedChangeListener onCheckedListener;
+        
+        CacheTypeItem(int position)
+        {
+            this.position = position;
+        }
+    }
+    
+    CacheTypesConfig cacheTypesConfig;
+    CacheTypeItem cacheTypeItems[];
     
     class CacheTypesListAdapter extends BaseAdapter
     {
-        private LayoutInflater layoutInflater = LayoutInflater.from(parent);
-        
         @Override
         public View getView(int position, View convertView, ViewGroup parent)
         {
-            CacheTypeItemViewHolder holder;
-            if (convertView == null) {
-                convertView = layoutInflater.inflate(R.layout.cache_type_list_item, null);
-                holder = new CacheTypeItemViewHolder();
-                holder.initialSetup(convertView);
-                convertView.setTag(holder);
+            CheckBox cb;
+            if (convertView == null){
+                Context ctx = ChooseCacheTypesDialog.this.parent;
+                cb = new CheckBox(ctx);
+                cb.setTextAppearance(ctx, android.R.style.TextAppearance_Large);
+                convertView = cb;
             } else {
-                holder = (CacheTypeItemViewHolder) convertView.getTag();
+                cb = (CheckBox)convertView;
             }
-            applyToView(position, holder);
-            return convertView;
+            final CacheTypeItem cit = getItem(position);
+            applyToView(cit, cb);
+            return cb;
         }
         
         @Override
@@ -80,60 +75,48 @@ public class ChooseCacheTypesDialog
         }
         
         @Override
-        public Void getItem(final int position)
+        public CacheTypeItem getItem(final int position)
         {
-            return null; // cacheTypesConfig[position]; // XXX ???
+            return cacheTypeItems[position];
         }
         
         @Override
         public int getCount()
         {
-            return cacheTypesConfig.getCount();
+            return cacheTypeItems.length;
+        }
+        
+        @Override
+        public boolean hasStableIds()
+        {
+            return true;
         }
     }    
     
-    private CompoundButton.OnCheckedChangeListener allClickListener = new CompoundButton.OnCheckedChangeListener()
+    void applyToView(final CacheTypeItem cacheTypeItem, CheckBox checkbox)
     {
-        @Override
-        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
-        {
-            listViewAdapter.notifyDataSetChanged();
-            if (isChecked){
-                dialog.dismiss();
-            }
-        }    
-    };
-
-    void applyToView(final int position, CacheTypeItemViewHolder holder)
-    {
-        holder.cacheTypeItemCheckBox.setOnCheckedChangeListener(null);
-        holder.cacheTypeItemCheckBox.setChecked(cacheTypesConfig.get(position));
-        final int[][] androidConfig = cacheTypesConfig.getAndroidConfig();
-        if (position == 0){
+        checkbox.setOnCheckedChangeListener(null);
+        checkbox.setChecked(cacheTypesConfig.get(cacheTypeItem.position));
+        checkbox.setOnCheckedChangeListener(cacheTypeItem.onCheckedListener);
+        checkbox.setText(cacheTypeItem.label);
+        
+        Drawable icon;
+        if (cacheTypeItem.position == 0){
             // all
-            holder.cacheTypeItemCheckBox.setOnCheckedChangeListener(allClickListener);
-            holder.cacheTypeItemText.setCompoundDrawables(null, null, null, null);
-            holder.cacheTypeItemText.setEnabled(true);
-            holder.cacheTypeItemCheckBox.setEnabled(true);
+            icon = cacheTypeItem.normalIcon;
+            checkbox.setEnabled(true);
         } else {
-            holder.cacheTypeItemCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
-            {
-                @Override
-                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
-                {
-                    cacheTypesConfig.set(position, isChecked);
-                }    
-            });
             boolean enabled = !cacheTypesConfig.isAllSet();
-            Drawable icon = parent.getResources().getDrawable(androidConfig[position][0]);
-            if (!enabled){
-                icon = AndroidUtils.getGrayscaled(icon);
-            }
-            holder.cacheTypeItemText.setCompoundDrawables(icon, null, null, null);
-            holder.cacheTypeItemText.setEnabled(enabled);
-            holder.cacheTypeItemCheckBox.setEnabled(enabled);
+            icon = enabled ? cacheTypeItem.normalIcon : cacheTypeItem.disabledIcon;
+            checkbox.setEnabled(enabled);
         }
-        holder.cacheTypeItemText.setText(androidConfig[position][1]);
+        
+        //Drawable[] drawabes = checkbox.getCompoundDrawables();
+        //if (drawabes == null || drawabes.length == 0 || drawabes[0] != icon){
+            // this causes relayout, and almost infinite loop of layout measure followed by layout request
+            // avoid by caching view on our side
+            checkbox.setCompoundDrawablesWithIntrinsicBounds(icon, null, null, null);
+        //}
     }
     
     public ChooseCacheTypesDialog(Activity parent)
@@ -141,29 +124,123 @@ public class ChooseCacheTypesDialog
         this.parent = parent;
     }
     
-    public void display(String cacheTypes)
+    public void display(CacheTypesConfig cacheTypes)
     {
+        this.cacheTypesConfig = cacheTypes;
         if (dialog != null){
             dialog.setOnDismissListener(null);
             dialog.dismiss();
             dialog = null;
         }
-        cacheTypesConfig.parseFromString(cacheTypes);
         prepareDialog();
+    }
+    
+    public void display(String cacheTypes)
+    {
+        CacheTypesConfig cacheTypesConfig = new CacheTypesConfig(); 
+        cacheTypesConfig.parseFromConfigString(cacheTypes);
+        display(cacheTypesConfig);
+    }
+    
+    private Drawable makeDisabled(Drawable icon0, float contrast, float brightness, int threshold)
+    {
+        final BitmapDrawable icon = (BitmapDrawable)(icon0.mutate());
+        int width = icon.getIntrinsicWidth();
+        int height = icon.getIntrinsicHeight();
+        Paint paint = new Paint();
+
+        Bitmap bmp0 = icon.getBitmap();
+        
+        Bitmap bmp1 = Bitmap.createBitmap(width, height, Config.ARGB_8888);
+        bmp1.setDensity(bmp0.getDensity());
+        Canvas canvas1 = new Canvas(bmp1);
+        paint.setColorFilter(new PorterDuffColorFilter(Color.GRAY, Mode.SRC_IN));
+        canvas1.drawBitmap(bmp0, 0, 0, paint);
+        
+        BitmapDrawable icon2;
+        
+        for (int x=0; x<width; x++){
+            for (int y=0; y<height; y++){
+                int color = bmp1.getPixel(x, y);
+                int a = Color.alpha(color);
+                int c = (Color.red(color) + Color.green(color) + Color.blue(color))/3;
+
+                c = (int)(c * contrast + brightness);
+                c = Math.min(255, Math.max(c, 0));
+                a = (int)(a * contrast + brightness);
+                a = Math.min(255, Math.max(a, 0));
+                
+                int c2 = (a * c / 255 + 255-a);
+                if (c2 >= threshold){
+                    a = 0;
+                } else {
+                    c = (int)(c*0.8);
+                }
+                color = Color.argb(a, c, c, c);
+                bmp1.setPixel(x, y, color);
+            }
+        }
+        icon2 = new BitmapDrawable(null, bmp1);
+        icon2.setTargetDensity(bmp0.getDensity());
+        
+        return icon2;
     }
     
     private void prepareDialog()
     {
-        final LayoutInflater inflater = LayoutInflater.from(parent);
-        final ViewGroup view = (ViewGroup)inflater.inflate(R.layout.activity_choose_cache_type, null);
+        final Resources resources = parent.getResources();
+        final int[][] androidConfig = cacheTypesConfig.getAndroidConfig();
+        cacheTypeItems = new CacheTypeItem[cacheTypesConfig.getCount()];
+        {
+            CacheTypeItem cti = new CacheTypeItem(0);
+            cti.onCheckedListener = new CompoundButton.OnCheckedChangeListener()
+            {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
+                {
+                    cacheTypesConfig.set(0, isChecked);
+                    listViewAdapter.notifyDataSetChanged();
+                    if (isChecked){
+                        dialog.dismiss();
+                    }
+                }    
+            };
+            if (androidConfig[0][0] > 0){
+                cti.label = " " + resources.getString(androidConfig[0][1]);
+                cti.normalIcon = resources.getDrawable(androidConfig[0][0]);
+            } else {
+                cti.label = resources.getString(androidConfig[0][1]);
+            }
+            cacheTypeItems[0] = cti;
+        }
         
-        listViewCacheTypes = (ListView)view.findViewById(R.id.listViewCacheTypes);
+        float contrast = 2f;
+        float brightness = -400f;
+        int threshold = 240;
+        
+        for (int i=1; i<cacheTypeItems.length; i++){
+            CacheTypeItem cti = new CacheTypeItem(i);
+            final int fi = i;
+            cti.onCheckedListener = new CompoundButton.OnCheckedChangeListener()
+            {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
+                {
+                    cacheTypesConfig.set(fi, isChecked);
+                }    
+            };
+            
+            cti.label = " " + resources.getString(androidConfig[i][1]);
+            cti.normalIcon = resources.getDrawable(androidConfig[i][0]);
+            cti.disabledIcon = makeDisabled(resources.getDrawable(androidConfig[i][0]), contrast, brightness, threshold);
+            cacheTypeItems[i] = cti;
+        }
+
         listViewAdapter = new CacheTypesListAdapter();
-        listViewCacheTypes.setAdapter(listViewAdapter);
         
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(parent);
-        dialogBuilder.setTitle(R.string.title_activity_oauth_signing);
-        dialogBuilder.setView(view);
+        dialogBuilder.setTitle(R.string.chooseCacheTypes);
+        dialogBuilder.setAdapter(listViewAdapter, null);
         
         dialog = dialogBuilder.create();
         dialog.show();
@@ -173,12 +250,13 @@ public class ChooseCacheTypesDialog
             public void onDismiss(DialogInterface dialog)
             {
                 if (onTypesChosenListener != null){
-                    final String result = cacheTypesConfig.serializeToString();
-                    onTypesChosenListener.cacheTypes(result);
+                    if (!cacheTypesConfig.isAnySet()){
+                        cacheTypesConfig.set(0, true);
+                    }
+                    onTypesChosenListener.cacheTypes(cacheTypesConfig);
                 }
             }
         });
-        
     }
 
     public OnTypesChosenListener getOnTypesChosenListener()

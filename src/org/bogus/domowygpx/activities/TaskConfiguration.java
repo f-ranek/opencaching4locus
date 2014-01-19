@@ -42,6 +42,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
     private String maxCacheDistance;
     private boolean doLocusImport;
     private String targetFileName;
+    private String cacheTypes;
 
     // config
     private String gpxTargetDirName;
@@ -399,6 +400,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         dest.writeString(maxCacheDistance);
         dest.writeByte((byte)(doLocusImport ? 1 : 0));
         dest.writeString(targetFileName);
+        dest.writeString(cacheTypes);
 
         dest.writeString(gpxTargetDirName);
         dest.writeString(gpxTargetDirNameTemp);
@@ -426,6 +428,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         result.maxCacheDistance = src.readString();
         result.doLocusImport = src.readByte() == 1;
         result.targetFileName = src.readString();
+        result.cacheTypes = src.readString();
         
         result.gpxTargetDirName = src.readString();
         result.gpxTargetDirNameTemp = src.readString();
@@ -497,6 +500,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         result = prime * result + outMaxNumOfCaches;
         result = prime * result + ((outTargetDirName == null) ? 0 : outTargetDirName.hashCode());
         result = prime * result + ((outTargetFileName == null) ? 0 : outTargetFileName.hashCode());
+        result = prime * result + ((cacheTypes == null) ? 0 : cacheTypes.hashCode());
         return result;
     }
 
@@ -537,6 +541,11 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
                 return false;
         } else if (!outTargetFileName.equals(other.outTargetFileName))
             return false;
+        if (cacheTypes == null) {
+            if (other.cacheTypes != null)
+                return false;
+        } else if (!cacheTypes.equals(other.cacheTypes))
+            return false;
         return true;
     }
 
@@ -548,6 +557,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         builder.add("longitude", longitude);
         builder.add("maxNumOfCaches", maxNumOfCaches);
         builder.add("maxCacheDistance", maxCacheDistance);
+        builder.add("cacheTypes", cacheTypes); 
         builder.add("doLocusImport", doLocusImport);
         builder.add("targetFileName", targetFileName);
         builder.add("gpxTargetDirName", gpxTargetDirName);
@@ -575,6 +585,16 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
     public void setOutLatitude(double outLatitude)
     {
         this.outLatitude = outLatitude;
+    }
+
+    public String getCacheTypes()
+    {
+        return cacheTypes;
+    }
+
+    public void setCacheTypes(String cacheTypes)
+    {
+        this.cacheTypes = cacheTypes;
     }
 
 }
