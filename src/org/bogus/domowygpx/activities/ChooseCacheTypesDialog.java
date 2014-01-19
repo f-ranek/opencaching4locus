@@ -22,6 +22,11 @@ import android.widget.BaseAdapter;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 
+/**
+ * A pick-up dialog for cache types
+ * @author Boguś
+ *
+ */
 public class ChooseCacheTypesDialog
 {
     final Activity parent;
@@ -29,11 +34,20 @@ public class ChooseCacheTypesDialog
     CacheTypesListAdapter listViewAdapter;
     OnTypesChosenListener onTypesChosenListener;
 
+    /**
+     * An interface to be notified when 
+     * @author Boguś
+     *
+     */
     public interface OnTypesChosenListener {
+        /**
+         * Dialog has been closed, and new config is to be applied
+         * @param config
+         */
         void cacheTypes(CacheTypesConfig config);
     }
     
-    class CacheTypeItem {
+    static class CacheTypeItem {
         final int position;
         Drawable normalIcon;
         Drawable disabledIcon;
@@ -124,6 +138,10 @@ public class ChooseCacheTypesDialog
         this.parent = parent;
     }
     
+    /**
+     * Display dialog using given config. Make sure to {@link #setOnTypesChosenListener(OnTypesChosenListener)}
+     * @param cacheTypes
+     */
     public void display(CacheTypesConfig cacheTypes)
     {
         this.cacheTypesConfig = cacheTypes;
@@ -135,6 +153,10 @@ public class ChooseCacheTypesDialog
         prepareDialog();
     }
     
+    /**
+     * Parse the config and display dialog. Make sure to {@link #setOnTypesChosenListener(OnTypesChosenListener)}
+     * @param cacheTypes
+     */
     public void display(String cacheTypes)
     {
         CacheTypesConfig cacheTypesConfig = new CacheTypesConfig(); 
@@ -142,7 +164,7 @@ public class ChooseCacheTypesDialog
         display(cacheTypesConfig);
     }
     
-    private Drawable makeDisabled(Drawable icon0, float contrast, float brightness, int threshold)
+    protected Drawable makeDisabled(Drawable icon0, float contrast, float brightness, int threshold)
     {
         final BitmapDrawable icon = (BitmapDrawable)(icon0.mutate());
         int width = icon.getIntrinsicWidth();
@@ -186,7 +208,7 @@ public class ChooseCacheTypesDialog
         return icon2;
     }
     
-    private void prepareDialog()
+    protected void prepareDialog()
     {
         final Resources resources = parent.getResources();
         final int[][] androidConfig = cacheTypesConfig.getAndroidConfig();
@@ -247,12 +269,13 @@ public class ChooseCacheTypesDialog
         dialog.setOnDismissListener(new DialogInterface.OnDismissListener()
         {
             @Override
-            public void onDismiss(DialogInterface dialog)
+            public void onDismiss(DialogInterface dlg)
             {
+                dialog = null;
+                if (!cacheTypesConfig.isAnySet()){
+                    cacheTypesConfig.set(0, true);
+                }
                 if (onTypesChosenListener != null){
-                    if (!cacheTypesConfig.isAnySet()){
-                        cacheTypesConfig.set(0, true);
-                    }
                     onTypesChosenListener.cacheTypes(cacheTypesConfig);
                 }
             }

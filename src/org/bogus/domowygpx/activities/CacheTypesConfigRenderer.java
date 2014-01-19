@@ -11,20 +11,33 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.TextView;
 
+/**
+ * Responsible for updating view to reflect config state
+ * @author Boguś
+ *
+ */
 public class CacheTypesConfigRenderer
 {
+    /** Padding between icons, in DP */
     static final int PADDING_DP = 1;
     
     final Activity context;
     final CacheTypesConfig config;
     final TextView textView;
     
+    ChooseCacheTypesDialog dialog;
     private int iconWidth, iconHeight;
     
     private int paddingPx;
 
     protected int drawableWidth, drawableHeight;
     
+    /**
+     * 
+     * @param ctx Parent context
+     * @param cfg Items config
+     * @param tv  View
+     */
     public CacheTypesConfigRenderer(Activity ctx, CacheTypesConfig cfg, TextView tv)
     {
         this.context = ctx;
@@ -65,31 +78,32 @@ public class CacheTypesConfigRenderer
             @Override
             public void onClick(final View v)
             {
-                final ChooseCacheTypesDialog cctd = new ChooseCacheTypesDialog(context);
-                cctd.display(config);
-                cctd.setOnTypesChosenListener(new OnTypesChosenListener(){
-
-                    @Override
-                    public void cacheTypes(CacheTypesConfig cacheTypes)
-                    {
-                        applyToTextView();
-                    }});
+                if (dialog == null){
+                    dialog = new ChooseCacheTypesDialog(context);
+                    dialog.setOnTypesChosenListener(new OnTypesChosenListener(){
+                        @Override
+                        public void cacheTypes(CacheTypesConfig cacheTypes)
+                        {
+                            applyToTextView();
+                        }});
+                }
+                dialog.display(config);
             }
         });        
     }
     
+    /**
+     * Calculate icon size for the display of selected cache types.
+     * Sets {@link #drawableHeight} and {@link #drawableWidth}
+     * @param maxWidth
+     */
     protected void calculateDrawableSize(int maxWidth)
     {
         drawableWidth = drawableHeight = -1;
         if (config.isAllSet()){
             return ;
         }
-        int selectedCount = 0;
-        for (int i=config.getCount()-1; i>=1; i--){
-            if (config.get(i)){
-                selectedCount++;
-            }
-        }
+        final int selectedCount = config.getSelectedCount();
         if (selectedCount == 0){
             return ;
         }
@@ -109,7 +123,12 @@ public class CacheTypesConfigRenderer
         }
     }
     
-    protected Drawable generateDrawable()
+    /**
+     * Generates drawable with selected icons. {@link #calculateDrawableSize(int)} must be
+     * called priori this method invocation. 
+     * @return
+     */
+    protected BitmapDrawable generateDrawable()
     {
         if (drawableWidth < 0 || drawableHeight < 0){
             return null;
@@ -139,6 +158,9 @@ public class CacheTypesConfigRenderer
         return result;
     }
     
+    /**
+     * Apply config state to the view. Call this method manually after config changes.
+     */
     public void applyToTextView()
     {
         if (config.isAllSet()){

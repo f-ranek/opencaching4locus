@@ -4,6 +4,13 @@ import java.util.BitSet;
 
 import org.bogus.geocaching.egpx.R;
 
+/**
+ * Responsible for storing data and metadata about available and selected
+ * cache types.
+ * 
+ * @author Boguś
+ *
+ */
 public class CacheTypesConfig
 {
     // TODO: make it configurable by okapi server
@@ -33,6 +40,11 @@ public class CacheTypesConfig
     };
     private BitSet values = new BitSet(CACHE_TYPES_CONFIG.length);
     
+    /**
+     * Parses from preferences string.
+     * @param cacheTypes
+     * @see #serializeToConfigString()
+     */
     public void parseFromConfigString(String cacheTypes)
     {
         values.clear();
@@ -49,6 +61,11 @@ public class CacheTypesConfig
         }
     }
     
+    /**
+     * Serialize to string, that can be saved in user preferences
+     * @return
+     * @see #parseFromConfigString(String)
+     */
     public String serializeToConfigString()
     {
         StringBuilder result = new StringBuilder();
@@ -63,41 +80,88 @@ public class CacheTypesConfig
         return result.toString();
     }
     
+    /**
+     * Serialize to cache_types web service argument
+     * @return
+     */
     public String serializeToWebServiceString()
     {
         return isAllSet() ? null : serializeToConfigString();
     }
     
+    /**
+     * Is ALL caches set?
+     * @return
+     */
     public boolean isAllSet()
     {
         return values.get(0);
     }
     
+    /**
+     * Is any cache type (including ALL item) set?
+     * @return
+     */
     public boolean isAnySet()
     {
         return !values.isEmpty();
     }
+
+    /**
+     * Returns count of selected positions, including ALL item
+     * @return
+     */
+    public int getSelectedCount()
+    {
+        return values.cardinality();
+    }
     
+    /**
+     * Is given type selected?
+     * @param index
+     * @return
+     */
     public boolean get(int index)
     {
         return values.get(index);
     }
     
+    /**
+     * Changes selection for given type
+     * @param index
+     * @param value
+     */
     public void set(int index, boolean value)
     {
         values.set(index, value);
     }
     
+    /**
+     * Return the number of configuration items (including ALL item)
+     * @return
+     */
     public int getCount()
     {
         return CACHE_TYPES_CONFIG.length;
     }
     
+    /**
+     * Returns array of [icon_id, string_id]. 
+     * <br>First dimension - item index, from 0 to {@link #getCount()} exclusive. 
+     * Second dimension - icon_id (may be <= 0) and label string_id. Item at index
+     * 0 is an ALL item.  
+     * @return  
+     */
     public int[][] getAndroidConfig()
     {
         return CACHE_TYPES_CONFIG;
     }
     
+    /**
+     * Returns the string, which can be used as a configuration default value
+     * @return
+     * @see #parseFromConfigString(String)
+     */
     public String getDefaultConfig()
     {
         return "ALL|Traditional|Multi|Moving|Virtual|Other|Quiz";
