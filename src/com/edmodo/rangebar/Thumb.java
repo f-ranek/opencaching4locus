@@ -15,9 +15,8 @@ package com.edmodo.rangebar;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.util.TypedValue;
 
 /**
@@ -38,16 +37,8 @@ class Thumb {
     // Radius (in pixels) of the touch area of the thumb.
     private final float mTargetRadiusPx;
 
-    // The normal and pressed images to display for the thumbs.
-    private final Bitmap mImageNormal;
-    private final Bitmap mImagePressed;
-
-    // Variables to store half the width/height for easier calculation.
-    private final float mHalfWidthNormal;
-    private final float mHalfHeightNormal;
-
-    private final float mHalfWidthPressed;
-    private final float mHalfHeightPressed;
+    // The images to display for the thumbs.
+    private final Drawable mDrawable;
 
     // Indicates whether this thumb is currently pressed and active.
     private boolean mIsPressed = false;
@@ -62,24 +53,18 @@ class Thumb {
 
     Thumb(Context ctx,
           float y,
-          int thumbImageNormal,
-          int thumbImagePressed) {
+          int thumbDrawableResId) {
 
         final Resources res = ctx.getResources();
 
-        mImageNormal = BitmapFactory.decodeResource(res, thumbImageNormal);
-        mImagePressed = BitmapFactory.decodeResource(res, thumbImagePressed);
+        mDrawable = res.getDrawable(thumbDrawableResId);
 
-        mHalfWidthNormal = mImageNormal.getWidth() / 2f;
-        mHalfHeightNormal = mImageNormal.getHeight() / 2f;
-
-        mHalfWidthPressed = mImagePressed.getWidth() / 2f;
-        mHalfHeightPressed = mImagePressed.getHeight() / 2f;
+        float mHalfWidthNormal = mDrawable.getIntrinsicWidth() / 2f;
 
         // Sets the minimum touchable area, but allows it to expand based on
         // image size
 
-        int normalDrawableSize = Math.max(mImageNormal.getWidth(), mImageNormal.getHeight());
+        int normalDrawableSize = Math.max(mDrawable.getIntrinsicWidth(), mDrawable.getIntrinsicHeight());
         mTargetRadiusPx = Math.max(normalDrawableSize, 
                 TypedValue.complexToDimensionPixelSize(MINIMUM_TARGET_RADIUS_DP,
                     res.getDisplayMetrics()));
@@ -89,14 +74,6 @@ class Thumb {
     }
 
     // Package-Private Methods /////////////////////////////////////////////////
-
-    float getHalfWidth() {
-        return mHalfWidthNormal;
-    }
-
-    float getHalfHeight() {
-        return mHalfHeightNormal;
-    }
 
     void setX(float x) {
         mX = x;
@@ -143,17 +120,14 @@ class Thumb {
      */
     void draw(Canvas canvas) {
 
-        // should use drawable, and drawable states!
-        final Bitmap bitmap = (mIsPressed) ? mImagePressed : mImageNormal;
-
-        if (mIsPressed) {
-            final float topPressed = mY - mHalfHeightPressed;
-            final float leftPressed = mX - mHalfWidthPressed;
-            canvas.drawBitmap(bitmap, leftPressed, topPressed, null);
-        } else {
-            final float topNormal = mY - mHalfHeightNormal;
-            final float leftNormal = mX - mHalfWidthNormal;
-            canvas.drawBitmap(bitmap, leftNormal, topNormal, null);
+        if (mDrawable.isStateful()){
+            mDrawable.setState(new int[]{mIsPressed ? android.R.attr.state_pressed : 0});
         }
+        final int topPressed = (int)(mY - mDrawable.getIntrinsicHeight()/2f);
+        final int leftPressed = (int)(mX - mDrawable.getIntrinsicWidth()/2f);
+        mDrawable.setBounds(leftPressed, topPressed,
+            leftPressed+mDrawable.getIntrinsicWidth(),
+            topPressed+mDrawable.getIntrinsicHeight());
+        mDrawable.draw(canvas);
     }
 }

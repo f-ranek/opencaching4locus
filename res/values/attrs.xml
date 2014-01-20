@@ -8,8 +8,7 @@
         <attr name="barColor" format="reference|color" />
         <attr name="connectingLineWeight" format="dimension" />
         <attr name="connectingLineColor" format="reference|color" />
-        <attr name="thumbImageNormal" format="reference" />
-        <attr name="thumbImagePressed" format="reference" />
+        <attr name="thumbImage" format="reference" />
     </declare-styleable>
 
 </resources>

@@ -61,6 +61,8 @@ class Bar {
 
         mTickStartY = mY - mTickHeight / 2f;
         mTickEndY = mY + mTickHeight / 2f;
+        
+        // TODO: implement thickers relative position: top, middle, bottom
 
         // Initialize the paint.
         mBarPaint = new Paint();
@@ -166,5 +168,7 @@ class Bar {
         // Draw final tick. We draw the final tick outside the loop to avoid any
         // rounding discrepancies.
         canvas.drawLine(mRightX, mTickStartY, mRightX, mTickEndY, mTickPaint);
+        
+        // TODO: implement lables
     }
 }
