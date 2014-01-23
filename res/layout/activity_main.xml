@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    xmlns:app="http://schemas.android.com/apk/res-auto" 
     android:layout_width="fill_parent"
-    android:layout_height="wrap_content" >
+    android:layout_height="wrap_content" xmlns:app1="http://schemas.android.com/apk/res/org.bogus.geocaching.egpx">
 
     <LinearLayout
         android:layout_width="fill_parent"
@@ -335,19 +334,26 @@
         </TableLayout>
 
         <com.edmodo.rangebar.RangeBar
-            
             android:id="@+id/rangebar1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingRight="20dp"
-            android:paddingLeft="30dp"
-            android:background="@color/dupa_kolor2"
-            app:tickCount="9" 
-            app:barWeight="3dp"
-            app:tickHeight="5dp"
-            app:tickWidth="1dp"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:visibility="gone"
+            app1:barWeight="3dp"
+            app1:connectingLineWeight="1dp"
+            app1:labels="@array/difficultyLables"
+            app1:labelsTopSpace="1dp"
+            app1:leftIndex="5"
+            app1:textAppearance="?android:attr/textAppearanceSmall"
+            app1:tickCount="5"
+            app1:tickHeight="12dp"
+            app1:tickWidth="1dp" 
+            app1:secondaryTickCount="1"
+            app1:secondaryTickHeight="6dp"
+            app1:secondaryTickWidth="1dp" 
             />
-        
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

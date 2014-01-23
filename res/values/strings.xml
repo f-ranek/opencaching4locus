@@ -166,4 +166,16 @@
     <string name="cacheTypeUnknown">Skrzynka nietypowa</string>
     <string name="cacheTypeVirtual">Wirtualna</string>
     <string name="cacheTypeWebcam">Webcam</string>
+    
+    <string-array name="difficultyLables">
+        <item>1</item>
+        <item />
+        <item>2</item>
+        <item />
+        <item>3</item>
+        <item />
+        <item>4</item>
+        <item />
+        <item>5</item>
+    </string-array>
 </resources>
