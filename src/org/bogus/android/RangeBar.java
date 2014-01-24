@@ -11,7 +11,7 @@
  * governing permissions and limitations under the License. 
  */
 
-package com.edmodo.rangebar;
+package org.bogus.android;
 
 import org.bogus.geocaching.egpx.R;
 
@@ -44,6 +44,8 @@ import android.view.ViewDebug.ExportedProperty;
  * Clients of the RangeBar can attach a
  * {@link RangeBar#OnRangeBarChangeListener} to be notified when the thumbs have
  * been moved.
+ * <p>
+ * Based on https://github.com/edmodo/range-bar
  */
 public class RangeBar extends View {
 
@@ -51,34 +53,6 @@ public class RangeBar extends View {
 
     private static final String LOG_TAG = "RangeBar";
 
-    private static final int[] styleable_TextAppearance;
-    private static final int styleable_TextAppearance_textColor;
-    private static final int styleable_TextAppearance_textSize;
-    private static final int styleable_TextAppearance_typeface;
-    private static final int styleable_TextAppearance_fontFamily;
-    private static final int styleable_TextAppearance_textStyle;
-    
-    static {
-        // F*ing freaking code
-        int ta[] = null, taTc = 0, taTs = 0, taTf = 0, taFf = 0, taTst = 0; 
-        try{
-            Class<?> clazz = Class.forName("com.android.internal.R$styleable", false, RangeBar.class.getClassLoader());
-            ta = (int[])clazz.getField("TextAppearance").get(null);
-            taTc = clazz.getField("TextAppearance_textColor").getInt(null);
-            taTs = clazz.getField("TextAppearance_textSize").getInt(null);
-            taTf = clazz.getField("TextAppearance_typeface").getInt(null);
-            taFf = clazz.getField("TextAppearance_fontFamily").getInt(null);
-            taTst = clazz.getField("TextAppearance_textStyle").getInt(null);
-        }catch(Exception e){
-            Log.e(LOG_TAG, "Failed to load styleable_TextAppearance", e);
-        }
-        styleable_TextAppearance = ta;
-        styleable_TextAppearance_textColor = taTc;
-        styleable_TextAppearance_textSize = taTs;
-        styleable_TextAppearance_typeface = taTf;
-        styleable_TextAppearance_fontFamily = taFf;
-        styleable_TextAppearance_textStyle = taTst;
-    }
     
     // Default values for variables
     private static final int DEFAULT_TICK_COUNT = 3;
@@ -386,8 +360,9 @@ public class RangeBar extends View {
 
         int paddingTop = getPaddingTop();
         
+        final float yPos = Math.max(mConnectingLineWeight, 
+            Math.max(mDrawableHeight, Math.max(mTickHeight, mSecondaryTickHeight) + mBarWeight)) / 2f + paddingTop;
         // Create the two thumb objects.
-        final float yPos = h / 2f + paddingTop;
         mLeftThumb = new Thumb(ctx, yPos);
         mRightThumb = new Thumb(ctx, yPos);
 
@@ -444,7 +419,7 @@ public class RangeBar extends View {
         final float barSecondaryTickStartY = mBarY - secondaryBarTickHeight / 2f;
         final float barSecondaryTickEndY = mBarY + secondaryBarTickHeight / 2f;
         final float mickDistance = (mBarRightX-mBarLeftX) / (totalTickCount-1);
-        final float barLabelStartY = mLabelsHeight + barTickEndY + mLabelsTopSpace;
+        final float barLabelStartY = mLabelsHeight + Math.max(barTickEndY, barSecondaryTickEndY) + mLabelsTopSpace;
 
         canvas.drawLine(mBarLeftX, mBarY, mBarRightX, mBarY, mBarPaint);
     
@@ -477,8 +452,6 @@ public class RangeBar extends View {
         if (mLabels != null && mLabels[totalTickCount-1] != null){
             canvas.drawText(mLabels[totalTickCount-1], mBarRightX, barLabelStartY, mLabelPaint);
         }
-        
-        // TODO: implement lables
     }
     
     protected void drawLine(Canvas canvas) {
@@ -559,23 +532,25 @@ public class RangeBar extends View {
             mLeftIndex = leftThumbIndex;
             mRightIndex = rightThumbIndex;
             
-            // Initialize thumbs to the desired indices
-            float mTickDistance = (mBarRightX-mBarLeftX) / (mTickCount - 1);
-            mLeftThumb.setX(mBarLeftX + (mLeftIndex * mTickDistance));
-            mRightThumb.setX(mBarLeftX + (mRightIndex * mTickDistance));
+            if (mLeftThumb != null && mRightThumb != null){
+                // Initialize thumbs to the desired indices
+                float mTickDistance = (mBarRightX-mBarLeftX) / (mTickCount - 1);
+                mLeftThumb.setX(mBarLeftX + (mLeftIndex * mTickDistance));
+                mRightThumb.setX(mBarLeftX + (mRightIndex * mTickDistance));
+    
+                // Set the thumb indices.
+                final int newLeftIndex = getNearestTickIndex(mLeftThumb);
+                final int newRightIndex = getNearestTickIndex(mRightThumb);
 
-            // Set the thumb indices.
-            final int newLeftIndex = getNearestTickIndex(mLeftThumb);
-            final int newRightIndex = getNearestTickIndex(mRightThumb);
-
-            // Call the listener.
-            if (newLeftIndex != mLeftIndex || newRightIndex != mRightIndex) {
-
-                mLeftIndex = newLeftIndex;
-                mRightIndex = newRightIndex;
-
-                if (mListener != null) {
-                    mListener.onIndexChangeListener(this, mLeftIndex, mRightIndex);
+                // Call the listener.
+                if (newLeftIndex != mLeftIndex || newRightIndex != mRightIndex) {
+    
+                    mLeftIndex = newLeftIndex;
+                    mRightIndex = newRightIndex;
+    
+                    if (mListener != null) {
+                        mListener.onIndexChangeListener(this, mLeftIndex, mRightIndex);
+                    }
                 }
             }
         }
@@ -696,27 +671,24 @@ public class RangeBar extends View {
             TypedArray appearance = null;
             int ap = ta.getResourceId(R.styleable.RangeBar_textAppearance, -1);
             if (ap != -1) {
-                appearance = context.getTheme().obtainStyledAttributes(ap, styleable_TextAppearance);
-                try {
-                    int n = appearance.getIndexCount();
-                    for (int i = 0; i < n; i++) {
-                        int attr = appearance.getIndex(i);
+                appearance = context.getTheme().obtainStyledAttributes(ap, TextAppearanceConsts.styleable_TextAppearance);
+                int n = appearance.getIndexCount();
+                for (int i = 0; i < n; i++) {
+                    int attr = appearance.getIndex(i);
 
-                        if (attr == styleable_TextAppearance_textColor){
-                            mTextColor = appearance.getColorStateList(attr);
-                        } else if (attr == styleable_TextAppearance_textSize){
-                            mTextSize = appearance.getDimensionPixelSize(attr, mTextSize);
-                        } else if (attr == styleable_TextAppearance_typeface){
-                            mTypefaceIndex = appearance.getInt(attr, -1);
-                        } else if (attr == styleable_TextAppearance_fontFamily){
-                            mFontFamily = appearance.getString(attr);
-                        } else if (attr == styleable_TextAppearance_textStyle){
-                            mFontStyleIndex = appearance.getInt(attr, -1);
-                        }
+                    if (attr == TextAppearanceConsts.styleable_TextAppearance_textColor){
+                        mTextColor = appearance.getColorStateList(attr);
+                    } else if (attr == TextAppearanceConsts.styleable_TextAppearance_textSize){
+                        mTextSize = appearance.getDimensionPixelSize(attr, mTextSize);
+                    } else if (attr == TextAppearanceConsts.styleable_TextAppearance_typeface){
+                        mTypefaceIndex = appearance.getInt(attr, -1);
+                    } else if (attr == TextAppearanceConsts.styleable_TextAppearance_fontFamily){
+                        mFontFamily = appearance.getString(attr);
+                    } else if (attr == TextAppearanceConsts.styleable_TextAppearance_textStyle){
+                        mFontStyleIndex = appearance.getInt(attr, -1);
                     }
-                }finally{
-                    appearance.recycle();
                 }
+                appearance.recycle();
             }
         } finally {
             ta.recycle();
@@ -736,7 +708,7 @@ public class RangeBar extends View {
                     continue;
                 }
                 mLabelPaint.getTextBounds(text, 0, text.length(), bounds);
-                int height = bounds.bottom;
+                int height = bounds.height();
                 if (height > mLabelsHeight){
                     mLabelsHeight = height;
                 }
@@ -744,12 +716,13 @@ public class RangeBar extends View {
         }
         
         
-        int mDefaultHeight = (int)Math.max(mConnectingLineWeight, 
+        float mDefaultHeight = Math.max(mConnectingLineWeight, 
             Math.max(mDrawableHeight, Math.max(mTickHeight, mSecondaryTickHeight) + mBarWeight));
         mDefaultHeight += getPaddingTop();
         mDefaultHeight += getPaddingBottom();
         mDefaultHeight += mLabelsHeight;
-        return mDefaultHeight;
+        mDefaultHeight += mLabelsTopSpace;
+        return (int)mDefaultHeight;
     }
 
     public void setTickCount(int tickCount) {
