@@ -184,7 +184,7 @@ public class OAuthSigningActivity extends Activity
     private void prepareSignInDialog()
     {
         final LayoutInflater inflater = LayoutInflater.from(this);
-        final ViewGroup view = (ViewGroup)inflater.inflate(R.layout.activity_oauth_signing, null);
+        final ViewGroup view = (ViewGroup)inflater.inflate(R.layout.dialog_oauth_signing, null);
         
         btnAuthorize = (Button)view.findViewById(R.id.oauthBtnAuthorize);
         btnAuthorize.setOnClickListener(new View.OnClickListener()

@@ -35,7 +35,7 @@ public class ChooseCacheTypesDialog
     OnTypesChosenListener onTypesChosenListener;
 
     /**
-     * An interface to be notified when 
+     * An interface to be notified when user closes the dialog
      * @author Boguś
      *
      */

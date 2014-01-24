@@ -56,6 +56,9 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 	private CacheTypesConfig cacheTypesConfig;
 	private CacheTypesConfigRenderer cacheTypesConfigRenderer;
 
+	private RangeConfig cacheTaskDifficultyConfig, cacheTerrainDifficultyConfig;
+	private CacheDifficultiesRenderer cacheDifficultiesRenderer;
+
     private EditText editTargetFileName;
 
     private LocationManager locman;
@@ -144,6 +147,13 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 		final TextView editCacheTypes = (TextView) findViewById(R.id.editCacheTypes);
 		cacheTypesConfig = new CacheTypesConfig();
 		cacheTypesConfigRenderer = new CacheTypesConfigRenderer(this, cacheTypesConfig, editCacheTypes);
+		
+		final TextView editCacheDifficulties = (TextView) findViewById(R.id.editCacheDifficulties);
+		cacheTaskDifficultyConfig = new RangeConfig(); 
+		cacheTerrainDifficultyConfig = new RangeConfig();
+		cacheDifficultiesRenderer = new CacheDifficultiesRenderer(this, cacheTaskDifficultyConfig,
+		    cacheTerrainDifficultyConfig, editCacheDifficulties);
+
 		
 		if (hasActionBar()){
 		    ViewGroup tableRowStart = (ViewGroup) findViewById(R.id.tableRowStart);
@@ -348,6 +358,9 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 	    taskConfiguration.setDownloadImagesStrategy(downloadImagesFragment.getCurrentDownloadImagesStrategy());
 	    taskConfiguration.setDoLocusImport(checkBoxAutoLocusImport.isChecked());
 	    taskConfiguration.setCacheTypes(cacheTypesConfig.serializeToWebServiceString());
+	    taskConfiguration.setCacheTaskDifficulty(cacheTaskDifficultyConfig.serializeToWebServiceString());
+	    taskConfiguration.setCacheTerrainDifficulty(cacheTerrainDifficultyConfig.serializeToWebServiceString());
+	    
 	    
 	    taskConfiguration.parseAndValidate(this);
 	    
@@ -401,7 +414,9 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
         config.putString("downloadImagesStrategy", downloadImagesFragment.getCurrentDownloadImagesStrategy());
         config.putBoolean("autoLocusImport", checkBoxAutoLocusImport.isChecked());
         config.putString("cacheTypes", cacheTypesConfig.serializeToConfigString());
-
+        config.putString("cacheTaskDifficulty", cacheTaskDifficultyConfig.serializeToConfigString());
+        config.putString("cacheTerrainDifficulty", cacheTerrainDifficultyConfig.serializeToConfigString());
+        
         config.commit();
 	}
 	
@@ -438,6 +453,8 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
                 config.getString("downloadImagesStrategy", TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI));
 		    
 		    cacheTypesConfig.parseFromConfigString(config.getString("cacheTypes", cacheTypesConfig.getDefaultConfig()));
+		    cacheTaskDifficultyConfig.parseFromConfigString(config.getString("cacheTaskDifficulty", null));
+		    cacheTerrainDifficultyConfig.parseFromConfigString(config.getString("cacheTerrainDifficulty", null));
 		    
             updateBtnGetLocationFromGps(isGpsPending());
 		}catch(Exception e){
@@ -446,6 +463,7 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 		}
 		
 		cacheTypesConfigRenderer.applyToTextView();
+		cacheDifficultiesRenderer.applyToTextView();
 	}
 	
 	@SuppressLint("SimpleDateFormat")
@@ -465,6 +483,7 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 	    downloadImagesFragment.setCurrentDownloadImagesStrategy(TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI);
 	    cacheTypesConfig.parseFromConfigString(cacheTypesConfig.getDefaultConfig());
 	    cacheTypesConfigRenderer.applyToTextView();
+	    cacheDifficultiesRenderer.applyToTextView();
 	}
 
     /**

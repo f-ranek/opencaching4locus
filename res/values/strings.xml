@@ -167,15 +167,22 @@
     <string name="cacheTypeVirtual">Wirtualna</string>
     <string name="cacheTypeWebcam">Webcam</string>
     
+    <string name="difficultyTask">Trudność zadania</string>
+    <string name="difficultyTerrain">Trudność terenu</string>
+    <string name="difficulties">Trudność:</string>
+    <string name="chooseDifficulties">Wybierz trudność</string>
+    <string name="difficultiesAll">Dowolna</string>
+    <string name="difficultiesTaskItem">zadania: %d</string>
+    <string name="difficultiesTerrainItem">terenu: %d</string>
+    <string name="difficultiesTaskRange">zadania: %1$d-%2$d</string>
+    <string name="difficultiesTerrainRange">terenu: %1$d-%2$d</string>
     <string-array name="difficultyLables">
         <item>1</item>
-        <item />
         <item>2</item>
-        <item />
         <item>3</item>
-        <item />
         <item>4</item>
-        <item />
         <item>5</item>
     </string-array>
+    
+    <!-- color name="zdupy">#00FF80</color  -->
 </resources>

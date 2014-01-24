@@ -43,6 +43,8 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
     private boolean doLocusImport;
     private String targetFileName;
     private String cacheTypes;
+    private String cacheTaskDifficulty;
+    private String cacheTerrainDifficulty;
 
     // config
     private String gpxTargetDirName;
@@ -401,6 +403,8 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         dest.writeByte((byte)(doLocusImport ? 1 : 0));
         dest.writeString(targetFileName);
         dest.writeString(cacheTypes);
+        dest.writeString(cacheTaskDifficulty);
+        dest.writeString(cacheTerrainDifficulty);
 
         dest.writeString(gpxTargetDirName);
         dest.writeString(gpxTargetDirNameTemp);
@@ -429,6 +433,8 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         result.doLocusImport = src.readByte() == 1;
         result.targetFileName = src.readString();
         result.cacheTypes = src.readString();
+        result.cacheTaskDifficulty = src.readString();
+        result.cacheTerrainDifficulty = src.readString();
         
         result.gpxTargetDirName = src.readString();
         result.gpxTargetDirNameTemp = src.readString();
@@ -501,6 +507,8 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         result = prime * result + ((outTargetDirName == null) ? 0 : outTargetDirName.hashCode());
         result = prime * result + ((outTargetFileName == null) ? 0 : outTargetFileName.hashCode());
         result = prime * result + ((cacheTypes == null) ? 0 : cacheTypes.hashCode());
+        result = prime * result + ((cacheTaskDifficulty == null) ? 0 : cacheTaskDifficulty.hashCode());
+        result = prime * result + ((cacheTerrainDifficulty == null) ? 0 : cacheTerrainDifficulty.hashCode());
         return result;
     }
 
@@ -546,6 +554,16 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
                 return false;
         } else if (!cacheTypes.equals(other.cacheTypes))
             return false;
+        if (cacheTaskDifficulty == null) {
+            if (other.cacheTaskDifficulty != null)
+                return false;
+        } else if (!cacheTaskDifficulty.equals(other.cacheTaskDifficulty))
+            return false;
+        if (cacheTerrainDifficulty == null) {
+            if (other.cacheTerrainDifficulty != null)
+                return false;
+        } else if (!cacheTerrainDifficulty.equals(other.cacheTerrainDifficulty))
+            return false;
         return true;
     }
 
@@ -557,7 +575,9 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         builder.add("longitude", longitude);
         builder.add("maxNumOfCaches", maxNumOfCaches);
         builder.add("maxCacheDistance", maxCacheDistance);
-        builder.add("cacheTypes", cacheTypes); 
+        builder.add("cacheTypes", cacheTypes);
+        builder.add("cacheTaskDifficulty", cacheTaskDifficulty); 
+        builder.add("cacheTerrainDifficulty", cacheTerrainDifficulty); 
         builder.add("doLocusImport", doLocusImport);
         builder.add("targetFileName", targetFileName);
         builder.add("gpxTargetDirName", gpxTargetDirName);
@@ -595,6 +615,26 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
     public void setCacheTypes(String cacheTypes)
     {
         this.cacheTypes = cacheTypes;
+    }
+
+    public String getCacheTaskDifficulty()
+    {
+        return cacheTaskDifficulty;
+    }
+
+    public String getCacheTerrainDifficulty()
+    {
+        return cacheTerrainDifficulty;
+    }
+
+    public void setCacheTaskDifficulty(String cacheTaskDifficulty)
+    {
+        this.cacheTaskDifficulty = cacheTaskDifficulty;
+    }
+
+    public void setCacheTerrainDifficulty(String cacheTerrainDifficulty)
+    {
+        this.cacheTerrainDifficulty = cacheTerrainDifficulty;
     }
 
 }

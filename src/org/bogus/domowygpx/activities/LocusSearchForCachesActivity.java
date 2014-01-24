@@ -70,6 +70,9 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
     CacheTypesConfig cacheTypesConfig;
     CacheTypesConfigRenderer cacheTypesConfigRenderer;
     
+    RangeConfig cacheTaskDifficultyConfig, cacheTerrainDifficultyConfig;
+    CacheDifficultiesRenderer cacheDifficultiesRenderer;
+
     DownloadImagesFragment downloadImagesFragment;
     
     private ValidationUtils validationUtils;
@@ -146,7 +149,16 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
                     TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI));
         cacheTypesConfig = new CacheTypesConfig();
         cacheTypesConfig.parseFromConfigString(config.getString("Locus.cacheTypes", 
-            cacheTypesConfig.getDefaultConfig()));
+            config.getString("cacheTypes", cacheTypesConfig.getDefaultConfig())));
+        
+        cacheTaskDifficultyConfig = new RangeConfig(); 
+        cacheTaskDifficultyConfig.parseFromConfigString(config.getString("Locus.cacheTaskDifficulty", 
+            config.getString("cacheTaskDifficulty", null)));
+
+        cacheTerrainDifficultyConfig = new RangeConfig();
+        cacheTerrainDifficultyConfig.parseFromConfigString(config.getString("Locus.cacheTerrainDifficulty", 
+            config.getString("cacheTerrainDifficulty", null)));
+        
         
         validationUtils = new ValidationUtils(this);
         
@@ -224,7 +236,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         }
         
         final LayoutInflater inflater = LayoutInflater.from(this);
-        final ViewGroup view = (ViewGroup)inflater.inflate(R.layout.activity_locus_search_for_caches, null);
+        final ViewGroup view = (ViewGroup)inflater.inflate(R.layout.dialog_locus_search_for_caches, null);
         
         {
             TextView textViewGeoPosition = (TextView) view.findViewById(R.id.textViewGeoPosition);
@@ -239,6 +251,11 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         final TextView editCacheTypes = (TextView) view.findViewById(R.id.editCacheTypes);
         cacheTypesConfigRenderer = new CacheTypesConfigRenderer(this, cacheTypesConfig, editCacheTypes);
         cacheTypesConfigRenderer.applyToTextView();
+        
+        final TextView editCacheDifficulties = (TextView) view.findViewById(R.id.editCacheDifficulties);
+        cacheDifficultiesRenderer = new CacheDifficultiesRenderer(this, cacheTaskDifficultyConfig,
+            cacheTerrainDifficultyConfig, editCacheDifficulties);
+        cacheDifficultiesRenderer.applyToTextView();
         
         checkBoxDontAskAgain = (CheckBox) view.findViewById(R.id.checkBoxDontAskAgain);
         checkBoxDontAskAgain.setChecked(dontAskAgain);
@@ -311,6 +328,8 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
                 editor.putString("Locus.maxNumOfCaches", AndroidUtils.toString(editMaxNumOfCaches.getText()));
                 editor.putString("Locus.downloadImagesStrategy", downloadImagesFragment.getCurrentDownloadImagesStrategy());
                 editor.putString("Locus.cacheTypes", cacheTypesConfig.serializeToConfigString());
+                editor.putString("Locus.cacheTaskDifficulty", cacheTaskDifficultyConfig.serializeToConfigString());
+                editor.putString("Locus.cacheTerrainDifficulty", cacheTerrainDifficultyConfig.serializeToConfigString());
                 
                 if (isPointTools){ 
                     editor.putBoolean("Locus.point_searchWithoutAsking", checkBoxDontAskAgain.isChecked());
@@ -357,6 +376,8 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         taskConfiguration.setDownloadImagesStrategy(downloadImagesStrategy);
         taskConfiguration.setDoLocusImport(true);
         taskConfiguration.setCacheTypes(cacheTypesConfig.serializeToWebServiceString());
+        taskConfiguration.setCacheTaskDifficulty(cacheTaskDifficultyConfig.serializeToWebServiceString());
+        taskConfiguration.setCacheTerrainDifficulty(cacheTerrainDifficultyConfig.serializeToWebServiceString());
         
         taskConfiguration.parseAndValidate(this);
         
