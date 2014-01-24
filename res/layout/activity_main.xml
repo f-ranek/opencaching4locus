@@ -333,7 +333,7 @@
             
         </TableLayout>
 
-        <com.edmodo.rangebar.RangeBar
+        <!-- com.edmodo.rangebar.RangeBar
             android:id="@+id/rangebar1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -352,7 +352,7 @@
             app1:secondaryTickCount="1"
             app1:secondaryTickHeight="6dp"
             app1:secondaryTickWidth="1dp" 
-            />
+            /-->
 
         <TextView
             android:layout_width="wrap_content"
