@@ -221,7 +221,7 @@ public class RangeBar extends View {
     private int mTextSize = 15;
     private String mFontFamily;
     private int mTypefaceIndex = -1;
-    private int mFontStyleIndex = -1;
+    private int mFontStyleIndex = Typeface.NORMAL;
     
     // Constructors ////////////////////////////////////////////////////////////
 
@@ -331,7 +331,7 @@ public class RangeBar extends View {
                         tf = Typeface.MONOSPACE;
                         break;
                 }
-                if (mFontStyleIndex > 0) {
+                if (mFontStyleIndex >= 0) {
                     if (tf == null) {
                         tf = Typeface.defaultFromStyle(mFontStyleIndex);
                     } else {

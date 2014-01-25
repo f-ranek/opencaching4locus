@@ -19,11 +19,11 @@ public class TextAppearanceConsts
         try{
             Class<?> clazz = Class.forName("com.android.internal.R$styleable", false, TextAppearanceConsts.class.getClassLoader());
             ta = (int[])clazz.getField("TextAppearance").get(null);
-            taTc = clazz.getField("TextAppearance_textColor").getInt(null);
-            taTs = clazz.getField("TextAppearance_textSize").getInt(null);
-            taTf = clazz.getField("TextAppearance_typeface").getInt(null);
-            taFf = clazz.getField("TextAppearance_fontFamily").getInt(null);
-            taTst = clazz.getField("TextAppearance_textStyle").getInt(null);
+            taTc = getField(clazz, "TextAppearance_textColor");
+            taTs = getField(clazz, "TextAppearance_textSize");
+            taTf = getField(clazz, "TextAppearance_typeface");
+            taFf = getField(clazz, "TextAppearance_fontFamily");
+            taTst = getField(clazz, "TextAppearance_textStyle");
         }catch(Exception e){
             Log.e(LOG_TAG, "Failed to load styleable_TextAppearance", e);
         }
@@ -35,4 +35,15 @@ public class TextAppearanceConsts
         styleable_TextAppearance_textStyle = taTst;
     }
 
+    private static int getField(Class<?> clazz, String fieldName)
+    throws IllegalAccessException
+    {
+        try{
+            return clazz.getField(fieldName).getInt(null);
+        }catch(NoSuchFieldException nsfe){
+            Log.e(LOG_TAG, nsfe.toString());
+            return -1;
+        }
+    }
+    
 }
