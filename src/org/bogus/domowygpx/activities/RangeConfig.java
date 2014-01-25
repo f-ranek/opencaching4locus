@@ -8,7 +8,7 @@ public class RangeConfig
     
     private final static int MIN_VALUE = 1;
     private final static int MAX_VALUE = 5;
-    private int min, max;
+    private int min = -1, max = -1;
     
     protected int ensureRange(int val)
     {

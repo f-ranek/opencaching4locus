@@ -127,7 +127,7 @@ public class ChooseCacheDifficultiesDialog
             }
         });
         
-        dialog.getButton(Dialog.BUTTON_NEUTRAL).setTextAppearance(parent, android.R.style.TextAppearance_Large);
+        dialog.getButton(Dialog.BUTTON_NEUTRAL).setTextAppearance(parent, R.style.TextAppearance_Large);
     }
 
     public OnDifficultiesChosenListener getOnDifficultiesChosenListener()
