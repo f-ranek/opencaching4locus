@@ -73,7 +73,7 @@ public class RangeConfig
                 setMax(Integer.parseInt(t[1]));
                 validate();
             }catch(Exception e){
-                Log.e(LOG_TAG, "Failed to parse task=" + config, e);
+                Log.e(LOG_TAG, "Failed to parse RangeConfig=" + config, e);
             }
         }
     }

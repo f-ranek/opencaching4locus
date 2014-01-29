@@ -59,6 +59,11 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 	private RangeConfig cacheTaskDifficultyConfig, cacheTerrainDifficultyConfig;
 	private CacheDifficultiesRenderer cacheDifficultiesRenderer;
 
+    private CacheRatingsConfig cacheRatingsConfig;
+    private CacheRecommendationsConfig cacheRecommendationsConfig;
+    private CacheRatingsRenderer cacheRatingsRenderer;
+
+	
     private EditText editTargetFileName;
 
     private LocationManager locman;
@@ -154,6 +159,11 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 		cacheDifficultiesRenderer = new CacheDifficultiesRenderer(this, cacheTaskDifficultyConfig,
 		    cacheTerrainDifficultyConfig, editCacheDifficulties);
 
+        final TextView editCacheRatings = (TextView) findViewById(R.id.editCacheRatings);
+        cacheRatingsConfig = new CacheRatingsConfig(); 
+        cacheRecommendationsConfig = new CacheRecommendationsConfig();
+        cacheRatingsRenderer = new CacheRatingsRenderer(this, cacheRatingsConfig,
+            cacheRecommendationsConfig, editCacheRatings);
 		
 		if (hasActionBar()){
 		    ViewGroup tableRowStart = (ViewGroup) findViewById(R.id.tableRowStart);
@@ -360,7 +370,8 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 	    taskConfiguration.setCacheTypes(cacheTypesConfig.serializeToWebServiceString());
 	    taskConfiguration.setCacheTaskDifficulty(cacheTaskDifficultyConfig.serializeToWebServiceString());
 	    taskConfiguration.setCacheTerrainDifficulty(cacheTerrainDifficultyConfig.serializeToWebServiceString());
-	    
+        taskConfiguration.setCacheRatings(cacheRatingsConfig.serializeToWebServiceString());
+        taskConfiguration.setCacheRecommendations(cacheRecommendationsConfig.serializeToWebServiceString());
 	    
 	    taskConfiguration.parseAndValidate(this);
 	    
@@ -416,6 +427,8 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
         config.putString("cacheTypes", cacheTypesConfig.serializeToConfigString());
         config.putString("cacheTaskDifficulty", cacheTaskDifficultyConfig.serializeToConfigString());
         config.putString("cacheTerrainDifficulty", cacheTerrainDifficultyConfig.serializeToConfigString());
+        config.putString("cacheRatings", cacheRatingsConfig.serializeToConfigString());
+        config.putString("cacheRecommendations", cacheRecommendationsConfig.serializeToConfigString());
         
         config.commit();
 	}
@@ -455,6 +468,8 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 		    cacheTypesConfig.parseFromConfigString(config.getString("cacheTypes", cacheTypesConfig.getDefaultConfig()));
 		    cacheTaskDifficultyConfig.parseFromConfigString(config.getString("cacheTaskDifficulty", null));
 		    cacheTerrainDifficultyConfig.parseFromConfigString(config.getString("cacheTerrainDifficulty", null));
+		    cacheRatingsConfig.parseFromConfigString(config.getString("cacheRatings", null));
+		    cacheRecommendationsConfig.parseFromConfigString(config.getString("cacheRecommendations", null));
 		    
             updateBtnGetLocationFromGps(isGpsPending());
 		}catch(Exception e){
@@ -464,6 +479,7 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 		
 		cacheTypesConfigRenderer.applyToTextView();
 		cacheDifficultiesRenderer.applyToTextView();
+		cacheRatingsRenderer.applyToTextView();
 	}
 	
 	@SuppressLint("SimpleDateFormat")
@@ -484,6 +500,7 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 	    cacheTypesConfig.parseFromConfigString(cacheTypesConfig.getDefaultConfig());
 	    cacheTypesConfigRenderer.applyToTextView();
 	    cacheDifficultiesRenderer.applyToTextView();
+	    cacheRatingsRenderer.applyToTextView();
 	}
 
     /**

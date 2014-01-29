@@ -350,8 +350,11 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             if (taskConfig.getCacheTerrainDifficulty() != null){
                 searchParams.put("terrain", taskConfig.getCacheTerrainDifficulty());
             }
-            if (taskConfig.getCacheTypes() != null){
-                searchParams.put("type", taskConfig.getCacheTypes());
+            if (taskConfig.getCacheRatings() != null){
+                searchParams.put("rating", taskConfig.getCacheRatings());
+            }
+            if (taskConfig.getCacheRecommendations() != null){
+                searchParams.put("min_rcmds", taskConfig.getCacheRecommendations());
             }
             SharedPreferences config = getSharedPreferences("egpx", Context.MODE_PRIVATE);
             if (userUuid != null){

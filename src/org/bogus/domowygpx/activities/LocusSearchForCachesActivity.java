@@ -73,6 +73,10 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
     RangeConfig cacheTaskDifficultyConfig, cacheTerrainDifficultyConfig;
     CacheDifficultiesRenderer cacheDifficultiesRenderer;
 
+    CacheRatingsConfig cacheRatingsConfig;
+    CacheRecommendationsConfig cacheRecommendationsConfig;
+    CacheRatingsRenderer cacheRatingsRenderer;
+    
     DownloadImagesFragment downloadImagesFragment;
     
     private ValidationUtils validationUtils;
@@ -159,6 +163,13 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         cacheTerrainDifficultyConfig.parseFromConfigString(config.getString("Locus.cacheTerrainDifficulty", 
             config.getString("cacheTerrainDifficulty", null)));
         
+        cacheRatingsConfig = new CacheRatingsConfig(); 
+        cacheRatingsConfig.parseFromConfigString(config.getString("Locus.cacheRatings", 
+            config.getString("cacheRatings", null)));
+
+        cacheRecommendationsConfig = new CacheRecommendationsConfig();
+        cacheRecommendationsConfig.parseFromConfigString(config.getString("Locus.cacheRecommendations", 
+            config.getString("cacheRecommendations", null)));
         
         validationUtils = new ValidationUtils(this);
         
@@ -257,6 +268,11 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
             cacheTerrainDifficultyConfig, editCacheDifficulties);
         cacheDifficultiesRenderer.applyToTextView();
         
+        final TextView editCacheRatings = (TextView) view.findViewById(R.id.editCacheRatings);
+        cacheRatingsRenderer = new CacheRatingsRenderer(this, cacheRatingsConfig,
+            cacheRecommendationsConfig, editCacheRatings);
+        cacheRatingsRenderer.applyToTextView();
+
         checkBoxDontAskAgain = (CheckBox) view.findViewById(R.id.checkBoxDontAskAgain);
         checkBoxDontAskAgain.setChecked(dontAskAgain);
         checkBoxDontAskAgain.setOnClickListener(new View.OnClickListener()
@@ -330,6 +346,8 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
                 editor.putString("Locus.cacheTypes", cacheTypesConfig.serializeToConfigString());
                 editor.putString("Locus.cacheTaskDifficulty", cacheTaskDifficultyConfig.serializeToConfigString());
                 editor.putString("Locus.cacheTerrainDifficulty", cacheTerrainDifficultyConfig.serializeToConfigString());
+                editor.putString("Locus.cacheRatings", cacheRatingsConfig.serializeToConfigString());
+                editor.putString("Locus.cacheRecommendations", cacheRecommendationsConfig.serializeToConfigString());
                 
                 if (isPointTools){ 
                     editor.putBoolean("Locus.point_searchWithoutAsking", checkBoxDontAskAgain.isChecked());
@@ -378,6 +396,8 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         taskConfiguration.setCacheTypes(cacheTypesConfig.serializeToWebServiceString());
         taskConfiguration.setCacheTaskDifficulty(cacheTaskDifficultyConfig.serializeToWebServiceString());
         taskConfiguration.setCacheTerrainDifficulty(cacheTerrainDifficultyConfig.serializeToWebServiceString());
+        taskConfiguration.setCacheRatings(cacheRatingsConfig.serializeToWebServiceString());
+        taskConfiguration.setCacheRecommendations(cacheRecommendationsConfig.serializeToWebServiceString());
         
         taskConfiguration.parseAndValidate(this);
         

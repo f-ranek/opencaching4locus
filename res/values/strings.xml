@@ -184,5 +184,27 @@
         <item>5</item>
     </string-array>
     
+    <string name="chooseCacheRatings">Określ ocenę skrzynek</string>
+    <string name="cacheRatings">Ocena:</string>
+    <string name="cacheMinimumRating">Minimalna ocena</string>
+    <string name="cacheRatingsAll">Dowolna</string>
+    <string name="cacheRatings3">Przynajmniej normalna</string>
+    <string name="cacheRatings4">Przynajmniej dobra</string>
+    <string name="cacheRatings5">Tylko znakomita</string>
+    <string name="cacheRatingsX">lub brak</string>
+    <string name="cacheIncludeUnrated">Uwzględnij skrzynki bez oceny</string>
+    <plurals name="cacheRcmdsText">
+        <item quantity="one">Przynajmniej %d rekomendacja</item>
+        <item quantity="few">Przynajmniej %d rekomendacje</item>
+        <item quantity="other">Przynajmniej %d rekomendacji</item>
+    </plurals>
+    <plurals name="cacheRcmdsTextPercent">
+        <item quantity="other">Przynajmniej %d%% rekomendacji</item>
+    </plurals>
+    <string name="cacheRcmds">Rekomandacje</string>
+    <string name="cacheRcmdsMin">Przynajmniej</string>
+    <string name="cacheRcmdsInfoNormal">Wymaga, aby każda skrzynka została zarekomendowana przez podaną liczbę znalazców</string>
+    <string name="cacheRcmdsInfoPercent">Wymaga, aby każda skrzynka została zarekomendowana przez podany procent znalazców</string>
+    
     <!-- color name="zdupy">#00FF80</color  -->
 </resources>
