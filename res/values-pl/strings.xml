@@ -174,13 +174,6 @@
     <string name="difficultiesTerrainItem">terenu: %d</string>
     <string name="difficultiesTaskRange">zadania: %1$d-%2$d</string>
     <string name="difficultiesTerrainRange">terenu: %1$d-%2$d</string>
-    <string-array name="difficultyLables">
-        <item>1</item>
-        <item>2</item>
-        <item>3</item>
-        <item>4</item>
-        <item>5</item>
-    </string-array>
     
     <string name="chooseCacheRatings">Określ ocenę skrzynek</string>
     <string name="cacheRatings">Ocena:</string>
@@ -251,9 +244,4 @@
     <string name="dir_default_temp">awaryjniejszy-gpx/kesze-temp</string>
     <string name="dir_default_images">awaryjniejszy-gpx/.cacheImages</string>
     
-    <string name="dir_locus_temp">mapItems-temp</string>
-    <string name="dir_locus_images">.cacheImages</string>
-    
-    
-    <!-- color name="zdupy">#00FF80</color  -->
 </resources>
