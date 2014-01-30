@@ -190,8 +190,8 @@
     </plurals>
     <string name="cacheRcmds">Recommendations</string>
     <string name="cacheRcmdsMin">At least</string>
-    <string name="cacheRcmdsInfoNormal">Each geocache must be recommended by the given number of founders</string>
-    <string name="cacheRcmdsInfoPercent">Each geocache must be recommended by the given percent of founders</string>
+    <string name="cacheRcmdsInfoNormal">Each geocache must be recommended by the given number of finders</string>
+    <string name="cacheRcmdsInfoPercent">Each geocache must be recommended by the given percent of finders</string>
     
     <string name="downloader_cancelling">Cancelling</string>
     <string name="downloader_cancelling2">Cancellation in progress</string>
