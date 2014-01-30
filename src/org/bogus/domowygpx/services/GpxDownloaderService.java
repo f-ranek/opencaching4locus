@@ -633,7 +633,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
 
                 checkInterrupted();
                 
-                HttpResponse resp = null;
                 try{
                     StringBuilder requestURL = new StringBuilder(256);
                     requestURL.append(okApi.getAPIUrl());
@@ -661,13 +660,11 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     }
                     
                 }catch(Exception e){
-                    ResponseUtils.abortResponse(resp);
+                    ResponseUtils.abortResponse(mainResponse);
                     if (!processDefaultException(e)){
                         setErrorDescription(res.getString(R.string.gpx_downloader_error_search), e); 
                     }
                     throw e;
-                }finally{
-                    ResponseUtils.closeResponse(resp);
                 }
                 
                 checkInterrupted();

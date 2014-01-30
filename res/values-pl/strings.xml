@@ -19,7 +19,7 @@
     
     <string name="start">Start</string>
 
-    <string name="maxNumOfCaches">Maks. liczba keszy:</string>
+    <string name="maxNumOfCaches">Maks. liczba\nkeszy:</string>
     <string name="maxCacheDistance">Maks. odległość [km/m]:</string>
 
     <string name="hintMaxNumOfCaches">np. 200 keszy</string>

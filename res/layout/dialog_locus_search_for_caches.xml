@@ -83,7 +83,8 @@
                     android:gravity="center_vertical"
                     android:maxWidth="80dp"
                     android:paddingRight="10dp"
-                    android:text="@string/maxCacheDistance" />
+                    android:text="@string/maxCacheDistance"
+                    android:textAppearance="?android:attr/textAppearanceSmall" />
 
                 <LinearLayout
                     android:layout_width="fill_parent"
@@ -118,7 +119,6 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"
                     android:gravity="center_vertical"
-                    android:maxWidth="80dp"
                     android:paddingRight="10dp"
                     android:text="@string/cacheTypes"
                     android:textAppearance="?android:attr/textAppearanceLarge" />
@@ -146,7 +146,6 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"
                     android:gravity="center_vertical"
-                    android:maxWidth="80dp"
                     android:paddingRight="10dp"
                     android:text="@string/difficulties"
                     android:textAppearance="?android:attr/textAppearanceLarge" />
@@ -174,7 +173,6 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"
                     android:gravity="center_vertical"
-                    android:maxWidth="80dp"
                     android:paddingRight="10dp"
                     android:text="@string/cacheRatings"
                     android:textAppearance="?android:attr/textAppearanceLarge" />
