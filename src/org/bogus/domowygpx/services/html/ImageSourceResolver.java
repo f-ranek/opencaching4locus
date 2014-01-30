@@ -1,4 +1,4 @@
-package org.bogus.domowygpx.html;
+package org.bogus.domowygpx.services.html;
 
 public interface ImageSourceResolver
 {

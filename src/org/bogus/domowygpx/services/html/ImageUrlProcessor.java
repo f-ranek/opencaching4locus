@@ -1,4 +1,4 @@
-package org.bogus.domowygpx.html;
+package org.bogus.domowygpx.services.html;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -31,8 +31,8 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
-import org.bogus.domowygpx.gpx.GpxState;
 import org.bogus.domowygpx.services.downloader.FileData;
+import org.bogus.domowygpx.services.gpx.GpxState;
 import org.bogus.domowygpx.utils.Hex;
 import org.bogus.geocaching.egpx.BuildConfig;
 import org.bogus.logging.LogFactory;

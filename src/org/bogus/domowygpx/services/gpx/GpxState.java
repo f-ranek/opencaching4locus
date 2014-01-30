@@ -1,4 +1,4 @@
-package org.bogus.domowygpx.gpx;
+package org.bogus.domowygpx.services.gpx;
 
 public interface GpxState
 {

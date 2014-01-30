@@ -1,4 +1,4 @@
-package org.bogus.domowygpx.gpx;
+package org.bogus.domowygpx.services.gpx;
 
 import java.io.BufferedInputStream;
 import java.io.Closeable;
@@ -15,8 +15,8 @@ import java.util.Locale;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.CountingOutputStream;
 import org.apache.commons.logging.Log;
-import org.bogus.domowygpx.html.HTMLProcessor;
-import org.bogus.domowygpx.html.ImageSourceResolver;
+import org.bogus.domowygpx.services.html.HTMLProcessor;
+import org.bogus.domowygpx.services.html.ImageSourceResolver;
 import org.bogus.logging.LogFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;

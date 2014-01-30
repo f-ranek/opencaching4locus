@@ -1,4 +1,4 @@
-package org.bogus.domowygpx.html;
+package org.bogus.domowygpx.services.html;
 
 import java.util.ArrayList;
 import java.util.List;
