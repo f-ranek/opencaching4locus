@@ -50,12 +50,12 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.os.MessageQueue;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.util.Pair;
@@ -603,13 +603,28 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
      * Reads files to be downloaded for a given task, and schedules them for download
      * @param task
      * @param restartFromScratch
-     * @return false, if no files have been scheduled for a download (this should not happen)
      */
-    protected boolean startTaskFromDatabase(
+    protected void startTaskFromDatabase(
         final FilesDownloadTask task, 
-        boolean restartFromScratch) 
+        final DownloadProgressMonitorImpl dpm,
+        final boolean restartFromScratch) 
     {
-        // TODO: move this method to the downloader thread... somewhere, somehow
+        AsyncTask<Void, Void, Void> task2 = new AsyncTask<Void, Void, Void>(){
+
+            @Override
+            protected Void doInBackground(Void... params)
+            {
+                startTaskFromDatabaseInThread(task, dpm, restartFromScratch);
+                return null;
+            }};
+        task2.execute();
+    }
+
+    protected void startTaskFromDatabaseInThread(
+        final FilesDownloadTask task, 
+        final DownloadProgressMonitorImpl dpm,
+        final boolean restartFromScratch) 
+    {
         final List<FileData> files; 
         database.beginTransaction();
         try{
@@ -646,18 +661,13 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             database.endTransaction();
         }
         
-        final MessageQueue queue = Looper.myQueue();
-        queue.addIdleHandler(new MessageQueue.IdleHandler(){
-
-            @Override
-            public boolean queueIdle()
-            {
-                Log.i(LOG_TAG, "Submitting task files, id=" + task.taskId + 
-                    ", count=" + files.size());
-                task.filesDownloader.submit(files);
-                return false;
-            }});
-        return files.size() > 0;
+        Log.i(LOG_TAG, "Submitting task files, id=" + task.taskId + 
+            ", count=" + files.size());
+        task.filesDownloader.submit(files);
+        
+        if (files.size() == 0){
+            onTaskFinished(dpm, false);
+        }
     }
     
     /**
@@ -1039,10 +1049,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                             filesDownloader.setDownloadProgressMonitor(dpm);
                             final boolean restartFromScratch = intent == null ? false : 
                                 intent.getBooleanExtra(INTENT_EXTRA_RESTART_FROM_SCRATCH, false); 
-                            boolean started = startTaskFromDatabase(task, restartFromScratch);
-                            if (!started){
-                                onTaskFinished(dpm, false);
-                            }
+                            startTaskFromDatabase(task, dpm, restartFromScratch);
                         }
                     }
                 }
