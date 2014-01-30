@@ -642,12 +642,37 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     appendReturnParameters(requestURL, userUuid);
                     
                     // execute requestURL and process response
-                    sendProgressInfo(res.getString(R.string.gpx_downloader_progress_search)); 
-                    final String url = requestURL.toString();
-                    Log.i(LOG_TAG, url);
-                    final HttpGet get = new HttpGet(url);
-                    currentRequest = get;
-                    mainResponse = httpClient.execute(get);
+                    sendProgressInfo(res.getString(R.string.gpx_downloader_progress_search));
+                    
+                    // MK 2014-01-30 START
+                    boolean gotMK = false;
+                    HttpGet get = null;
+                    String url = null;
+                    final String userName = config.getString("userName", null);
+                    if (userName != null && 
+                            ("wrygiel".equalsIgnoreCase(userName) ||
+                             "Boguś z Polska".equalsIgnoreCase(userName) ||
+                             "fiordland".equalsIgnoreCase(userName)))
+                    {
+                        url = "http://rygielski.net/r/gpx-dla-marty?login=" + urlEncode(userName);
+                        // url = "http://bogus.ovh.org/oc4l/gpx-dla-marty.php?login=" + urlEncode(userName);
+                        Log.i(LOG_TAG, url);
+                        get = new HttpGet(url);
+                        currentRequest = get;
+                        mainResponse = httpClient.execute(get);
+                        final StatusLine statusLine = mainResponse.getStatusLine();
+                        final int statusCode = statusLine.getStatusCode();
+                        gotMK = statusCode == 200;
+                    }
+                    
+                    if (!gotMK){
+                        url = requestURL.toString();
+                        Log.i(LOG_TAG, url);
+                        get = new HttpGet(url);
+                        currentRequest = get;
+                        mainResponse = httpClient.execute(get);
+                    }
+                    // MK 2014-01-30 END
                     taskState.expectedTotalKB = (int)(ResponseUtils.getContentLength(mainResponse) / 1024L);
                     final StatusLine statusLine = mainResponse.getStatusLine();
                     final int statusCode = statusLine.getStatusCode();
