@@ -1,0 +1,55 @@
+== Steps to build application
+
+* Install Android SDK and SKD Platform for API v16 (Android 4.1.2)
+
+* Open OKAPISecrets.java
+
+** Edit getApiKey() to return your consumer key and secret
+
+** Run the following command
+
+    git update-index --assume-unchanged src/org/bogus/domowygpx/oauth/OKAPISecrets.java
+
+   to make git ignore this file.
+
+** Run 
+
+    git status
+
+   to make sure above file is not on the change list
+
+* Run 
+
+    ant generate-build-info
+
+   to generate build info file (otherwise the project won't compile from
+   Eclipse)
+
+== Developer build
+
+* Open project in Eclipse
+
+** Run the project from Run or Debug menu, on a real device or simulator
+
+== Production build
+
+* Edit local.properties
+# Setup target directory. The name will be appended with current date,
+# and output files will be placed there.  
+releases.dir=E:\\Home\\Bogus\\Pulpit\\KESZE\\opencaching4locus-release-
+
+# Setup keystore path and alias
+key.store=<path to your keystore>
+key.alias=<key alias>
+# Optional keys below 
+key.store.password=<keystore password>
+key.alias.password=<key password>
+
+
+* Make sure Eclipse Build automatically is UNCHECKED
+
+* Run 
+
+    ant clean release
+
+** Check your releases.dir<date> for output files

@@ -1,0 +1,47 @@
+== Switch between production and development versions without data (state) loss
+Root and busybox required
+
+This is only template script!
+Your milage may vary!
+
+## this is the path, where app data will be temporarly stored
+cd /storage/extSdCard
+# remove previous version
+rm -r org.bogus.geocaching.egpx
+# copy current data
+cp -r /data/data/org.bogus.geocaching.egpx .
+# uninstall application
+pm uninstall org.bogus.geocaching.egpx
+
+# install release package:
+    adb install opencaching4locus-release- ...\app.apk
+
+# if you install developer package, make sure to kill the process 
+# (not only go back from the app) before you continue
+
+
+cd /data/data
+ls -la | grep org.bogus.geocaching.egpx
+
+# the user name and group name will vary!
+# remember output values!
+
+    drwxr-x--x u0_a2  u0_a2          2013-11-26 13:58 org.bogus.geocaching.egpx
+
+## make sure to copy from the directory, where files have been previously saved
+cp -r /storage/extSdCard/org.bogus.geocaching.egpx .
+
+# setup Linux security
+# make sure to change owner and group to the values listed above
+chown u0_a2:u0_a2 org.bogus.geocaching.egpx
+cd org.bogus.geocaching.egpx
+find -exec chown u0_a2:u0_a2 {} \;
+find -type f -exec chmod 640 {} \;
+find -type d -exec chmod 750 {} \;
+ 
+
+chown system:system lib
+chown system:system lib\*
+
+# start the app
+am start -n org.bogus.geocaching.egpx/org.bogus.domowygpx.activities.MainActivity
