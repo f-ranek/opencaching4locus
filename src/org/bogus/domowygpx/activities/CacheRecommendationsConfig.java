@@ -4,7 +4,7 @@ import android.util.Log;
 
 public class CacheRecommendationsConfig
 {
-    private final static String LOG_TAG = "CacheRecommendationsCfg";
+    private final static String LOG_TAG = "CacheRcmdsCfg";
 
     private int value;
     private boolean percent;

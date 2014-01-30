@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <lint>
+    <issue id="MissingQuantity">
+        <ignore path="res/values-pl/strings.xml" />
+    </issue>
     <issue id="OldTargetApi">
         <ignore path="AndroidManifest.xml" />
     </issue>

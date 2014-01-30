@@ -44,6 +44,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
@@ -760,18 +761,19 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             }
         }
         
+        final Resources res = getResources();
         final NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setOngoing(runningCount != 0);
         if (runningCount > 0){
-            builder.setContentTitle("Pobieram pliki"); 
+            builder.setContentTitle(res.getString(R.string.files_downloader_in_progrss)); 
         } else
         if (stoppedCount > 0){
-            builder.setContentTitle("Pobieranie wstrzymane"); 
+            builder.setContentTitle(res.getString(R.string.files_downloader_paused)); 
         } else
         if (failedCount == finishedCount) {
-            builder.setContentTitle("Błąd pobierania");
+            builder.setContentTitle(res.getString(R.string.files_downloader_error));
         } else {
-            builder.setContentTitle("Pobieranie zakończone"); 
+            builder.setContentTitle(res.getString(R.string.files_downloader_finished)); 
         }
         final StringBuilder sb = new StringBuilder();
         boolean wasFirstTaskInfo = false;
@@ -789,7 +791,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                 sb.append(", "); 
             }
             sb.append(getResources().getQuantityString(
-                wasFirstTaskInfo ? R.plurals.finished : R.plurals.taskFinished, 
+                wasFirstTaskInfo ? R.plurals.downloader_finished : R.plurals.taskFinished, 
                 finishedCount, finishedCount));
             wasFirstTaskInfo = true;
         }
@@ -797,13 +799,13 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             if (sb.length() > 0){
                 sb.append(", "); 
             }
-            sb.append(failedCount).append(" błędnie"); 
+            sb.append(res.getString(R.string.files_downloader_with_errors1, failedCount));
         }
         if (withFailuresCount > 0){
             if (sb.length() > 0){
                 sb.append(", "); 
             }
-            sb.append(withFailuresCount).append(" z błędami"); 
+            sb.append(res.getString(R.string.files_downloader_with_errors2, withFailuresCount)); 
         }
         
         if (sb.length() > 0){

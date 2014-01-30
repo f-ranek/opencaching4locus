@@ -1,18 +1,18 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <string name="title_activity_oauth_signing">Logowanie w oc.pl</string>
-    <string name="msgLogoutInfo">Czy na pewno chcesz się wylogować?</string>
-    <string name="btnLogout">Wyloguj</string>
-    <string name="btnCancel">Anuluj</string>
+    <string name="title_activity_oauth_signing">Logging into oc.pl</string>
+    <string name="msgLogoutInfo">Are you sure you want to log out?</string>
+    <string name="btnLogout">Logout</string>
+    <string name="btnCancel">Cancel</string>
     
-    <string name="infoOAuthInvalidVerifier">Wprowadzony PIN jest niepoprawny</string>
-    <string name="infoOAuthNetworkFailure">Błąd sieci</string>
-    <string name="infoOAuthUnknownFailure">Serwer zwrócił nieznany błąd</string>
-    <string name="infoOAuthServerFailure2">Serwer zwrócił nieprawdiłową odpowiedź</string>
-    <string name="infoOAuthDone">Zostałeś zalogowany do opencaching.pl</string>
+    <string name="infoOAuthInvalidVerifier">The PIN you\'ve entered is incorrect</string>
+    <string name="infoOAuthNetworkFailure">Network error</string>
+    <string name="infoOAuthUnknownFailure">Server returned unknown error</string>
+    <string name="infoOAuthServerFailure2">Server returned unknown response</string>
+    <string name="infoOAuthDone">You have been logged to opencaching.pl</string>
     
-    <string name="infoOAuthInstruction" tools:ignore="Typos">1. Uderz przycisk „Rozpocznij autoryzację”, aby pozwolić Awaryjniejszemu GPXowi na dostęp do Twojego konta.\n2. Otwarta zostanie strona opencaching.pl, na której należy się zalogować, i zezwolić aplikacji na dostęp do swojego konta.\n3. Po autoryzacji na stronie pokazany zostanie PIN, który należy skopiować, oraz wkleić w pole poniżej.\n4.Następnie należy uderzyć przycisk „Zakończ proces”. To wszystko.</string>
-    <string name="btnOAuthAuthorize">Rozpocznij autoryzację</string>
-    <string name="editOAuthPINHint">Tu wklej PIN</string>
-    <string name="btnOAuthFinish" tools:ignore="Typos">Zakończ proces</string>
+    <string name="infoOAuthInstruction">1. Tap \'Start authorization\', to allow Awaryjniejszy GPX to access your account.\n2. An opencaching.pl web page will be opened, where you should log-in, and allow application to access your account.\n3. When you authorize the application, a PIN number will be shown, which one should be copied, and pasted to the field below.\n4. Next, tap \'Finish\'. That\'s all.</string>
+    <string name="btnOAuthAuthorize">Start authorization</string>
+    <string name="editOAuthPINHint">Paste PIN here</string>
+    <string name="btnOAuthFinish">Finish</string>
 </resources>

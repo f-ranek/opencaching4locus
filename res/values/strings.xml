@@ -3,179 +3,167 @@
 
     <string name="applicationName">Awaryjniejszy GPX</string>
     <string name="applicationLabel">Awaryjniej-\nszy GPX</string>
-    <string name="latitude">Szerokość*:</string>
-    <string name="longitude">Długość*:</string>
+    <string name="latitude">Latitude*:</string>
+    <string name="longitude">Longitude*:</string>
     <string name="hintGeoData">ddd:mm:ss.ssss</string>
-    <string name="getLocationFromGps">Pobierz z GPS</string>
-    <string name="getLocationFromGpsCancel">Anuluj pobieranie</string>
-    <string name="star">* - dozwolone formaty:\n1. [+-]ddd.dddd\n2. [+-]ddd:mm.mmm\n3. [+-]ddd:mm:ss.ss\n4. WGS84 (NSEW ddd° mm.mmm\')</string>
+    <string name="getLocationFromGps">Get from GPS</string>
+    <string name="getLocationFromGpsCancel">Cancel</string>
+    <string name="star">* - allowed formats:\n1. [+-]ddd.dddd\n2. [+-]ddd:mm.mmm\n3. [+-]ddd:mm:ss.ss\n4. WGS84 (NSEW ddd° mm.mmm\')</string>
 
-    <string name="targetFileName">Zapisz jako:</string>
-    <string name="hintTargetFileName">Ew. nazwa pliku GPX</string>
-    <string name="targetAutoImportToLocus">Importuj do Locusa</string>
-    <string name="downloadImages_always">Pobierz obrazy (tak)</string>
-    <string name="downloadImages_wifi">Pobierz obrazy (WiFi)</string>
-    <string name="downloadImages_never">Pobierz obrazy (nie)</string>
+    <string name="targetFileName">Save as:</string>
+    <string name="hintTargetFileName">Optional GPX file name</string>
+    <string name="targetAutoImportToLocus">Import to Locus</string>
+    <string name="downloadImages_always">Download images (yes)</string>
+    <string name="downloadImages_wifi">Download images (WiFi)</string>
+    <string name="downloadImages_never">Download images (no)</string>
     
     <string name="start">Start</string>
 
-    <string name="maxNumOfCaches">Maks. liczba keszy:</string>
-    <string name="maxCacheDistance">Maks. odległość [km/m]:</string>
+    <string name="maxNumOfCaches">Max number\nof geocaches:</string>
+    <string name="maxCacheDistance">Max distance [km/m]:</string>
 
-    <string name="hintMaxNumOfCaches">np. 200 keszy</string>
-    <string name="hintMaxCacheDistance">np. 10 km</string>
+    <string name="hintMaxNumOfCaches">i.e. 200 geocaches</string>
+    <string name="hintMaxCacheDistance">i.e. 10 km</string>
 
     <string name="maxNumOfCachesDefault">50</string>
     
-    <string name="cacheTypes">Typy keszy:</string>
-    <string name="chooseCacheTypes">Wybierz typy keszy</string>
+    <string name="cacheTypes">Cache types:</string>
+    <string name="chooseCacheTypes">Choose cache types</string>
 
-    <string name="locusCommunicationError">Błąd komunikacji z Locusem</string>
-    <string name="locusCommunicationError2">Awaryjniejszy GPX: Błąd komunikacji z Locusem</string>
+    <string name="locusCommunicationError">Locus communication error</string>
+    <string name="locusCommunicationError2">Awaryjniejszy GPX: Locus communication error</string>
     
-    <string name="gpsDisabled">GPS wyłączony, pobieram lokalizację z sieci</string>
-    <string name="noLocationInfo">Nie można pobrać informacji o lokalizacji</string>
+    <string name="gpsDisabled">GPS disabled, getting location info from network</string>
+    <string name="noLocationInfo">Can\'t get location info</string>
 
     <string name="distanceUnit.m">m</string>
     <string name="distanceUnit.km">km</string>
     
-    <string name="validationErrors">Przed kontynuacją popraw zaznaczone błędy</string>
-    <string name="validationWarnings">Wystąpiły pewne problemy. Zweryfikuj dane, po czym ponownie kliknij \'Start\'</string>
-    <string name="validationIncompleteLocation">Położenie geograficzne jest niepełne</string>
-    <string name="validationInvalidLocation">Położenie geograficzne jest w niepoprwnym formacie</string>
-    <string name="validationMissingLocation">Wprowadź lokalizację keszy</string>
-    <string name="validationInvalidMaxCachesLimit">Limit musi być w przedziale 1 do 500</string>
-    <string name="validationMinCacheDistanceWarning">Minimalna odległość to 20m</string>
-    <string name="validationMaxCachesHardLimit">Ograniczono limit do 500 keszy</string>
-    <string name="validationInvalidCacheDistance">Niepoprawna wartość odległości</string>
-    <string name="validationInvalidNoCacheDistanceNeitherLimit">Wprowadź liczbę keszy lub dystans</string>
-    <string name="validationMissingFileName">Wprowadź nazwę pliku</string>
-    <string name="validationMissingFileNameOrLocusImport">Wprowadź nazwę pliku, lub zaznacz import do Locusa</string>
-    <string name="validationTargetFileIsDir">Docelowy plik już istnieje, i jest katalogiem</string>
-    <string name="validationTargetFileIsReadOnly">Docelowy plik już istnieje, i nie można go zastąpić</string>
-    <string name="validationTargetFileExistsWarning">Docelowy plik już istnieje. Jeżeli chcesz go zastąpić, kliknij ponownie \'Start\'</string>
-    <string name="validationCantCreateTargetDir">Nie można utworzyć katalogu na docelowy plik</string>
-    <string name="validationTargetDirIsReadOnly">Nie można zapisywać w katalogu docelowym</string>
-    <string name="validationTargetDirIsFile">Katalog docelowy jest plikiem</string>
-    <string name="validationInvalidImagesDownloadStrategy">Niepoprawna wartość strategii pobierania obrazów</string>
-    <string name="validationCantCreateTargetImagesDir">Nie można utworzyć katalogu na pobierane obrazy</string>
-    <string name="validationTargetImagesDirIsReadOnly">Nie można zapisywać plików w katalogu obrazów</string>
-    <string name="validationTargetImagesDirIsFile">Katalog zapisu obrazów jest plikiem</string>
+    <string name="validationErrors">Please correct error shown befor continue</string>
+    <string name="validationWarnings">There were some problems with your config. Please verify form data, and tap \'Start\' again</string>
+    <string name="validationIncompleteLocation">Location is not filled</string>
+    <string name="validationInvalidLocation">Wrong location format</string>
+    <string name="validationMissingLocation">Please enter location</string>
+    <string name="validationInvalidMaxCachesLimit">Limit must be in range 1..500</string>
+    <string name="validationMinCacheDistanceWarning">Minimum distance is 20m</string>
+    <string name="validationMaxCachesHardLimit">Limit has been set to 500 geocaches</string>
+    <string name="validationInvalidCacheDistance">Invalid distance</string>
+    <string name="validationInvalidNoCacheDistanceNeitherLimit">Please enter distance, or limit number of geocaches</string>
+    <string name="validationMissingFileName">Please enter filename</string>
+    <string name="validationMissingFileNameOrLocusImport">Enter file name, or check \'Import to Locus\'</string>
+    <string name="validationTargetFileIsDir">Target file already exists, and is a directory</string>
+    <string name="validationTargetFileIsReadOnly">Target file already exists, and can\'t be overwritten</string>
+    <string name="validationTargetFileExistsWarning">Target file already exists. If you want to overwrite it, tap \'Start\' again</string>
+    <string name="validationCantCreateTargetDir">Can\'t create target directory</string>
+    <string name="validationTargetDirIsReadOnly">Can\'t write to target directory</string>
+    <string name="validationTargetDirIsFile">Target directory is a file</string>
+    <string name="validationInvalidImagesDownloadStrategy">Invalid images download strategy</string>
+    <string name="validationCantCreateTargetImagesDir">Can\'t create directory for the images</string>
+    <string name="validationTargetImagesDirIsReadOnly">Can\'t write in directory for the images</string>
+    <string name="validationTargetImagesDirIsFile">Images target directory is a file</string>
     
     <string name="errorPlaceholderText">ERROR_TEXT_GOES_HERE</string>
 
-    <string name="gpxDownloaderServiceName">Usługa pobierania GPX</string>
-    <string name="gpxDownloaderServiceDescription">Usługa realizuje pobranie i przetwarzanie pliku GPX</string>
-    <string name="filesDownloaderServiceName">Usługa pobierania plików</string>
-    <string name="filesDownloaderServiceDescription">Usługa realizuje pobranie plików zasobów</string>
+    <string name="gpxDownloaderServiceName">GPX downloader service</string>
+    <string name="gpxDownloaderServiceDescription">Downloads and process GPX files</string>
+    <string name="filesDownloaderServiceName">Files downloader service</string>
+    <string name="filesDownloaderServiceDescription">Downloads images and other static resources</string>
     
-    <string name="titleActivityDownloadList">Lista pobieranych plików</string>
-    <string name="menuGoToDownloadsList">Pobieranie plików</string>
+    <string name="titleActivityDownloadList">Downloads list</string>
+    <string name="menuGoToDownloadsList">Files downloads</string>
 
-    <string name="btnDownloadItemStop">Wstrzymaj</string>
-    <string name="btnDownloadItemPlay">Wznów</string>
-    <string name="btnDownloadItemRestart">Uruchom ponownie</string>
-    <string name="btnDownloadItemCancel">Zatrzymaj</string>
-    <string name="btnDownloadItemRemove">Usuń</string>
+    <string name="btnDownloadItemStop">Pause</string>
+    <string name="btnDownloadItemPlay">Reasume</string>
+    <string name="btnDownloadItemRestart">Restart</string>
+    <string name="btnDownloadItemCancel">Stop</string>
+    <string name="btnDownloadItemRemove">Remove</string>
     
-    <string name="btnDownloadItemStopDescription">Wstrzymuje zadanie</string>
-    <string name="btnDownloadItemPlayDescription">Wznawia zadanie</string>
-    <string name="btnDownloadItemCancelDescription">Zatrzymuje zadanie</string>
+    <string name="btnDownloadItemStopDescription">Pauses task</string>
+    <string name="btnDownloadItemPlayDescription">Resumes task</string>
+    <string name="btnDownloadItemCancelDescription">Stops task</string>
     
     
     <plurals name="cache">
-        <item quantity="one">%d kesz</item>
-        <item quantity="few">%d kesze</item>
-        <item quantity="other">%d keszy</item>
+        <item quantity="one">%d geocache</item>
+        <item quantity="other">%d geocaches</item>
     </plurals>
     <plurals name="error">
-        <item quantity="one">%d błąd</item>
-        <item quantity="few">%d błędy</item>
-        <item quantity="other">%d błędów</item>
+        <item quantity="one">%d error</item>
+        <item quantity="other">%d errors</item>
     </plurals>
     <plurals name="skipped">
-        <item quantity="one">%d pominięty</item>
-        <item quantity="few">%d pominięte</item>
-        <item quantity="other">%d pominiętych</item>
+        <item quantity="other">%d skipped</item>
     </plurals>
     <plurals name="running">
-        <item quantity="one">%d w trakcie</item>
-        <item quantity="few">%d w trakcie</item>
-        <item quantity="other">%d w trakcie</item>
+        <item quantity="other">%d in progress</item>
     </plurals>
     <plurals name="taskRunning">
-        <item quantity="one">%d zadanie w trakcie</item>
-        <item quantity="few">%d zadania w trakcie</item>
-        <item quantity="other">%d zadań w trakcie</item>
+        <item quantity="one">%d task running</item>
+        <item quantity="other">%d tasks running</item>
     </plurals>
-    <plurals name="finished">
-        <item quantity="one">%d zakończone</item>
-        <item quantity="few">%d zakończone</item>
-        <item quantity="other">%d zakończonych</item>
+    <plurals name="downloader_finished">
+        <item quantity="other">%d finished</item>
     </plurals>
     <plurals name="taskFinished">
-        <item quantity="one">%d zadanie zakończone</item>
-        <item quantity="few">%d zadania zakończone</item>
-        <item quantity="other">%d zadań zakończonych</item>
+        <item quantity="one">%d task finished</item>
+        <item quantity="other">%d tasks finished</item>
     </plurals>
     <plurals name="filesCountOverTotal">
-        <item quantity="one">%1$d plik z %2$d</item>
-        <item quantity="few">%1$d pliki z %2$d</item>
-        <item quantity="other">%1$d/%2$d plików</item>
+        <item quantity="one">%1$d file out of %2$d</item>
+        <item quantity="other">%1$d/%2$d files</item>
     </plurals>
     <plurals name="filesCount">
-        <item quantity="one">%d plik</item>
-        <item quantity="few">%d pliki</item>
-        <item quantity="other">%d plików</item>
+        <item quantity="one">%d file</item>
+        <item quantity="other">%d files</item>
     </plurals>
-    <string name="infoWaiting">Oczekuję&#8230;</string>
-    <string name="infoWorkInProgress">Czekaj, pracuję&#8230;</string>
+    <string name="infoWaiting">Waiting&#8230;</string>
+    <string name="infoWorkInProgress">Wait, working&#8230;</string>
     
-    <string name="okapiErrorInvalidToken">Użytkownik odwołał dostęp aplikacji do serwisu</string>
-    <string name="okapiErrorInvalidTimestamp">Sprawdź czas na urządzeniu</string>
+    <string name="okapiErrorInvalidToken">You have revoked app access to oc.pl</string>
+    <string name="okapiErrorInvalidTimestamp">Check your device\'s time</string>
     
-    <string name="titleActivityInfo">Informacje</string>
-    <string name="infoAboutTitle">Dobra, jakiś sensowny opis poproszę ;)</string>
-    <string name="infoAbout">Program przygotowany został do współpracy z programami Locus i Columbus trochę też. Pozwala na pobieranie informacji o keszach z serwisu opencaching.pl. Ponadto pozwala na pobranie „z góry” dołączonych do keszy zdjęć i obrazków.</string>
-    <string name="infoHelpTitle">Pomocy!</string>
-    <string name="infoHelp" formatted="false">(Instrukcja obsługi=%0)\n\n(Forum=%1)</string>
-    <string name="versionInfoTitle">Informacje o wersji</string>
-    <string name="versionInfo">Wersja:\t\t\t%1$s\nData:\t\t\t\t%2$s\nGit:\t\t\t\t\t%3$s</string>
+    <string name="titleActivityInfo">About</string>
+    <string name="infoAboutTitle">Here should be some application description ;)</string>
+    <string name="infoAbout">The main development focus of this application was to integrate with Locus Maps, and Columbus. It let\'s you download geocaches data from opencaching.pl service. Moreover, it allows to download images attached to geocaches \'in front\', i.e. when you are on WiFi in home.</string>
+    <string name="infoHelpTitle">Help!</string>
+    <string name="infoHelp" formatted="false">(User\'s manual=%0)\t(Forum=%1)\t(both in Polish)</string>
+    <string name="versionInfoTitle">Version info</string>
+    <string name="versionInfo">Version:\t\t%1$s\nDate:\t\t\t\t%2$s\nGit:\t\t\t\t\t%3$s</string>
     
-    <string name="historyTitle">Historia zmian</string>
-    <string name="history">1.0 – pierwsza wersja, na bazie programu Awaryjny GPX\n1.1 – dodano integrację z Locusem\n1.2 – dodano możliwość logowania do oc.pl</string>
+    <string name="historyTitle">Changes history</string>
+    <string name="history">1.0 – first version, based on Awaryjny GPX\n1.1 – added Locus integration\n1.2 – added integration with oc.pl\n1.3 – new search filters</string>
 
-    <string name="infoDeveloperInfoTitle">Informacje dla programisty</string>
-    <string name="infoDeveloperInfoDesc" tools:ignore="Typos">Generuje informacje przydatne programiście w celu diagnozowania i poprawy błędów. Wygenerowany plik zostanie zapisany w pamięci wewnętrznej, a następnie udostępniony do wysłania e-mailem. Podaj proszę również opis problemu bądź błędu.\n\nJeżeli nie masz skonfigurowanego klienta poczty, plik możesz przesłać w inny sposób na adres awaryjniejszy-gpx@10g.pl.\n\nPlik zawiera następujące dane:\n * informacje o urządzeniu (bez nr telefonu i innych wrażliwych danych)\n * konfigurację i dane programu\n * logi systemu</string>
-    <string name="infoDeveloperInfoFile">W pamięci wewnętrznej zapisano plik %s.</string>
-    <string name="infoDeveloperEmailText">Wygenerowano informacje dla programisty, wysyłany e-mail powinien posiadać załącznik o rozmiarze około %2$s. Dołączane informacje są również zapisane w pamięci wewnętrznej, w pliku %1$s.\n\nPodaj proszę również opis problemu bądź błędu.</string>
-    <string name="infoDeveloperDialogTitle">Awaryjniejszy GPX - błąd :(</string>
-    <string name="infoDeveloperDialogText" tools:ignore="Typos">Wygląda na to, że poprzednie uruchomienie aplikacji zakończyło się błędem. Wygenerowany został plik z informacjami o błędzie, oraz zapisany w pamięci wewnętrznej jako %s.\nCzy chcesz wysłać teraz ten plik do programisty, jako e-mail na adres awaryjniejszy-gpx@10g.pl?\n\nZgłoszenia i opisy błędów pomogą udoskonalać aplikację.</string>
-    <string name="infoDeveloperInfoGo">Wygeneruj</string>
-    <string name="infoDeveloperInfoSend">Wyślij</string>
-    <string name="infoDeveloperInfoPostpone">Później</string>
-    <string name="infoDeveloperInfoError">Wystąpił nieznany błąd</string>
+    <string name="infoDeveloperInfoTitle">Developer info</string>
+    <string name="infoDeveloperInfoDesc">Generates state dump file, which is useful for a developer to diagnose and correct bugs. The generated file is saved in internal storage, and then could be sent via e-mail. Please drop few words describing the problem or situation in the e-mail.\n\nIf you don\'t have e-mail client configured, you can send the file to awaryjniejszy-gpx@10g.pl by other means.\n\nThe dump consists of the following information:\n * device info (without your phone number, contacts data, sms and other sensitive information)\n * application config and state files\n * system logs</string>
+    <string name="infoDeveloperInfoFile">File %s has been saved in internal storage.</string>
+    <string name="infoDeveloperEmailText">Developer dump has been generated, the e-mail you are sending should contain attachment, with an approximate size of %2$s. The attachment data is also stored in internal memory, in file %1$s.\n\nPlease also drop few words describing the situation or problem.</string>
+    <string name="infoDeveloperDialogTitle">Awaryjniejszy GPX - error :(</string>
+    <string name="infoDeveloperDialogText">It looks like Awaryjniejszy GPX has failed. A file with error dump has been generated, and saved in internal memory under the name of %s.\nWould you like to send this file to the developer, as an e-mail attachment to awaryjniejszy-gpx@10g.pl?\n\nError reports helps to improve the app.</string>
+    <string name="infoDeveloperInfoGo">Generate</string>
+    <string name="infoDeveloperInfoSend">Send</string>
+    <string name="infoDeveloperInfoPostpone">Later</string>
+    <string name="infoDeveloperInfoError">Unknown error occurred</string>
     
-    <string name="cacheTypeAll">Wszystkie</string>
-    <string name="cacheTypeEvent">Wydarzenie</string>
-    <string name="cacheTypeMoving">Mobilna</string>
+    <string name="cacheTypeAll">All</string>
+    <string name="cacheTypeEvent">Event</string>
+    <string name="cacheTypeMoving">Moving cache</string>
     <string name="cacheTypeMulti">Multicache</string>
     <string name="cacheTypeOwn">Own cache</string>
     <string name="cacheTypeQuiz">Quiz</string>
-    <string name="cacheTypeTraditional">Tradycyjna</string>
-    <string name="cacheTypeUnknown">Skrzynka nietypowa</string>
-    <string name="cacheTypeVirtual">Wirtualna</string>
+    <string name="cacheTypeTraditional">Traditional</string>
+    <string name="cacheTypeUnknown">Other type</string>
+    <string name="cacheTypeVirtual">Virtual</string>
     <string name="cacheTypeWebcam">Webcam</string>
     
-    <string name="difficultyTask">Trudność zadania</string>
-    <string name="difficultyTerrain">Trudność terenu</string>
-    <string name="difficulties">Trudność:</string>
-    <string name="chooseDifficulties">Wybierz trudność</string>
-    <string name="difficultiesAll">Dowolna</string>
-    <string name="difficultiesTaskItem">zadania: %d</string>
-    <string name="difficultiesTerrainItem">terenu: %d</string>
-    <string name="difficultiesTaskRange">zadania: %1$d-%2$d</string>
-    <string name="difficultiesTerrainRange">terenu: %1$d-%2$d</string>
+    <string name="difficultyTask">Task difficulty</string>
+    <string name="difficultyTerrain">Terrain difficulty</string>
+    <string name="difficulties">Difficulty:</string>
+    <string name="chooseDifficulties">Select difficulty</string>
+    <string name="difficultiesAll">Any</string>
+    <string name="difficultiesTaskItem">task: %d</string>
+    <string name="difficultiesTerrainItem">terrain: %d</string>
+    <string name="difficultiesTaskRange">task: %1$d-%2$d</string>
+    <string name="difficultiesTerrainRange">terrain: %1$d-%2$d</string>
     <string-array name="difficultyLables">
         <item>1</item>
         <item>2</item>
@@ -184,27 +172,77 @@
         <item>5</item>
     </string-array>
     
-    <string name="chooseCacheRatings">Określ ocenę skrzynek</string>
-    <string name="cacheRatings">Ocena:</string>
-    <string name="cacheMinimumRating">Minimalna ocena</string>
-    <string name="cacheRatingsAll">Dowolna</string>
-    <string name="cacheRatings3">Przynajmniej normalna</string>
-    <string name="cacheRatings4">Przynajmniej dobra</string>
-    <string name="cacheRatings5">Tylko znakomita</string>
-    <string name="cacheRatingsX">lub brak</string>
-    <string name="cacheIncludeUnrated">Uwzględnij skrzynki bez oceny</string>
+    <string name="chooseCacheRatings">Select geocaches rating</string>
+    <string name="cacheRatings">Rating:</string>
+    <string name="cacheMinimumRating">Minimum rating</string>
+    <string name="cacheRatingsAll">Any</string>
+    <string name="cacheRatings3">At least average</string>
+    <string name="cacheRatings4">At least good</string>
+    <string name="cacheRatings5">Only excellent</string>
+    <string name="cacheRatingsX">or unrated</string>
+    <string name="cacheIncludeUnrated">Include unrated geocaches</string>
     <plurals name="cacheRcmdsText">
-        <item quantity="one">Przynajmniej %d rekomendacja</item>
-        <item quantity="few">Przynajmniej %d rekomendacje</item>
-        <item quantity="other">Przynajmniej %d rekomendacji</item>
+        <item quantity="one">At least %d recommendation</item>
+        <item quantity="other">At least %d recommendations</item>
     </plurals>
     <plurals name="cacheRcmdsTextPercent">
-        <item quantity="other">Przynajmniej %d%% rekomendacji</item>
+        <item quantity="other">At least %d%% recommendations</item>
     </plurals>
-    <string name="cacheRcmds">Rekomandacje</string>
-    <string name="cacheRcmdsMin">Przynajmniej</string>
-    <string name="cacheRcmdsInfoNormal">Wymaga, aby każda skrzynka została zarekomendowana przez podaną liczbę znalazców</string>
-    <string name="cacheRcmdsInfoPercent">Wymaga, aby każda skrzynka została zarekomendowana przez podany procent znalazców</string>
+    <string name="cacheRcmds">Recommendations</string>
+    <string name="cacheRcmdsMin">At least</string>
+    <string name="cacheRcmdsInfoNormal">Each geocache must be recommended by the given number of founders</string>
+    <string name="cacheRcmdsInfoPercent">Each geocache must be recommended by the given percent of founders</string>
+    
+    <string name="downloader_cancelling">Cancelling</string>
+    <string name="downloader_cancelling2">Cancellation in progress</string>
+    <string name="downloader_stopping">Stopping</string>
+    <string name="downloader_downloading">Downloading</string>
+    <string name="downloader_download_finished">Download finished</string>
+    <string name="downloader_download_stopped">Download stopped</string>
+    
+    <string name="files_downloader_in_progrss">Files download in progress</string>
+    <string name="files_downloader_paused">Download paused</string>
+    <string name="files_downloader_error">Download error</string>
+    <string name="files_downloader_finished">Download finished</string>
+    <string name="files_downloader_with_errors1">%d failed</string>
+    <string name="files_downloader_with_errors2">%d with errors</string>
+    <string name="gpx_downloader_failed_to_get_user">Failed to get user data</string>
+    <string name="gpx_downloader_no_such_user">Can\'t find user %s</string>
+    <string name="gpx_downloader_too_many_connections">Too many network connections</string>
+    <string name="gpx_downloader_data_timeout">Network timeout error</string>
+    <string name="gpx_downloader_network_error">Network error</string>
+    <string name="gpx_downloader_ssl_error">SSL error</string>
+    <string name="gpx_downloader_server_request_error">Server failed to understand our request</string>
+    <string name="gpx_downloader_login_error">Failed to login</string>
+    <string name="gpx_downloader_server_error">Server error</string>
+    <string name="gpx_downloader_progress_init">Initialization</string>
+    <string name="gpx_downloader_error_file_creation">Failed to create target file</string>
+    <string name="gpx_downloader_progress_search">Looking for geocaches</string>
+    <string name="gpx_downloader_error_search">Error while looking for geocaches</string>
+    <string name="gpx_downloader_error_fs">File system error</string>
+    <string name="gpx_downloader_progress_downloading">Downloading GPX</string>
+    <string name="gpx_downloader_error_invalid_gpx">Error in GPX processing</string>
+    <string name="gpx_downloader_error_images_downloading">Error while downloading images</string>
+    <string name="gpx_downloader_error_locus_import">Error while importing to Locus</string>
+    <string name="gpx_downloader_progress_finish">Finished</string>
+    <string name="gpx_downloader_progress_no_caches">No geocaches found</string>
+    <string name="gpx_downloader_unknown_error">Unknown error has occurred</string>
+    <string name="gpx_downloader_notif_finished">GPX download finished</string>
+    <plurals name="gpx_downloader_notif_state">
+        <item quantity="one">GPX download in progress</item>
+        <item quantity="other">GPXes download in progress</item>
+    </plurals>
+    <string name="gpx_downloader_notif_in_progress">%d in progress</string>
+    <string name="gpx_downloader_notif_with_error">%d errors</string>
+    
+    
+    <string name="dir_default">awaryjniejszy-gpx/geocaches</string>
+    <string name="dir_default_temp">awaryjniejszy-gpx/geocaches-temp</string>
+    <string name="dir_default_images">awaryjniejszy-gpx/.cacheImages</string>
+    
+    <string name="dir_locus_temp">mapItems-temp</string>
+    <string name="dir_locus_images">.cacheImages</string>
+    
     
     <!-- color name="zdupy">#00FF80</color  -->
 </resources>

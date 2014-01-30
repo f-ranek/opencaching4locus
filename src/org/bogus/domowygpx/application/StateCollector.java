@@ -287,13 +287,13 @@ public class StateCollector
         
         StringBuilder sb = new StringBuilder(512);
         final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        sb.append("Data bieżąca: ").append(sdf.format(new Date())).append('\n');
+        sb.append("Current date: ").append(sdf.format(new Date())).append('\n');
         if (errorTimeStamp > 0){
-            sb.append("Data błędu: ").append(sdf.format(new Date(errorTimeStamp))).append('\n');
+            sb.append("Error date: ").append(sdf.format(new Date(errorTimeStamp))).append('\n');
         }
         try{
             final String packageName = context.getPackageName();
-            sb.append("Aplikacja: ");
+            sb.append("Application: ");
             final PackageInfo packageInfo = context.getPackageManager().getPackageInfo(packageName, 0);
             sb.append(packageInfo.versionName).append(" (").append(org.bogus.geocaching.egpx.BuildInfo.GIT_VERSION).append(")");
         }catch(NameNotFoundException nnfe){
@@ -306,7 +306,7 @@ public class StateCollector
         sb.append("\nDevice: ").append(android.os.Build.DEVICE);
         sb.append("\nModel (and Product): ").append(android.os.Build.MODEL).append(" (").append(android.os.Build.PRODUCT).append(")");
         
-        sb.append("\n\nID urządzenia: ").append(Secure.getString(context.getContentResolver(), Secure.ANDROID_ID));
+        sb.append("\n\nDevice ID: ").append(Secure.getString(context.getContentResolver(), Secure.ANDROID_ID));
 
         OutputStream os = null;
         try{

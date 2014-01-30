@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
@@ -435,17 +436,18 @@ public class Application extends android.app.Application implements OnSharedPref
         File gpxTargetDirName = null;
         File gpxTargetDirNameTemp = null;
         File imagesTargetDirName = null;
+        Resources res = getResources();
         if (locus != null && !locus.isEmpty()){
             File loc = locus.get(0); 
             gpxTargetDirName = new File(loc, "mapItems");
-            gpxTargetDirNameTemp = new File (loc, "mapItems-temp");
-            imagesTargetDirName = new File(loc, ".cacheImages");
+            gpxTargetDirNameTemp = new File (loc, res.getString(R.string.dir_locus_temp));
+            imagesTargetDirName = new File(loc, res.getString(R.string.dir_locus_images));
         } else {
             final List<File> data = tdl.locateSaveDirectories();
             final File dir = data.get(0);
-            gpxTargetDirName = new File(dir, "awaryjniejszy-gpx/kesze"); // XXX localization!!!
-            gpxTargetDirNameTemp = new File (dir, "awaryjniejszy-gpx/kesze-temp");
-            imagesTargetDirName = new File(dir, "awaryjniejszy-gpx/.cacheImages");
+            gpxTargetDirName = new File(dir, res.getString(R.string.dir_default));
+            gpxTargetDirNameTemp = new File (dir, res.getString(R.string.dir_default_temp));
+            imagesTargetDirName = new File(dir, res.getString(R.string.dir_default_images));
         }
         
         editor.putString("gpxTargetDirName", gpxTargetDirName.toString());
