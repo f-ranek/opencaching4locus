@@ -20,7 +20,7 @@
     <string name="start">Start</string>
 
     <string name="maxNumOfCaches">Max number\nof geocaches:</string>
-    <string name="maxCacheDistance">Max distance [km/m]:</string>
+    <string name="maxCacheDistance">Max distance [km]:</string>
 
     <string name="hintMaxNumOfCaches">i.e. 200 geocaches</string>
     <string name="hintMaxCacheDistance">i.e. 10 km</string>
