@@ -72,7 +72,7 @@ public class ChooseCacheTypesDialog
             if (convertView == null){
                 Context ctx = ChooseCacheTypesDialog.this.parent;
                 cb = new CheckBox(ctx);
-                cb.setTextAppearance(ctx, android.R.style.TextAppearance_Large);
+                cb.setTextAppearance(ctx, R.style.TextAppearance_Large);
                 convertView = cb;
             } else {
                 cb = (CheckBox)convertView;
@@ -264,8 +264,7 @@ public class ChooseCacheTypesDialog
         dialogBuilder.setTitle(R.string.chooseCacheTypes);
         dialogBuilder.setAdapter(listViewAdapter, null);
         
-        dialog = dialogBuilder.create();
-        dialog.show();
+        dialog = dialogBuilder.show();
         dialog.setOnDismissListener(new DialogInterface.OnDismissListener()
         {
             @Override

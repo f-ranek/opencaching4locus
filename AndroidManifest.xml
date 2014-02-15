@@ -71,6 +71,10 @@
                 <action android:name="locus.api.android.INTENT_ITEM_SEARCH_LIST" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="org.bogus.domowygpx.activities.LOCUS_INVOKER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
             
         </activity>
         <activity

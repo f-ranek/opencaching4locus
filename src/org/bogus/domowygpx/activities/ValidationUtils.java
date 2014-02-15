@@ -38,7 +38,7 @@ public class ValidationUtils
         TextView v = (TextView)ownerView.findViewById(viewId);
         v.setText(null);
         v.setVisibility(TextView.GONE);
-        v.setTextAppearance(context, android.R.style.TextAppearance_Small);
+        v.setTextAppearance(context, R.style.TextAppearance_Small);
     }
     
     public void resetViewErrors()

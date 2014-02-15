@@ -108,25 +108,33 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
                 throw new IllegalArgumentException("null intent");
             }
 
-            isPointTools = LocusUtils.isIntentPointTools(intent);
-            isSearchList = LocusUtils.isIntentSearchList(intent);
-            if (!isPointTools && !isSearchList){
-                throw new IllegalArgumentException("Unknown action=" + intent.getAction());
-            }
-            
-            if (isSearchList){
-                location = LocusUtils.getLocationFromIntent(intent, LocusConst.INTENT_EXTRA_LOCATION_MAP_CENTER);
-                if (location == null){
-                    throw new IllegalArgumentException("null location for action=" + intent.getAction());
+            if ("org.bogus.domowygpx.activities.LOCUS_INVOKER".equals(intent.getAction())){
+                isPointTools = intent.getBooleanExtra("isPointTool", false);
+                isSearchList = !isPointTools;
+                location = new locus.api.objects.extra.Location();
+                location.latitude = intent.getDoubleExtra("latitude", 50);
+                location.longitude = intent.getDoubleExtra("longitude", 18);
+            } else {
+                isPointTools = LocusUtils.isIntentPointTools(intent);
+                isSearchList = LocusUtils.isIntentSearchList(intent);
+                if (!isPointTools && !isSearchList){
+                    throw new IllegalArgumentException("Unknown action=" + intent.getAction());
                 }
-            } else
-            if (isPointTools){
-                final Waypoint wpt = LocusUtils.handleIntentPointTools(this, intent);
-                if (wpt != null){
-                    location = wpt.getLocation();
-                }
-                if (location == null){
-                    throw new IllegalArgumentException("null location for action=" + intent.getAction());
+                
+                if (isSearchList){
+                    location = LocusUtils.getLocationFromIntent(intent, LocusConst.INTENT_EXTRA_LOCATION_MAP_CENTER);
+                    if (location == null){
+                        throw new IllegalArgumentException("null location for action=" + intent.getAction());
+                    }
+                } else
+                if (isPointTools){
+                    final Waypoint wpt = LocusUtils.handleIntentPointTools(this, intent);
+                    if (wpt != null){
+                        location = wpt.getLocation();
+                    }
+                    if (location == null){
+                        throw new IllegalArgumentException("null location for action=" + intent.getAction());
+                    }
                 }
             }
         }catch(Exception e){

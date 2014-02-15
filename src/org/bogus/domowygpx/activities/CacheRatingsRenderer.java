@@ -67,7 +67,7 @@ public class CacheRatingsRenderer
     {
         if (cacheRatingsConfig.isAll() && cacheRecommendationsConfig.isAll()){
             textView.setText(R.string.cacheRatingsAll);
-            textView.setTextAppearance(context, android.R.style.TextAppearance_Large);
+            textView.setTextAppearance(context, R.style.TextAppearance_Large);
         } else {
             Resources res = context.getResources();
             StringBuilder sb = new StringBuilder();
@@ -103,7 +103,7 @@ public class CacheRatingsRenderer
                 sb.append(str);
             }
             textView.setText(sb.toString());
-            textView.setTextAppearance(context, android.R.style.TextAppearance_Medium);
+            textView.setTextAppearance(context, R.style.TextAppearance_Medium);
         }
     }
 }
