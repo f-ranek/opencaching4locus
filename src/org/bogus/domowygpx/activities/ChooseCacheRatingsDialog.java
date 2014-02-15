@@ -10,7 +10,6 @@ import android.text.Selection;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -80,7 +79,7 @@ public class ChooseCacheRatingsDialog
         LayoutInflater inflater = LayoutInflater.from(parent);
         View view = inflater.inflate(R.layout.dialog_ratings, null);
         dialogBuilder.setView(view);
-        
+
         final RadioButton[] radios = new RadioButton[6];
         radios[0] = (RadioButton)view.findViewById(R.id.radioButtonRatingsAll);
         radios[3] = (RadioButton)view.findViewById(R.id.radioButtonRatings3);
@@ -139,34 +138,9 @@ public class ChooseCacheRatingsDialog
             checkBoxIncludeUnrated.setEnabled(val != 0);
         }
         
-        
-        final ViewGroup layoutRcmds = (ViewGroup)view.findViewById(R.id.layoutRcmds);
-        final CheckBox checkBoxRcmds = (CheckBox)view.findViewById(R.id.checkBoxRcmds);
-        final CheckBox checkBoxPercent = (CheckBox)layoutRcmds.findViewById(R.id.checkBoxRcmdsPercent);
-        final EditText editRecomendations = (EditText)layoutRcmds.findViewById(R.id.editTextRcmds);
-        final TextView textViewRdmdsInfo = (TextView)layoutRcmds.findViewById(R.id.textViewRdmdsInfo);
-        
-        checkBoxRcmds.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
-        {
-            protected void setEnabled(View view, boolean value)
-            {
-                view.setEnabled(value);
-                if (view instanceof ViewGroup){
-                    ViewGroup vg = (ViewGroup)view;
-                    int cc = vg.getChildCount();
-                    for (int i=0; i<cc; i++){
-                        View child = vg.getChildAt(i);
-                        setEnabled(child, value);
-                    }
-                }
-            }
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
-            {
-                setEnabled(layoutRcmds, isChecked); 
-                rcmds.setAll(!isChecked);
-            }
-        });
+        final CheckBox checkBoxPercent = (CheckBox)view.findViewById(R.id.checkBoxRcmdsPercent);
+        final EditText editRecomendations = (EditText)view.findViewById(R.id.editTextRcmds);
+        final TextView textViewRdmdsInfo = (TextView)view.findViewById(R.id.textViewRdmdsInfo);
         
         checkBoxPercent.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
         {
@@ -185,9 +159,8 @@ public class ChooseCacheRatingsDialog
             }
         });
         
-        checkBoxRcmds.setChecked(!rcmds.isAll());
         checkBoxPercent.setChecked(rcmds.isPercent());
-        if (rcmds.getValue() > 0){
+        if (rcmds.getValue() > 0 && !rcmds.isAll()){
             Editable text = editRecomendations.getText();
             text.replace(0, text.length(), String.valueOf(rcmds.getValue()));
             Selection.setSelection(text, text.length());
@@ -234,11 +207,9 @@ public class ChooseCacheRatingsDialog
                     final Editable s = editRecomendations.getText();
                     int newVal = s.length() == 0 ? 0 : Integer.parseInt(s.toString());
                     rcmds.setValue(newVal);
+                    rcmds.setAll(newVal == 0);
                 }catch(NumberFormatException nfe){
                     // ignore
-                }
-                if (!checkBoxRcmds.isChecked()){
-                    rcmds.setAll(true);
                 }
                 
                 if (onRatingsChosenListener != null){

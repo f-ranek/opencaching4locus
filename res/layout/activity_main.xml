@@ -242,15 +242,12 @@
                     android:text="@string/cacheRatings"
                     android:textAppearance="?android:attr/textAppearanceLarge" />
 
-                <TextView
+                <Button
                     android:id="@+id/editCacheRatings"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"
                     android:gravity="center_vertical"
-                    android:paddingBottom="3dp"
-                    android:paddingLeft="3dp"
-                    android:paddingTop="3dp"
                     android:text="@string/cacheRatingsAll"
                     android:textAppearance="?android:attr/textAppearanceLarge" />
 
