@@ -201,22 +201,28 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
             {
                 
                 @Override
-                public void onSharedPreferenceChanged(SharedPreferences config, String key)
+                public void onSharedPreferenceChanged(final SharedPreferences config, final String key)
                 {
-                    final boolean signed = oauth.hasOAuth3();
-                    if (signed){
-                        signToService.setTitle(R.string.pref_my_account_sign_forget);
-                        signToService.setSummary(R.string.pref_my_account_sign_forget_desc);
-                        signToService.getButton().setText(R.string.pref_my_account_sign_forget_btn);
-                    } else {
-                        signToService.setTitle(R.string.pref_my_account_sign);
-                        signToService.setSummary(R.string.pref_my_account_sign_desc);
-                        signToService.getButton().setText(R.string.pref_my_account_sign_btn);
-                    }
-                    signToService.setShouldDisableDependents(!signed);
-                    userName.setEnabled(!signed);
-                    userName.getOnPreferenceChangeListener().onPreferenceChange(userName, config.getString("userName", ""));
-                    
+                    runOnUiThread(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            final boolean signed = oauth.hasOAuth3();
+                            if (signed){
+                                signToService.setTitle(R.string.pref_my_account_sign_forget);
+                                signToService.setSummary(R.string.pref_my_account_sign_forget_desc);
+                                signToService.getButton().setText(R.string.pref_my_account_sign_forget_btn);
+                            } else {
+                                signToService.setTitle(R.string.pref_my_account_sign);
+                                signToService.setSummary(R.string.pref_my_account_sign_desc);
+                                signToService.getButton().setText(R.string.pref_my_account_sign_btn);
+                            }
+                            signToService.setShouldDisableDependents(!signed);
+                            userName.setEnabled(!signed);
+                            userName.getOnPreferenceChangeListener().onPreferenceChange(userName, config.getString("userName", ""));
+                        }
+                    });
                 }
             };
             config.registerOnSharedPreferenceChangeListener(spcl);
