@@ -4,5 +4,5 @@
     <string name="titleLocusSearchInProgress">Working&#8230;</string>
     <string name="dontAskAgain">Don\'t ask again</string>
     <string name="btnClose">Close</string>
-    <string name="msgDownloadInBackground">Donwloading in background</string>
+    <string name="msgDownloadInBackground">Downloading in background</string>
 </resources>

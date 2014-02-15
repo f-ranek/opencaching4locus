@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <string name="applicationName">Awaryjniejszy GPX</string>
-    <string name="applicationLabel">Awaryjniej-\nszy GPX</string>
+    <string name="applicationName">Emergency GPX</string>
+    <string name="applicationLabel">Emergency GPX</string>
     <string name="latitude">Latitude*:</string>
     <string name="longitude">Longitude*:</string>
     <string name="hintGeoData">ddd:mm:ss.ssss</string>
@@ -11,12 +11,12 @@
     <string name="star">* - allowed formats:\n1. [+-]ddd.dddd\n2. [+-]ddd:mm.mmm\n3. [+-]ddd:mm:ss.ss\n4. WGS84 (NSEW ddd° mm.mmm\')</string>
 
     <string name="targetFileName">Save as:</string>
-    <string name="hintTargetFileName">Optional GPX file name</string>
-    <string name="targetAutoImportToLocus">Import to Locus</string>
+    <string name="hintTargetFileName">GPX filename (optional)</string>
+    <string name="targetAutoImportToLocus">Import into Locus</string>
     <string name="downloadImages_always">Download images (yes)</string>
-    <string name="downloadImages_wifi">Download images (WiFi)</string>
+    <string name="downloadImages_wifi">Download images (WiFi only)</string>
     <string name="downloadImages_never">Download images (no)</string>
-    
+
     <string name="start">Start</string>
 
     <string name="maxNumOfCaches">Max number\nof geocaches:</string>
@@ -26,62 +26,62 @@
     <string name="hintMaxCacheDistance">i.e. 10 km</string>
 
     <string name="maxNumOfCachesDefault">50</string>
-    
-    <string name="cacheTypes">Cache types:</string>
+
+    <string name="cacheTypes">Only these cache types:</string>
     <string name="chooseCacheTypes">Choose cache types</string>
 
     <string name="locusCommunicationError">Locus communication error</string>
-    <string name="locusCommunicationError2">Awaryjniejszy GPX: Locus communication error</string>
-    
-    <string name="gpsDisabled">GPS disabled, getting location info from network</string>
-    <string name="noLocationInfo">Can\'t get location info</string>
+    <string name="locusCommunicationError2">Emergency GPX: Locus communication error</string>
+
+    <string name="gpsDisabled">GPS is disabled, acquireing location from network</string>
+    <string name="noLocationInfo">Could not acquire location</string>
 
     <string name="distanceUnit.m">m</string>
     <string name="distanceUnit.km">km</string>
-    
-    <string name="validationErrors">Please correct error shown befor continue</string>
-    <string name="validationWarnings">There were some problems with your config. Please verify form data, and tap \'Start\' again</string>
-    <string name="validationIncompleteLocation">Location is not filled</string>
-    <string name="validationInvalidLocation">Wrong location format</string>
-    <string name="validationMissingLocation">Please enter location</string>
+
+    <string name="validationErrors">There are errors in your form, please correct them</string>
+    <string name="validationWarnings">There were some problems with your config. Please verify form data, and tap \'Start\' again</string> <!-- TODO -->
+    <string name="validationIncompleteLocation">Location cannot be empty</string>
+    <string name="validationInvalidLocation">Invalid location format</string>
+    <string name="validationMissingLocation">Location cannot be empty</string>
     <string name="validationInvalidMaxCachesLimit">Limit must be in range 1..500</string>
-    <string name="validationMinCacheDistanceWarning">Minimum distance is 20m</string>
+    <string name="validationMinCacheDistanceWarning">Minimum value for "Max distance" is 20 meters</string>
     <string name="validationInvalidCacheDistance">Invalid distance</string>
-    <string name="validationInvalidNoCacheDistanceNeitherLimit">Please enter distance, or limit number of geocaches</string>
-    <string name="validationMissingFileName">Please enter filename</string>
-    <string name="validationMissingFileNameOrLocusImport">Enter file name, or check \'Import to Locus\'</string>
-    <string name="validationTargetFileIsDir">Target file already exists, and is a directory</string>
-    <string name="validationTargetFileIsReadOnly">Target file already exists, and can\'t be overwritten</string>
-    <string name="validationTargetFileExistsWarning">Target file already exists. If you want to overwrite it, tap \'Start\' again</string>
-    <string name="validationCantCreateTargetDir">Can\'t create target directory</string>
-    <string name="validationTargetDirIsReadOnly">Can\'t write to target directory</string>
-    <string name="validationTargetDirIsFile">Target directory is a file</string>
+    <string name="validationInvalidNoCacheDistanceNeitherLimit">You must enter either the distance, or the limit</string>
+    <string name="validationMissingFileName">Missing filename</string>
+    <string name="validationMissingFileNameOrLocusImport">You must either enter the filename, or check the \'Import to Locus\' option</string>
+    <string name="validationTargetFileIsDir">Target location already exists, and it is a folder!</string>
+    <string name="validationTargetFileIsReadOnly">Target file already exists, and cannot be overwritten</string>
+    <string name="validationTargetFileExistsWarning">Target file already exists. If you want to overwrite it, tap \'Start\' again</string> <!-- TODO -->
+    <string name="validationCantCreateTargetDir">Could not create the target folder</string>
+    <string name="validationTargetDirIsReadOnly">Could not write into the target folder</string>
+    <string name="validationTargetDirIsFile">Target location is a file (expected a folder)</string>
     <string name="validationInvalidImagesDownloadStrategy">Invalid images download strategy</string>
-    <string name="validationCantCreateTargetImagesDir">Can\'t create directory for the images</string>
-    <string name="validationTargetImagesDirIsReadOnly">Can\'t write in directory for the images</string>
-    <string name="validationTargetImagesDirIsFile">Images target directory is a file</string>
-    
+    <string name="validationCantCreateTargetImagesDir">Could not create the folder for the images</string>
+    <string name="validationTargetImagesDirIsReadOnly">Could not write into the folder for the images</string>
+    <string name="validationTargetImagesDirIsFile">Images target location is a file (expected a folder)</string>
+
     <string name="errorPlaceholderText">ERROR_TEXT_GOES_HERE</string>
 
     <string name="gpxDownloaderServiceName">GPX downloader service</string>
-    <string name="gpxDownloaderServiceDescription">Downloads and process GPX files</string>
-    <string name="filesDownloaderServiceName">Files downloader service</string>
+    <string name="gpxDownloaderServiceDescription">Downloads and processes GPX files</string>
+    <string name="filesDownloaderServiceName">File downloader service</string>
     <string name="filesDownloaderServiceDescription">Downloads images and other static resources</string>
-    
+
     <string name="titleActivityDownloadList">Downloads list</string>
-    <string name="menuGoToDownloadsList">Files downloads</string>
+    <string name="menuGoToDownloadsList">File downloads</string>
 
     <string name="btnDownloadItemStop">Pause</string>
     <string name="btnDownloadItemPlay">Reasume</string>
     <string name="btnDownloadItemRestart">Restart</string>
     <string name="btnDownloadItemCancel">Stop</string>
     <string name="btnDownloadItemRemove">Remove</string>
-    
+
     <string name="btnDownloadItemStopDescription">Pauses task</string>
     <string name="btnDownloadItemPlayDescription">Resumes task</string>
     <string name="btnDownloadItemCancelDescription">Stops task</string>
-    
-    
+
+
     <plurals name="cache">
         <item quantity="one">%d geocache</item>
         <item quantity="other">%d geocaches</item>
@@ -116,33 +116,33 @@
         <item quantity="other">%d files</item>
     </plurals>
     <string name="infoWaiting">Waiting&#8230;</string>
-    <string name="infoWorkInProgress">Wait, working&#8230;</string>
-    
-    <string name="okapiErrorInvalidToken">You have revoked app access to oc.pl</string>
-    <string name="okapiErrorInvalidTimestamp">Check your device\'s time</string>
-    
+    <string name="infoWorkInProgress">Please wait, working&#8230;</string>
+
+    <string name="okapiErrorInvalidToken">We got "access denied" from oc.pl. You need to re-authorize.</string>
+    <string name="okapiErrorInvalidTimestamp">Check your system time, in needs to be valid!</string> <!-- BTW, this error can be fixed internally -->
+
     <string name="titleActivityInfo">About</string>
-    <string name="infoAboutTitle">Here should be some application description ;)</string>
-    <string name="infoAbout">The main development focus of this application was to integrate with Locus Maps, and Columbus. It let\'s you download geocaches data from opencaching.pl service. Moreover, it allows to download images attached to geocaches \'in front\', i.e. when you are on WiFi in home.</string>
+    <string name="infoAboutTitle">Here should be some application description ;)</string> <!-- Intensional mistake? -->
+    <string name="infoAbout">The major goal for this application is integrating Opencaching with applications such as Locus Maps and Columbus. It lets you download geocaches from opencaching.pl website. It also allows your prefetch all the images attached to the downloaded geocaches (so you can display them when you're offline).</string>
     <string name="infoHelpTitle">Help!</string>
     <string name="infoHelp" formatted="false">(User\'s manual=%0)\t(Forum=%1)\t(both in Polish)</string>
     <string name="versionInfoTitle">Version info</string>
     <string name="versionInfo">Version:\t\t%1$s\nDate:\t\t\t\t%2$s\nGit:\t\t\t\t\t%3$s</string>
-    
-    <string name="historyTitle">Changes history</string>
+
+    <string name="historyTitle">Change history</string>
     <string name="history">1.0 – first version, based on Awaryjny GPX\n1.1 – added Locus integration\n1.2 – added integration with oc.pl\n1.3 – new search filters</string>
 
     <string name="infoDeveloperInfoTitle">Developer info</string>
-    <string name="infoDeveloperInfoDesc">Generates state dump file, which is useful for a developer to diagnose and correct bugs. The generated file is saved in internal storage, and then could be sent via e-mail. Please drop few words describing the problem or situation in the e-mail.\n\nIf you don\'t have e-mail client configured, you can send the file to awaryjniejszy-gpx@10g.pl by other means.\n\nThe dump consists of the following information:\n * device info (without your phone number, contacts data, sms and other sensitive information)\n * application config and state files\n * system logs</string>
+    <string name="infoDeveloperInfoDesc">Generates a state dump file, which can be very useful for the developers when they try to diagnose and fix application bugs. The file is saved in internal storage, and later can be sent by e-mail. Please include a brief description of the problem in the e-mail.\n\nIf you don\'t have e-mail client configured, you can send the file to awaryjniejszy-gpx@10g.pl by other means.\n\nThe dump consists of the following information:\n * device info (without your phone number, contacts data, sms and other sensitive information)\n * application config and state files\n * system logs</string>
     <string name="infoDeveloperInfoFile">File %s has been saved in internal storage.</string>
-    <string name="infoDeveloperEmailText">Developer dump has been generated, the e-mail you are sending should contain attachment, with an approximate size of %2$s. The attachment data is also stored in internal memory, in file %1$s.\n\nPlease also drop few words describing the situation or problem.</string>
-    <string name="infoDeveloperDialogTitle">Awaryjniejszy GPX - error :(</string>
-    <string name="infoDeveloperDialogText">It looks like Awaryjniejszy GPX has failed. A file with error dump has been generated, and saved in internal memory under the name of %s.\nWould you like to send this file to the developer, as an e-mail attachment to awaryjniejszy-gpx@10g.pl?\n\nError reports helps to improve the app.</string>
+    <string name="infoDeveloperEmailText">Developer dump has been generated, the e-mail you are sending should contain attachment, with an approximate size of %2$s. The attachment data is also stored in internal memory, in file %1$s.\n\nPlease enter a brief description of the problem.</string>
+    <string name="infoDeveloperDialogTitle">Emergency GPX - error occurred :(</string>
+    <string name="infoDeveloperDialogText">It looks like Emergency GPX has crashed. Detailed debug report was generated, and saved in internal memory (%s).\nWould you like to send this report to the developer, as an e-mail attachment to awaryjniejszy-gpx@10g.pl?\n\nError reports helps to improve the app.</string>
     <string name="infoDeveloperInfoGo">Generate</string>
     <string name="infoDeveloperInfoSend">Send</string>
     <string name="infoDeveloperInfoPostpone">Later</string>
     <string name="infoDeveloperInfoError">Unknown error occurred</string>
-    
+
     <string name="cacheTypeAll">All</string>
     <string name="cacheTypeEvent">Event</string>
     <string name="cacheTypeMoving">Moving cache</string>
@@ -153,11 +153,11 @@
     <string name="cacheTypeUnknown">Other type</string>
     <string name="cacheTypeVirtual">Virtual</string>
     <string name="cacheTypeWebcam">Webcam</string>
-    
+
     <string name="difficultyTask">Task difficulty</string>
     <string name="difficultyTerrain">Terrain difficulty</string>
     <string name="difficulties">Difficulty:</string>
-    <string name="chooseDifficulties">Select difficulty</string>
+    <string name="chooseDifficulties">Choose a difficulty</string>
     <string name="difficultiesAll">Any</string>
     <string name="difficultiesTaskItem">task: %d</string>
     <string name="difficultiesTerrainItem">terrain: %d</string>
@@ -170,8 +170,8 @@
         <item>4</item>
         <item>5</item>
     </string-array>
-    
-    <string name="chooseCacheRatings">Select geocaches rating</string>
+
+    <string name="chooseCacheRatings">Choose a minimum rating</string>
     <string name="cacheRatings">Rating:</string>
     <string name="cacheMinimumRating">Minimum rating</string>
     <string name="cacheRatingsAll">Any</string>
@@ -189,17 +189,17 @@
     </plurals>
     <string name="cacheRcmds">Recommendations</string>
     <string name="cacheRcmdsMin">At least</string>
-    <string name="cacheRcmdsInfoNormal">Each geocache must be recommended by the given number of finders</string>
-    <string name="cacheRcmdsInfoPercent">Each geocache must be recommended by the given percent of finders</string>
-    
+    <string name="cacheRcmdsInfoNormal">Fetch only such geocaches which have been recommended at least N times</string>
+    <string name="cacheRcmdsInfoPercent">Fetch only such geocaches which were recommended by at least N% of all users who had found them</string>
+
     <string name="downloader_cancelling">Cancelling</string>
     <string name="downloader_cancelling2">Cancellation in progress</string>
     <string name="downloader_stopping">Stopping</string>
     <string name="downloader_downloading">Downloading</string>
     <string name="downloader_download_finished">Download finished</string>
     <string name="downloader_download_stopped">Download stopped</string>
-    
-    <string name="files_downloader_in_progrss">Files download in progress</string>
+
+    <string name="files_downloader_in_progrss">Files are being downloaded</string>
     <string name="files_downloader_paused">Download paused</string>
     <string name="files_downloader_error">Download error</string>
     <string name="files_downloader_finished">Download finished</string>
@@ -220,7 +220,7 @@
     <string name="gpx_downloader_error_search">Error while looking for geocaches</string>
     <string name="gpx_downloader_error_fs">File system error</string>
     <string name="gpx_downloader_progress_downloading">Downloading GPX</string>
-    <string name="gpx_downloader_error_invalid_gpx">Error in GPX processing</string>
+    <string name="gpx_downloader_error_invalid_gpx">Error: The GPX file seems to be invalid</string>
     <string name="gpx_downloader_error_images_downloading">Error while downloading images</string>
     <string name="gpx_downloader_error_locus_import">Error while importing to Locus</string>
     <string name="gpx_downloader_progress_finish">Finished</string>
@@ -229,19 +229,19 @@
     <string name="gpx_downloader_notif_finished">GPX download finished</string>
     <plurals name="gpx_downloader_notif_state">
         <item quantity="one">GPX download in progress</item>
-        <item quantity="other">GPXes download in progress</item>
+        <item quantity="other">Multiple GPX files are being downloaded</item>
     </plurals>
     <string name="gpx_downloader_notif_in_progress">%d in progress</string>
     <string name="gpx_downloader_notif_with_error">%d errors</string>
-    
-    
-    <string name="dir_default">awaryjniejszy-gpx/geocaches</string>
-    <string name="dir_default_temp">awaryjniejszy-gpx/geocaches-temp</string>
-    <string name="dir_default_images">awaryjniejszy-gpx/.cacheImages</string>
-    
+
+
+    <string name="dir_default">emergency-gpx/geocaches</string>
+    <string name="dir_default_temp">emergency-gpx/geocaches-temp</string>
+    <string name="dir_default_images">emergency-gpx/.cacheImages</string>
+
     <string name="dir_locus_temp">mapItems-temp</string>
     <string name="dir_locus_images">.cacheImages</string>
-    
-    
+
+
     <!-- color name="zdupy">#00FF80</color  -->
 </resources>
