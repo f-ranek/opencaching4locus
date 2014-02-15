@@ -300,6 +300,7 @@
                         android:id="@+id/textViewAutoLocusImport"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
                         android:layout_weight="10"
                         android:text="@string/targetAutoImportToLocus"
                         android:textAppearance="?android:attr/textAppearanceLarge" />
@@ -308,6 +309,7 @@
                         android:id="@+id/checkBoxAutoLocusImport"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
                         android:checked="true"
                         android:focusable="true"
                         android:gravity="right|center_vertical" />
@@ -331,6 +333,7 @@
                         android:id="@+id/textViewDownloadImages"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
                         android:layout_weight="10"
                         android:text="@string/downloadImages_wifi"
                         android:textAppearance="?android:attr/textAppearanceLarge" />
@@ -339,6 +342,7 @@
                         android:id="@+id/checkBoxDownloadImages"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
                         android:layout_weight="10"
                         android:checked="true"
                         android:focusable="true"
