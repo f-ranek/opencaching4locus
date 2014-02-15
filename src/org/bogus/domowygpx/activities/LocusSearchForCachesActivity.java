@@ -1,10 +1,13 @@
 package org.bogus.domowygpx.activities;
 
+import java.text.DecimalFormat;
+
 import locus.api.android.utils.LocusConst;
 import locus.api.android.utils.LocusUtils;
 import locus.api.objects.extra.Waypoint;
 
 import org.bogus.android.AndroidUtils;
+import org.bogus.android.DecimalKeyListener;
 import org.bogus.domowygpx.activities.DownloadListContext.GpxListItem;
 import org.bogus.domowygpx.activities.DownloadListContext.ListItemViewHolder;
 import org.bogus.domowygpx.application.Application;
@@ -266,6 +269,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         }
         editMaxNumOfCaches = (EditText) view.findViewById(R.id.editMaxNumOfCaches);
         editMaxCacheDistance = (EditText) view.findViewById(R.id.editMaxCacheDistance);
+        editMaxCacheDistance.setKeyListener(new DecimalKeyListener());
 
         final TextView editCacheTypes = (TextView) view.findViewById(R.id.editCacheTypes);
         cacheTypesConfigRenderer = new CacheTypesConfigRenderer(this, cacheTypesConfig, editCacheTypes);
@@ -419,13 +423,13 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
                 editMaxNumOfCaches.setText(maxNumOfCaches <= 0 ? "" : String.valueOf(maxNumOfCaches));
             } else 
             if ("MAX_CACHE_DISTANCE".equals(modifiedField)){
-                String s;
-                if (taskConfiguration.getOutMaxCacheDistance() < 1){
-                    s = Math.round(taskConfiguration.getOutMaxCacheDistance()*1000) + " m";
+                if (taskConfiguration.getOutMaxCacheDistance() < 0){
+                    editMaxCacheDistance.setText(null);
                 } else {
-                    s = taskConfiguration.getOutMaxCacheDistance() + " km";
+                    DecimalFormat df = new DecimalFormat("###0.###");
+                    String s = df.format(taskConfiguration.getOutMaxCacheDistance());
+                    editMaxCacheDistance.setText(s);
                 }
-                editMaxCacheDistance.setText(s);
             } 
         }
 

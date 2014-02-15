@@ -35,9 +35,9 @@
                     android:layout_height="wrap_content"
                     android:hint="@string/hintGeoData"
                     android:inputType="textNoSuggestions"
+                    android:maxLength="20"
                     android:maxLines="1"
-                    android:nextFocusDown="@+id/editLongitude" >
-                </EditText>
+                    android:nextFocusDown="@+id/editLongitude" />
             </TableRow>
 
             <TableRow
@@ -65,6 +65,7 @@
                         android:hint="@string/hintGeoData"
                         android:inputType="textNoSuggestions"
                         android:maxLines="1"
+	                    android:maxLength="20"
                         android:nextFocusDown="@+id/editMaxNumOfCaches" />
 
                     <TextView
@@ -120,6 +121,8 @@
                         android:layout_height="wrap_content"
                         android:hint="@string/hintMaxNumOfCaches"
                         android:inputType="number"
+                        android:maxLength="4"
+                        android:ellipsize="end"
                         android:nextFocusDown="@+id/editMaxCacheDistance"
                         android:text="@string/maxNumOfCachesDefault" />
 
@@ -158,6 +161,8 @@
                         android:layout_height="wrap_content"
                         android:hint="@string/hintMaxCacheDistance"
                         android:inputType="numberDecimal"
+                        android:maxLength="7"
+                        android:ellipsize="end"
                         android:nextFocusDown="@+id/editTargetFileName" />
 
                     <TextView

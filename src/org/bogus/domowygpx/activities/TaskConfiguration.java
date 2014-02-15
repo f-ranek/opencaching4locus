@@ -1,6 +1,8 @@
 package org.bogus.domowygpx.activities;
 
 import java.io.File;
+import java.text.DecimalFormat;
+import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -151,25 +153,17 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         outMaxCacheDistance = -1;
         String mcd = maxCacheDistance == null ? null : spaces.matcher(maxCacheDistance).replaceAll("");
         if (mcd != null && mcd.length() > 0){
-            boolean meters = false;
-            if (mcd.endsWith("km")){
-                mcd = mcd.substring(0, maxCacheDistance.length()-2);
-            } else if (mcd.endsWith("m")){
-                mcd = mcd.substring(0, maxCacheDistance.length()-1);
-                meters = true;
-            }
-            try{
-                outMaxCacheDistance = Double.parseDouble(mcd.trim());
-                if (meters){
-                    outMaxCacheDistance = outMaxCacheDistance / 1000.0;
-                }
+            DecimalFormat nf = new DecimalFormat("####0.###");
+            ParsePosition pp = new ParsePosition(0);
+            outMaxCacheDistance = nf.parse(mcd, pp).doubleValue();
+            if (pp.getIndex() != mcd.length()){
+                errors.add(Pair.makePair("MAX_CACHE_DISTANCE", R.string.validationInvalidCacheDistance));
+            } else {
                 if (outMaxCacheDistance < 0.02){
                     outMaxCacheDistance = 0.02;
                     modifiedFields.add("MAX_CACHE_DISTANCE");
                     warnings.add(Pair.makePair("MAX_CACHE_DISTANCE", R.string.validationMinCacheDistanceWarning));
                 }
-            }catch(NumberFormatException nfe){
-                errors.add(Pair.makePair("MAX_CACHE_DISTANCE", R.string.validationInvalidCacheDistance));
             }
         }
         

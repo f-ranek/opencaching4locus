@@ -1,5 +1,6 @@
 package org.bogus.domowygpx.activities;
 
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -7,6 +8,7 @@ import locus.api.android.utils.LocusConst;
 import locus.api.android.utils.LocusUtils;
 
 import org.bogus.android.AndroidUtils;
+import org.bogus.android.DecimalKeyListener;
 import org.bogus.android.LockableScrollView;
 import org.bogus.domowygpx.application.Application;
 import org.bogus.domowygpx.services.GpxDownloaderService;
@@ -123,6 +125,7 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 		
 		editMaxNumOfCaches = (EditText) findViewById(R.id.editMaxNumOfCaches);
 		editMaxCacheDistance = (EditText) findViewById(R.id.editMaxCacheDistance);
+		editMaxCacheDistance.setKeyListener(new DecimalKeyListener());
 		
 		checkBoxAutoLocusImport = (CheckBox) findViewById(R.id.checkBoxAutoLocusImport);
 		checkBoxAutoLocusImport.setOnClickListener(new View.OnClickListener()
@@ -378,16 +381,16 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 	    for (String modifiedField : taskConfiguration.getModifiedFields()){
 	        if ("CACHE_COUNT_LIMIT".equals(modifiedField)){
 	            int maxNumOfCaches = taskConfiguration.getOutMaxNumOfCaches();
-	            editMaxNumOfCaches.setText(maxNumOfCaches <= 0 ? "" : String.valueOf(maxNumOfCaches));
+	            editMaxNumOfCaches.setText(maxNumOfCaches <= 0 ? null : String.valueOf(maxNumOfCaches));
 	        } else 
             if ("MAX_CACHE_DISTANCE".equals(modifiedField)){
-                String s;
-                if (taskConfiguration.getOutMaxCacheDistance() < 1){
-                    s = Math.round(taskConfiguration.getOutMaxCacheDistance()*1000) + " " + getResources().getString(R.string.distanceUnit_m);
+                if (taskConfiguration.getOutMaxCacheDistance() < 0){
+                    editMaxCacheDistance.setText(null);
                 } else {
-                    s = taskConfiguration.getOutMaxCacheDistance() + " " + getResources().getString(R.string.distanceUnit_km);
+                    DecimalFormat df = new DecimalFormat("###0.###");
+                    String s = df.format(taskConfiguration.getOutMaxCacheDistance());
+                    editMaxCacheDistance.setText(s);
                 }
-                editMaxCacheDistance.setText(s);
             } 
 	    }
 	    

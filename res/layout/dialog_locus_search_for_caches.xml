@@ -55,8 +55,10 @@
                         android:id="@+id/editMaxNumOfCaches"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
+                        android:ellipsize="end"
                         android:hint="@string/hintMaxNumOfCaches"
                         android:inputType="number"
+                        android:maxLength="4"
                         android:nextFocusDown="@+id/editMaxCacheDistance"
                         android:text="@string/maxNumOfCachesDefault" />
 
@@ -96,6 +98,8 @@
                         android:layout_height="wrap_content"
                         android:hint="@string/hintMaxCacheDistance"
                         android:inputType="numberDecimal"
+                        android:ellipsize="end"
+                        android:maxLength="7"
                         android:nextFocusDown="@+id/editTargetFileName" />
 
                     <TextView

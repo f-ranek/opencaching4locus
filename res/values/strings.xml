@@ -27,7 +27,7 @@
 
     <string name="maxNumOfCachesDefault">50</string>
 
-    <string name="cacheTypes">Only these cache types:</string>
+    <string name="cacheTypes">Only these\ncache types:</string>
     <string name="chooseCacheTypes">Choose cache types</string>
 
     <string name="locusCommunicationError">Locus communication error</string>
@@ -35,9 +35,6 @@
 
     <string name="gpsDisabled">GPS is disabled, acquireing location from network</string>
     <string name="noLocationInfo">Could not acquire location</string>
-
-    <string name="distanceUnit.m">m</string>
-    <string name="distanceUnit.km">km</string>
 
     <string name="validationErrors">There are errors in your form, please correct them</string>
     <string name="validationWarnings">There were some problems with your config. Please verify form data, and tap \'Start\' again</string> <!-- TODO -->
@@ -123,7 +120,7 @@
 
     <string name="titleActivityInfo">About</string>
     <string name="infoAboutTitle">Here should be some application description ;)</string> <!-- Intensional mistake? -->
-    <string name="infoAbout">The major goal for this application is integrating Opencaching with applications such as Locus Maps and Columbus. It lets you download geocaches from opencaching.pl website. It also allows your prefetch all the images attached to the downloaded geocaches (so you can display them when you're offline).</string>
+    <string name="infoAbout">The major goal for this application is integrating Opencaching with applications such as Locus Maps and Columbus. It lets you download geocaches from opencaching.pl website. It also allows your prefetch all the images attached to the downloaded geocaches (so you can display them when you\'re offline).</string>
     <string name="infoHelpTitle">Help!</string>
     <string name="infoHelp" formatted="false">(User\'s manual=%0)\t(Forum=%1)\t(both in Polish)</string>
     <string name="versionInfoTitle">Version info</string>
@@ -227,10 +224,8 @@
     <string name="gpx_downloader_progress_no_caches">No geocaches found</string>
     <string name="gpx_downloader_unknown_error">Unknown error has occurred</string>
     <string name="gpx_downloader_notif_finished">GPX download finished</string>
-    <plurals name="gpx_downloader_notif_state">
-        <item quantity="one">GPX download in progress</item>
-        <item quantity="other">Multiple GPX files are being downloaded</item>
-    </plurals>
+    <string name="gpx_downloader_notif_state_1">GPX download in progress</string>
+    <string name="gpx_downloader_notif_state_n">Multiple GPX files are being downloaded</string>
     <string name="gpx_downloader_notif_in_progress">%d in progress</string>
     <string name="gpx_downloader_notif_with_error">%d errors</string>
 

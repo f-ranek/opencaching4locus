@@ -1194,8 +1194,11 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         final Resources res = getResources();
         if (runningCount == 0){
             builder.setContentTitle(res.getText(R.string.gpx_downloader_notif_finished));   
-        } else {
-            builder.setContentTitle(res.getQuantityText(R.plurals.gpx_downloader_notif_state, runningCount));
+        } else 
+        if (runningCount == 1){
+            builder.setContentTitle(res.getText(R.string.gpx_downloader_notif_state_1));   
+        } else {    
+            builder.setContentTitle(res.getText(R.string.gpx_downloader_notif_state_n));   
         }
         int[] runningStats = getStateStats();
         final int dbCountError = runningStats[1];
