@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="pref_my_account_found_strategy_values">
+        <item>skip</item>
+        <item>mark</item>
+    </string-array>
+    <string-array name="pref_my_account_my_notes_values">
+        <item>none</item>
+        <item>desc:text</item>
+        <item>gc:personal_note</item>
+        <item>desc:text|gc:personal_note</item>
+    </string-array>
+    <string-array name="pref_download_images_strategy_values">
+        <item>always</item>
+        <item>onlyOnWIFI</item>
+        <item>never</item>
+    </string-array>
+    <integer-array name="pref_download_logs_count_values">
+        <item>0</item>
+        <item>10</item>
+        <item>20</item>
+        <item>50</item>
+        <item>-1</item>
+    </integer-array>
+    <integer-array name="pref_advanced_download_tps_values">
+        <item>1</item>
+        <item>2</item>
+        <item>4</item>
+    </integer-array>
+    <integer-array name="pref_advanced_http_timeout_values">
+        <item>30</item>
+        <item>60</item>
+        <item>120</item>
+        <item>240</item>
+    </integer-array>
+    
+    <string-array name="difficultyLables">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+    </string-array>
+    
+</resources>

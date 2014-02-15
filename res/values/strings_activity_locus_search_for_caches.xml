@@ -1,4 +1,5 @@
-<resources>
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <string name="titleLocusSearch">Search for geocaches nearby</string>
     <string name="titleLocusSearchInProgress">Working&#8230;</string>

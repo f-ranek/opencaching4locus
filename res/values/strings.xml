@@ -58,7 +58,7 @@
     <string name="validationTargetImagesDirIsReadOnly">Could not write into the folder for the images</string>
     <string name="validationTargetImagesDirIsFile">Images target location is a file (expected a folder)</string>
 
-    <string name="errorPlaceholderText">ERROR_TEXT_GOES_HERE</string>
+    <string name="errorPlaceholderText" tools:ignore="MissingTranslation">ERROR_TEXT_GOES_HERE</string>
 
     <string name="gpxDownloaderServiceName">GPX downloader service</string>
     <string name="gpxDownloaderServiceDescription">Downloads and processes GPX files</string>
@@ -156,17 +156,10 @@
     <string name="difficulties">Difficulty:</string>
     <string name="chooseDifficulties">Choose a difficulty</string>
     <string name="difficultiesAll">Any</string>
-    <string name="difficultiesTaskItem">task: %d</string>
-    <string name="difficultiesTerrainItem">terrain: %d</string>
-    <string name="difficultiesTaskRange">task: %1$d-%2$d</string>
-    <string name="difficultiesTerrainRange">terrain: %1$d-%2$d</string>
-    <string-array name="difficultyLables">
-        <item>1</item>
-        <item>2</item>
-        <item>3</item>
-        <item>4</item>
-        <item>5</item>
-    </string-array>
+    <string name="difficultiesTaskItem">Task: %d</string>
+    <string name="difficultiesTerrainItem">Terrain: %d</string>
+    <string name="difficultiesTaskRange">Task: %1$d-%2$d</string>
+    <string name="difficultiesTerrainRange">Terrain: %1$d-%2$d</string>
 
     <string name="chooseCacheRatings">Choose a minimum rating</string>
     <string name="cacheRatings">Rating:</string>
@@ -234,8 +227,8 @@
     <string name="dir_default_temp">emergency-gpx/geocaches-temp</string>
     <string name="dir_default_images">emergency-gpx/.cacheImages</string>
 
-    <string name="dir_locus_temp">mapItems-temp</string>
-    <string name="dir_locus_images">.cacheImages</string>
+    <string name="dir_locus_temp" tools:ignore="MissingTranslation">mapItems-temp</string>
+    <string name="dir_locus_images" tools:ignore="MissingTranslation">.cacheImages</string>
 
 
     <!-- color name="zdupy">#00FF80</color  -->

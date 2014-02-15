@@ -1,4 +1,5 @@
-<resources>
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <string name="title_activity_settings">Settings</string>
 
@@ -12,10 +13,6 @@
         <item>skip</item>
         <item>mark</item>
     </string-array>
-    <string-array name="pref_my_account_found_strategy_values">
-        <item>skip</item>
-        <item>mark</item>
-    </string-array>
 
     <string name="pref_my_account_my_notes">Personal cache notes</string>
     <string-array name="pref_my_account_my_notes_titles">
@@ -23,12 +20,6 @@
         <item>in cache description</item>
         <item>in cache attributes</item>
         <item>in both cache description and attributes</item>
-    </string-array>
-    <string-array name="pref_my_account_my_notes_values">
-        <item>none</item>
-        <item>desc:text</item>
-        <item>gc:personal_note</item>
-        <item>desc:text|gc:personal_note</item>
     </string-array>
 
 
@@ -72,11 +63,6 @@
         <item>only over WiFi</item>
         <item>never</item>
     </string-array>
-    <string-array name="pref_download_images_strategy_values">
-        <item>always</item>
-        <item>onlyOnWIFI</item>
-        <item>never</item>
-    </string-array>
 
     <string name="pref_download_logs_count">Number of log entries per cache</string>
     <string-array name="pref_download_logs_count_titles">
@@ -86,13 +72,6 @@
         <item>50</item>
         <item>All</item>
     </string-array>
-    <integer-array name="pref_download_logs_count_values">
-        <item>0</item>
-        <item>10</item>
-        <item>20</item>
-        <item>50</item>
-        <item>-1</item>
-    </integer-array>
 
     <string name="pref_download_list_trackables">Show Geokrets</string>
     <string name="pref_download_list_trackables_desc">Fetch Geokrets data and store in geocache description</string>
@@ -112,11 +91,6 @@
         <item>2</item>
         <item>4</item>
     </string-array>
-    <integer-array name="pref_advanced_download_tps_values">
-        <item>1</item>
-        <item>2</item>
-        <item>4</item>
-    </integer-array>
     <string name="pref_advanced_http_timeout">Network timeout</string>
     <string-array name="pref_advanced_http_timeout_titles">
         <item>30 seconds</item>
@@ -124,10 +98,4 @@
         <item>2 minutes</item>
         <item>4 minutes</item>
     </string-array>
-    <integer-array name="pref_advanced_http_timeout_values">
-        <item>30</item>
-        <item>60</item>
-        <item>120</item>
-        <item>240</item>
-    </integer-array>
 </resources>

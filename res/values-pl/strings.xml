@@ -166,10 +166,10 @@
     <string name="difficulties">Trudność:</string>
     <string name="chooseDifficulties">Wybierz trudność</string>
     <string name="difficultiesAll">Dowolna</string>
-    <string name="difficultiesTaskItem">zadania: %d</string>
-    <string name="difficultiesTerrainItem">terenu: %d</string>
-    <string name="difficultiesTaskRange">zadania: %1$d-%2$d</string>
-    <string name="difficultiesTerrainRange">terenu: %1$d-%2$d</string>
+    <string name="difficultiesTaskItem">Zadania: %d</string>
+    <string name="difficultiesTerrainItem">Terenu: %d</string>
+    <string name="difficultiesTaskRange">Zadania: %1$d-%2$d</string>
+    <string name="difficultiesTerrainRange">Terenu: %1$d-%2$d</string>
     
     <string name="chooseCacheRatings">Określ ocenę skrzynek</string>
     <string name="cacheRatings">Ocena:</string>
