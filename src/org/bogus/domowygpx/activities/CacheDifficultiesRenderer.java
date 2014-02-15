@@ -62,6 +62,7 @@ public class CacheDifficultiesRenderer
     {
         if (taskConfig.isAllSet() && terrainConfig.isAllSet()){
             textView.setText(R.string.difficultiesAll);
+            textView.setTextAppearance(context, R.style.TextAppearance_Large);
         } else {
             Resources res = context.getResources();
             StringBuilder sb = new StringBuilder();
@@ -91,6 +92,7 @@ public class CacheDifficultiesRenderer
                 }
             }
             textView.setText(sb.toString());
+            textView.setTextAppearance(context, R.style.TextAppearance_Medium);
         }
     }
 }

@@ -152,15 +152,12 @@
                     android:text="@string/difficulties"
                     android:textAppearance="?android:attr/textAppearanceLarge" />
 
-                <TextView
+                <Button
                     android:id="@+id/editCacheDifficulties"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_vertical"
                     android:gravity="center_vertical"
-                    android:paddingBottom="3dp"
-                    android:paddingLeft="3dp"
-                    android:paddingTop="3dp"
                     android:text="@string/difficultiesAll"
                     android:textAppearance="?android:attr/textAppearanceLarge" />
 

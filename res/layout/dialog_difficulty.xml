@@ -15,7 +15,7 @@
             android:paddingLeft="10dp"
             android:paddingRight="10dp"
             android:text="@string/difficultyTask"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
+            android:textAppearance="?android:attr/textAppearanceLarge" />
 
         <org.bogus.android.RangeBar
             android:id="@+id/rangeDifficultyTask"
@@ -39,7 +39,7 @@
             android:paddingLeft="10dp"
             android:paddingRight="10dp"
             android:text="@string/difficultyTerrain"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
+            android:textAppearance="?android:attr/textAppearanceLarge" />
 
         <org.bogus.android.RangeBar
             android:id="@+id/rangeDifficultyTerrain"

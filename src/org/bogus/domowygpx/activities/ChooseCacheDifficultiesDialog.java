@@ -88,21 +88,6 @@ public class ChooseCacheDifficultiesDialog
         LayoutInflater inflater = LayoutInflater.from(parent);
         View view = inflater.inflate(R.layout.dialog_difficulty, null);
         dialogBuilder.setView(view);
-        dialogBuilder.setNeutralButton(R.string.difficultiesAll, new DialogInterface.OnClickListener()
-        {
-            @Override
-            public void onClick(DialogInterface dlg, int which)
-            {
-                dialog.setOnDismissListener(null);
-                dialog.dismiss();
-                dialog = null;
-                taskConfig.setAll();
-                terrainConfig.setAll();
-                if (onDifficultiesChosenListener != null){
-                    onDifficultiesChosenListener.cacheDifficulties(taskConfig, terrainConfig);
-                }
-            }
-        });
 
         final RangeBar rangeTask = (RangeBar)view.findViewById(R.id.rangeDifficultyTask);
         final RangeBar rangeTerrain = (RangeBar)view.findViewById(R.id.rangeDifficultyTerrain);
