@@ -50,7 +50,6 @@ public class ChooseCacheTypesDialog
     static class CacheTypeItem {
         final int position;
         Drawable normalIcon;
-        Drawable disabledIcon;
         String label;
         CompoundButton.OnCheckedChangeListener onCheckedListener;
         
@@ -114,23 +113,8 @@ public class ChooseCacheTypesDialog
         checkbox.setOnCheckedChangeListener(cacheTypeItem.onCheckedListener);
         checkbox.setText(cacheTypeItem.label);
         
-        Drawable icon;
-        if (cacheTypeItem.position == 0){
-            // all
-            icon = cacheTypeItem.normalIcon;
-            checkbox.setEnabled(true);
-        } else {
-            boolean enabled = !cacheTypesConfig.isAllSet();
-            icon = enabled ? cacheTypeItem.normalIcon : cacheTypeItem.disabledIcon;
-            checkbox.setEnabled(enabled);
-        }
-        
-        //Drawable[] drawabes = checkbox.getCompoundDrawables();
-        //if (drawabes == null || drawabes.length == 0 || drawabes[0] != icon){
-            // this causes relayout, and almost infinite loop of layout measure followed by layout request
-            // avoid by caching view on our side
-            checkbox.setCompoundDrawablesWithIntrinsicBounds(icon, null, null, null);
-        //}
+        Drawable icon = cacheTypeItem.normalIcon;
+        checkbox.setCompoundDrawablesWithIntrinsicBounds(icon, null, null, null);
     }
     
     public ChooseCacheTypesDialog(Activity parent)
@@ -236,9 +220,6 @@ public class ChooseCacheTypesDialog
             cacheTypeItems[0] = cti;
         }
         
-        float contrast = 2f;
-        float brightness = -400f;
-        int threshold = 240;
         
         for (int i=1; i<cacheTypeItems.length; i++){
             CacheTypeItem cti = new CacheTypeItem(i);
@@ -254,7 +235,10 @@ public class ChooseCacheTypesDialog
             
             cti.label = " " + resources.getString(androidConfig[i][1]);
             cti.normalIcon = resources.getDrawable(androidConfig[i][0]);
-            cti.disabledIcon = makeDisabled(resources.getDrawable(androidConfig[i][0]), contrast, brightness, threshold);
+            //final float contrast = 2f;
+            //final float brightness = -400f;
+            //final int threshold = 240;
+            //cti.disabledIcon = makeDisabled(resources.getDrawable(androidConfig[i][0]), contrast, brightness, threshold);
             cacheTypeItems[i] = cti;
         }
 

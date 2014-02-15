@@ -1,6 +1,7 @@
 package org.bogus.domowygpx.activities;
 
 import org.bogus.domowygpx.activities.ChooseCacheTypesDialog.OnTypesChosenListener;
+import org.bogus.geocaching.egpx.R;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
@@ -100,7 +101,7 @@ public class CacheTypesConfigRenderer
     protected void calculateDrawableSize(int maxWidth)
     {
         drawableWidth = drawableHeight = -1;
-        if (config.isAllSet()){
+        if (config.isAllItemsSet()){
             return ;
         }
         final int selectedCount = config.getSelectedCount();
@@ -140,7 +141,7 @@ public class CacheTypesConfigRenderer
         
         int x = 0, y = 0;
         final int[][] androidConfig = config.getAndroidConfig();
-        for (int i=1; i<config.getCount(); i++){
+        for (int i=0; i<config.getCount(); i++){
             if (!config.get(i)){
                 continue;
             }
@@ -163,8 +164,8 @@ public class CacheTypesConfigRenderer
      */
     public void applyToTextView()
     {
-        if (config.isAllSet()){
-            textView.setText(config.getAndroidConfig()[0][1]);
+        if (config.isAllItemsSet()){
+            textView.setText(R.string.cacheTypeAll);
             textView.setCompoundDrawablesWithIntrinsicBounds(null, null, null, null);
         } else {
             int width = textView.getWidth();  
