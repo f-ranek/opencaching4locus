@@ -46,7 +46,6 @@
     <string name="validationMissingLocation">Please enter location</string>
     <string name="validationInvalidMaxCachesLimit">Limit must be in range 1..500</string>
     <string name="validationMinCacheDistanceWarning">Minimum distance is 20m</string>
-    <string name="validationMaxCachesHardLimit">Limit has been set to 500 geocaches</string>
     <string name="validationInvalidCacheDistance">Invalid distance</string>
     <string name="validationInvalidNoCacheDistanceNeitherLimit">Please enter distance, or limit number of geocaches</string>
     <string name="validationMissingFileName">Please enter filename</string>

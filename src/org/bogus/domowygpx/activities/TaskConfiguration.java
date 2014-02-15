@@ -167,11 +167,6 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
                     outMaxCacheDistance = 0.02;
                     modifiedFields.add("MAX_CACHE_DISTANCE");
                     warnings.add(Pair.makePair("MAX_CACHE_DISTANCE", R.string.validationMinCacheDistanceWarning));
-                } else
-                if (outMaxCacheDistance > 10 && outMaxNumOfCaches != -1){
-                    outMaxNumOfCaches = 500;
-                    modifiedFields.add("CACHE_COUNT_LIMIT");
-                    warnings.add(Pair.makePair("MAX_CACHE_DISTANCE", R.string.validationMaxCachesHardLimit));
                 }
             }catch(NumberFormatException nfe){
                 errors.add(Pair.makePair("MAX_CACHE_DISTANCE", R.string.validationInvalidCacheDistance));

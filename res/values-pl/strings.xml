@@ -46,7 +46,6 @@
     <string name="validationMissingLocation">Wprowadź lokalizację keszy</string>
     <string name="validationInvalidMaxCachesLimit">Limit musi być w przedziale 1 do 500</string>
     <string name="validationMinCacheDistanceWarning">Minimalna odległość to 20m</string>
-    <string name="validationMaxCachesHardLimit">Ograniczono limit do 500 keszy</string>
     <string name="validationInvalidCacheDistance">Niepoprawna wartość odległości</string>
     <string name="validationInvalidNoCacheDistanceNeitherLimit">Wprowadź liczbę keszy lub dystans</string>
     <string name="validationMissingFileName">Wprowadź nazwę pliku</string>
