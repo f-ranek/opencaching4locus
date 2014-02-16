@@ -65,11 +65,11 @@
     
     <string name="pref_download_logs_count">Ilość logów na kesz</string>
     <string-array name="pref_download_logs_count_titles">
+        <item>Brak</item>
         <item>10</item>
         <item>20</item>
         <item>50</item>
         <item>Wszystkie!</item>
-        <item>Wcale :P</item>
     </string-array>
     
     <string name="pref_download_cache_availability">Dostępność skrzynki</string>
