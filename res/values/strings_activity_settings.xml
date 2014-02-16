@@ -73,6 +73,13 @@
         <item>All</item>
     </string-array>
 
+    <string name="pref_download_cache_availability">Cache availability</string>
+    <string-array name="pref_download_cache_availability_titles">
+        <item>available only</item>
+        <item>available and temporarily unavailable</item>
+        <item>all (including archived)</item>
+    </string-array>
+    
     <string name="pref_download_list_trackables">Show Geokrets</string>
     <string name="pref_download_list_trackables_desc">Fetch Geokrets data and store in geocache description</string>
 

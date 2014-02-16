@@ -72,6 +72,13 @@
         <item>Wcale :P</item>
     </string-array>
     
+    <string name="pref_download_cache_availability">Dostępność skrzynki</string>
+    <string-array name="pref_download_cache_availability_titles">
+        <item>tylko dostępne</item>
+        <item>dostępne i tymczasowo niedostępne</item>
+        <item>dowolna (w tym zarchiwizowane)</item>
+    </string-array>
+    
     <string name="pref_download_list_trackables">Pokaż Geokrety</string>
     <string name="pref_download_list_trackables_desc">Pobiera listę Geokretów i umieszcza w opisie skrzynki</string>
     

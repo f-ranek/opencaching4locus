@@ -16,6 +16,11 @@
         <item>onlyOnWIFI</item>
         <item>never</item>
     </string-array>
+    <string-array name="pref_download_cache_availability_values">
+        <item>Available</item>
+        <item>Available|Temporarily unavailable</item>
+        <item>Available|Temporarily unavailable|Archived</item>
+    </string-array>
     <integer-array name="pref_download_logs_count_values">
         <item>0</item>
         <item>10</item>

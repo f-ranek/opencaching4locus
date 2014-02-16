@@ -363,6 +363,10 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             if (taskConfig.isOnlyWithTrackables() && config.getBoolean("listTrackables", true)){
                 searchParams.put("with_trackables_only", "true");
             }
+            final String cacheAvailability = config.getString("cacheAvailability", null);
+            if (cacheAvailability != null && cacheAvailability.length() > 0){
+                searchParams.put("status", cacheAvailability);
+            }
             if (userUuid != null){
                 if (TaskConfiguration.FOUND_STRATEGY_SKIP.equals(config.getString("foundStrategy", TaskConfiguration.FOUND_STRATEGY_MARK))){
                     searchParams.put("not_found_by", userUuid);
@@ -379,7 +383,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 searchParams.put("location_source", "alt_wpt:user-coords");
             }
             
-            searchParams.put("status", "Available");
             query.append(urlEncode(searchParams));
         }
         

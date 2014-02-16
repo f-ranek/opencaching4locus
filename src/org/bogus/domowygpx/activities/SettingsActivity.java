@@ -337,7 +337,7 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
                 // For list preferences, look up the correct display value in
                 // the preference's 'entries' list.
                 ListPreference listPreference = (ListPreference)preference;
-                String stringValue2 = value.toString();
+                String stringValue2 = value == null ? "" : value.toString();
                 int index = listPreference.findIndexOfValue(stringValue2);
 
                 // Set the summary to reflect the new value.
