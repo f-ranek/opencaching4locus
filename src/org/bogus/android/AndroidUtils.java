@@ -5,12 +5,15 @@ import java.text.NumberFormat;
 
 import org.bogus.geocaching.egpx.R;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.SharedPreferences.Editor;
 import android.graphics.Color;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.view.View;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
@@ -109,6 +112,20 @@ public class AndroidUtils
         } else {
             final NumberFormat nf = new DecimalFormat("####0.##");
             return nf.format(sizeKB/1024.0) + " MB";
+        }
+    }
+    
+    /**
+     * Apply SharedPreferences' changes in an editor
+     * @param editor
+     */
+    @TargetApi(Build.VERSION_CODES.GINGERBREAD)
+    public static void applySharedPrefsEditor(Editor editor)
+    {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD){
+            editor.apply();
+        } else {
+            editor.commit();
         }
     }
 }

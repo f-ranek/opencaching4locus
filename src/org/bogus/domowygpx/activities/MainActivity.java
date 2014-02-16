@@ -436,7 +436,7 @@ public class MainActivity extends Activity
         config.putString("cacheTerrainDifficulty", cacheTerrainDifficultyConfig.serializeToConfigString());
         config.putString("cacheRatings", cacheRatingsConfig.serializeToConfigString());
         config.putString("cacheRecommendations", cacheRecommendationsConfig.serializeToConfigString());
-        config.commit();
+        AndroidUtils.applySharedPrefsEditor(config);
 	}
 	
 	@Override
@@ -578,11 +578,7 @@ public class MainActivity extends Activity
         final String currentDownloadImagesStrategy = downloadImagesFragment.getCurrentDownloadImagesStrategy();
         if (!currentDownloadImagesStrategy.equals(config.getString("downloadImagesStrategy", null))){
             editor.putString("downloadImagesStrategy", currentDownloadImagesStrategy);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD){
-                editor.apply();
-            } else {
-                editor.commit();
-            }
+            AndroidUtils.applySharedPrefsEditor(editor);
         }
         super.onPause();
     }

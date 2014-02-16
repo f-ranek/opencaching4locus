@@ -375,7 +375,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
                     editor.putBoolean("Locus.search_searchWithoutAsking", checkBoxDontAskAgain.isChecked());
                 }
                 
-                editor.commit();
+                AndroidUtils.applySharedPrefsEditor(editor);
                 paramsDialog = null;
             }
         });

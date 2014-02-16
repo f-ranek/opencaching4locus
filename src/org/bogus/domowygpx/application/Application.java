@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.regex.Pattern;
 
+import org.bogus.android.AndroidUtils;
 import org.bogus.domowygpx.oauth.OKAPI;
 import org.bogus.domowygpx.utils.TargetDirLocator;
 import org.bogus.geocaching.egpx.R;
@@ -68,7 +69,7 @@ public class Application extends android.app.Application implements OnSharedPref
         Editor editor = getSharedPreferences("egpx", MODE_PRIVATE).edit();
         editor.remove("Dump.offlineDumpFile");
         editor.remove("Dump.offlineDumpPostpone");
-        editor.commit();
+        AndroidUtils.applySharedPrefsEditor(editor);
     }
     
     protected void postponeOfflineDumpState()
@@ -77,7 +78,7 @@ public class Application extends android.app.Application implements OnSharedPref
             offlineDumpPostpone = System.currentTimeMillis() + 15L*60L*1000L;
             Editor editor = getSharedPreferences("egpx", MODE_PRIVATE).edit();
             editor.putLong("Dump.offlineDumpPostpone", offlineDumpPostpone);
-            editor.commit();
+            AndroidUtils.applySharedPrefsEditor(editor);
         }
     }
     
@@ -181,7 +182,7 @@ public class Application extends android.app.Application implements OnSharedPref
                                 Editor editor = config.edit();
                                 editor.putString("Dump.offlineDumpFile", dumpFile.toString());
                                 editor.remove("Dump.offlineDumpPostpone");
-                                editor.commit();
+                                AndroidUtils.applySharedPrefsEditor(editor);
                                 Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(dumpFile));
                                 intent.setType("application/octet-stream");
                                 sendBroadcast(intent);
@@ -359,7 +360,7 @@ public class Application extends android.app.Application implements OnSharedPref
                 case 1: 
                     updatePreferences(config, editor, 1);
                     editor.putInt("configVersion", 2);
-                    editor.commit();
+                    AndroidUtils.applySharedPrefsEditor(editor);
                     
                     createSaveDirectories(config);
                     break;
@@ -426,7 +427,7 @@ public class Application extends android.app.Application implements OnSharedPref
         initSaveDirectories(config, editor);
         
         editor.putInt("configVersion", 2);
-        editor.commit();    
+        AndroidUtils.applySharedPrefsEditor(editor);    
     }
     
     private void initSaveDirectories(SharedPreferences config, Editor editor)
@@ -495,7 +496,7 @@ public class Application extends android.app.Application implements OnSharedPref
         SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
         Editor editor = config.edit();
         initSaveDirectories(config, editor);
-        editor.commit();
+        AndroidUtils.applySharedPrefsEditor(editor);
         boolean result = createSaveDirectories(config);
         return result;
     }

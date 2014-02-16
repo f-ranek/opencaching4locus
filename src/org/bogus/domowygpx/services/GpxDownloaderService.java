@@ -36,6 +36,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.bogus.ToStringBuilder;
+import org.bogus.android.AndroidUtils;
 import org.bogus.domowygpx.activities.DownloadListActivity;
 import org.bogus.domowygpx.activities.TaskConfiguration;
 import org.bogus.domowygpx.apache.http.client.utils.ResponseUtils;
@@ -495,7 +496,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     editor.putString("userName", userName);
                     editor.putString("userUuid", userUuid);
                     editor.putString("userUUID:" + userName, userUuid);
-                    editor.commit();
+                    AndroidUtils.applySharedPrefsEditor(editor);
                    
                     return userUuid;
                 } else {
