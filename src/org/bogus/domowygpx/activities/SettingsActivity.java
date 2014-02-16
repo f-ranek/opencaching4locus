@@ -21,6 +21,7 @@ import android.content.SharedPreferences.Editor;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
@@ -186,16 +187,58 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
             
             CompoundPreferenceChangeListener.add(userName, 
                 new Preference.OnPreferenceChangeListener(){
+                boolean preventEvent;
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue)
                 {
-                    final boolean hasLogin = newValue != null && ((String)newValue).length() > 0;
-                    // yes, I know about preference dependencies
-                    findPreference("foundStrategy").setEnabled(hasLogin);
-                    findPreference("excludeMyOwn").setEnabled(hasLogin);
-                    return true;
+                    if (preventEvent){
+                        return false;
+                    }
+                    preventEvent = true;
+                    try{
+                        String userName = (String)newValue;
+                        if (userName != null && (userName = userName.trim()).length() == 0){
+                            userName = null;
+                        }
+                        final boolean hasLogin = userName != null;
+                        {
+                            // save preference if it has changed
+                            final String oldUserName = config.getString(preference.getKey(), null);
+                            if (oldUserName == userName || oldUserName != null && oldUserName.equals(userName)){
+                                // no change
+                            } else {
+                                Editor editor = config.edit();
+                                if (hasLogin){
+                                    editor.putString(preference.getKey(), userName);
+                                } else {
+                                    editor.remove(preference.getKey());
+                                }
+                                editor.commit();
+                            }
+                        }
+                        
+                        // yes, I know about preference dependencies
+                        findPreference("foundStrategy").setEnabled(hasLogin);
+                        findPreference("excludeMyOwn").setEnabled(hasLogin);
+
+                        {
+                            // update preference view if it has changed
+                            EditTextPreference editText = (EditTextPreference)preference;
+                            String oldUserName = editText.getText();
+                            if (oldUserName == null){
+                                oldUserName = "";
+                            }
+                            String newUserName = userName == null ? "" : userName;
+                            if (!oldUserName.equals(newUserName)){
+                                editText.setText(newUserName);
+                            }
+                        }
+                        return false;
+                    }finally{
+                        preventEvent = false;
+                    }
                 }});
-            
+
             final ButtonPreference signToService = (ButtonPreference)findPreference("signToService");
             OnSharedPreferenceChangeListener spcl = new OnSharedPreferenceChangeListener()
             {
@@ -203,6 +246,8 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
                 @Override
                 public void onSharedPreferenceChanged(final SharedPreferences config, final String key)
                 {
+                    // nope, this callback will not run on my main thread :/
+                    // for APIv8, it will run on a thread doing commit on SharedPreferences' editor
                     runOnUiThread(new Runnable()
                     {
                         @Override
@@ -220,7 +265,10 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
                             }
                             signToService.setShouldDisableDependents(!signed);
                             userName.setEnabled(!signed);
-                            userName.getOnPreferenceChangeListener().onPreferenceChange(userName, config.getString("userName", ""));
+                            
+                            if (key != null && key.equals(userName.getKey())){
+                                userName.getOnPreferenceChangeListener().onPreferenceChange(userName, config.getString("userName", null));
+                            }
                         }
                     });
                 }

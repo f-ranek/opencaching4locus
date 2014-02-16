@@ -12,7 +12,7 @@
     <string name="infoOAuthServerFailure2">Server returned an unknown response</string>
     <string name="infoOAuthDone">Success - you are not signed in to opencaching.pl</string>
 
-    <string name="infoOAuthInstruction">1. Tap \'Start authorization\', to allow Awaryjniejszy GPX to access your account.\n2. The opencaching.pl web page will be opened. Sign in, and allow the application to access your account.\n3. A PIN number will be shown, which should be copied and pasted into the field below.\n4. Tap \'Finish\' to complete the authorization.</string>
+    <string name="infoOAuthInstruction">1. Tap \'Start authorization\', to allow Emergency GPX to access your account.\n2. The opencaching.pl web page will be opened. Sign in, and allow the application to access your account.\n3. A PIN number will be shown, which should be copied and pasted into the field below.\n4. Tap \'Finish\' to complete the authorization.</string>
     <string name="btnOAuthAuthorize">Start authorization</string>
     <string name="editOAuthPINHint">Paste PIN here</string>
     <string name="btnOAuthFinish">Finish</string>
