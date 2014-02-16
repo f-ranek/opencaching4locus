@@ -53,7 +53,6 @@
     <string name="validationCantCreateTargetDir">Nie można utworzyć katalogu na docelowy plik</string>
     <string name="validationTargetDirIsReadOnly">Nie można zapisywać w katalogu docelowym</string>
     <string name="validationTargetDirIsFile">Katalog docelowy jest plikiem</string>
-    <string name="validationInvalidImagesDownloadStrategy">Niepoprawna wartość strategii pobierania obrazów</string>
     <string name="validationCantCreateTargetImagesDir">Nie można utworzyć katalogu na pobierane obrazy</string>
     <string name="validationTargetImagesDirIsReadOnly">Nie można zapisywać plików w katalogu obrazów</string>
     <string name="validationTargetImagesDirIsFile">Katalog zapisu obrazów jest plikiem</string>

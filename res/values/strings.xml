@@ -53,7 +53,6 @@
     <string name="validationCantCreateTargetDir">Could not create the target folder</string>
     <string name="validationTargetDirIsReadOnly">Could not write into the target folder</string>
     <string name="validationTargetDirIsFile">Target location is a file (expected a folder)</string>
-    <string name="validationInvalidImagesDownloadStrategy">Invalid images download strategy</string>
     <string name="validationCantCreateTargetImagesDir">Could not create the folder for the images</string>
     <string name="validationTargetImagesDirIsReadOnly">Could not write into the folder for the images</string>
     <string name="validationTargetImagesDirIsFile">Images target location is a file (expected a folder)</string>

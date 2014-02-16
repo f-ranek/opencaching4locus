@@ -23,9 +23,12 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 public class TaskConfiguration implements java.io.Serializable, Parcelable
 {
+    private final static String LOG_TAG = "TaskConfiguration";
+    
     private static final long serialVersionUID = 8437257680737553390L;
     
     private final static Pattern spaces = Pattern.compile("[ \t\u00A0]+");
@@ -254,7 +257,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
                 boolean hasWiFi = wifiInfo.isConnected();
                 outDownloadImages = hasWiFi;
             } else {
-                errors.add(Pair.makePair("DOWNLOAD_IMAGES_STRATEGY", R.string.validationInvalidImagesDownloadStrategy));
+                Log.e(LOG_TAG, "Invalid download images strategy: " + downloadImagesStrategy);
             }
         }
 
