@@ -35,6 +35,8 @@
 
     <string name="gpsDisabled">GPS is disabled, acquireing location from network</string>
     <string name="noLocationInfo">Could not acquire location</string>
+    
+    <string name="cachesWithTrackablesOnly">Only with Geokrets</string>
 
     <string name="validationErrors">There are errors in your form, please correct them</string>
     <string name="validationWarnings">There were some problems with your config. Please verify form data, and tap \'Start\' again</string> <!-- TODO -->

@@ -58,6 +58,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
     private String gpxTargetDirNameTemp;
     private String imagesTargetDirName;
     private String downloadImagesStrategy;
+    private boolean onlyWithTrackables;
     
     private double outLatitude = Double.NaN;
     private double outLongitude = Double.NaN;
@@ -406,6 +407,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         dest.writeString(gpxTargetDirNameTemp);
         dest.writeString(imagesTargetDirName);
         dest.writeString(downloadImagesStrategy);
+        dest.writeByte((byte)(onlyWithTrackables ? 1 : 0));
         
         dest.writeDouble(outLatitude);
         dest.writeDouble(outLongitude);
@@ -438,6 +440,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         result.gpxTargetDirNameTemp = src.readString();
         result.imagesTargetDirName = src.readString();
         result.downloadImagesStrategy = src.readString();
+        result.onlyWithTrackables = src.readByte() == 1;
         
         result.outLatitude = src.readDouble();
         result.outLongitude = src.readDouble();
@@ -493,6 +496,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         int result = 1;
         result = prime * result + (doLocusImport ? 1231 : 1237);
         result = prime * result + ((downloadImagesStrategy == null) ? 0 : downloadImagesStrategy.hashCode());
+        result = prime * result + (onlyWithTrackables ? 1231 : 1237);
         result = prime * result + (outDownloadImages ? 1231 : 1237);
         long temp;
         temp = Double.doubleToLongBits(outLatitude);
@@ -524,6 +528,9 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         TaskConfiguration other = (TaskConfiguration)obj;
         if (doLocusImport != other.doLocusImport)
             return false;
+        if (onlyWithTrackables != other.onlyWithTrackables){
+            return false;
+        }
         if (downloadImagesStrategy == null) {
             if (other.downloadImagesStrategy != null)
                 return false;
@@ -597,6 +604,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         builder.add("gpxTargetDirNameTemp", gpxTargetDirNameTemp);
         builder.add("imagesTargetDirName", imagesTargetDirName);
         builder.add("downloadImagesStrategy", downloadImagesStrategy);
+        builder.add("onlyWithTrackables", onlyWithTrackables, false);
         builder.add("outLatitude", outLatitude, Double.NaN);
         builder.add("outLongitude", outLongitude, Double.NaN);
         builder.add("outMaxNumOfCaches", outMaxNumOfCaches);
@@ -668,6 +676,16 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
     public void setCacheRecommendations(String cacheRecommendations)
     {
         this.cacheRecommendations = cacheRecommendations;
+    }
+
+    public boolean isOnlyWithTrackables()
+    {
+        return onlyWithTrackables;
+    }
+
+    public void setOnlyWithTrackables(boolean onlyWithTrackables)
+    {
+        this.onlyWithTrackables = onlyWithTrackables;
     }
 
 }

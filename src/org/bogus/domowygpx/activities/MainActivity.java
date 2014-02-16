@@ -23,7 +23,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -43,7 +42,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class MainActivity extends Activity implements OnSharedPreferenceChangeListener
+public class MainActivity extends Activity
 {
 	private static final String LOG_TAG = "MainActivity";
 	
@@ -76,6 +75,7 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
     private TextView textViewAutoLocusImport;
     
     private DownloadImagesFragment downloadImagesFragment;
+    private OnlyWithTrackablesFragment onlyWithTrackablesFragment;
     
     private ValidationUtils validationUtils;
     
@@ -127,17 +127,19 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 		editMaxCacheDistance = (EditText) findViewById(R.id.editMaxCacheDistance);
 		editMaxCacheDistance.setKeyListener(new DecimalKeyListener());
 		
-		checkBoxAutoLocusImport = (CheckBox) findViewById(R.id.checkBoxAutoLocusImport);
-		checkBoxAutoLocusImport.setOnClickListener(new View.OnClickListener()
+		final View.OnClickListener hideKeyboardClickListener = new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
             {
-                @Override
-                public void onClick(View v)
-                {
-                    if (v.isClickable()){
-                        AndroidUtils.hideSoftKeyboard(MainActivity.this);
-                    }
+                if (v.isClickable()){
+                    AndroidUtils.hideSoftKeyboard(MainActivity.this);
                 }
-            });
+            }
+        }; 
+		
+		checkBoxAutoLocusImport = (CheckBox) findViewById(R.id.checkBoxAutoLocusImport);
+		checkBoxAutoLocusImport.setOnClickListener(hideKeyboardClickListener);
 		tableRowAutoLocusImport = (ViewGroup) findViewById(R.id.tableRowAutoLocusImport);
 		textViewAutoLocusImport = (TextView) findViewById(R.id.textViewAutoLocusImport);
 		textViewAutoLocusImport.setOnClickListener(new View.OnClickListener()
@@ -151,6 +153,10 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
                 }
             }
         });
+		
+		onlyWithTrackablesFragment = new OnlyWithTrackablesFragment();
+		onlyWithTrackablesFragment.onCreate(view);
+		onlyWithTrackablesFragment.setWindow(getWindow());
 		
 		final TextView editCacheTypes = (TextView) findViewById(R.id.editCacheTypes);
 		cacheTypesConfig = new CacheTypesConfig();
@@ -369,6 +375,7 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 	    taskConfiguration.setMaxCacheDistance(editMaxCacheDistance.getText());
 	    taskConfiguration.setTargetFileName(editTargetFileName.getText());
 	    taskConfiguration.setDownloadImagesStrategy(downloadImagesFragment.getCurrentDownloadImagesStrategy());
+	    taskConfiguration.setOnlyWithTrackables(onlyWithTrackablesFragment.isOnlyWithTrackables());
 	    taskConfiguration.setDoLocusImport(checkBoxAutoLocusImport.isChecked());
 	    taskConfiguration.setCacheTypes(cacheTypesConfig.serializeToWebServiceString());
 	    taskConfiguration.setCacheTaskDifficulty(cacheTaskDifficultyConfig.serializeToWebServiceString());
@@ -426,13 +433,13 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
         config.putString("maxCacheDistance", editMaxCacheDistance.getText().toString());
         config.putString("maxNumOfCaches", editMaxNumOfCaches.getText().toString());
         config.putString("downloadImagesStrategy", downloadImagesFragment.getCurrentDownloadImagesStrategy());
+        config.putBoolean("onlyWithTrackables", onlyWithTrackablesFragment.isOnlyWithTrackables());
         config.putBoolean("autoLocusImport", checkBoxAutoLocusImport.isChecked());
         config.putString("cacheTypes", cacheTypesConfig.serializeToConfigString());
         config.putString("cacheTaskDifficulty", cacheTaskDifficultyConfig.serializeToConfigString());
         config.putString("cacheTerrainDifficulty", cacheTerrainDifficultyConfig.serializeToConfigString());
         config.putString("cacheRatings", cacheRatingsConfig.serializeToConfigString());
         config.putString("cacheRecommendations", cacheRecommendationsConfig.serializeToConfigString());
-        
         config.commit();
 	}
 	
@@ -442,7 +449,6 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 		super.onStart();
 		
 		final SharedPreferences config = this.getSharedPreferences("egpx", MODE_PRIVATE);
-		config.registerOnSharedPreferenceChangeListener(this);
 		try{
 		    int version = config.getInt("MainActivity.configVersion", -1);
 		    // XXX todo: migracja
@@ -467,6 +473,7 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
             
 		    downloadImagesFragment.setCurrentDownloadImagesStrategy(
                 config.getString("downloadImagesStrategy", TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI));
+		    onlyWithTrackablesFragment.setOnlyWithTrackables(config.getBoolean("onlyWithTrackables", false));
 		    
 		    cacheTypesConfig.parseFromConfigString(config.getString("cacheTypes", cacheTypesConfig.getDefaultConfig()));
 		    cacheTaskDifficultyConfig.parseFromConfigString(config.getString("cacheTaskDifficulty", null));
@@ -565,14 +572,6 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
         }
         return super.onOptionsItemSelected(item);
     }  
-    
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences config, String key) {    
-        if ("downloadImagesStrategy".equals(key)){
-            downloadImagesFragment.setCurrentDownloadImagesStrategy(
-                config.getString("downloadImagesStrategy", TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI));
-        }
-    }
     
     @TargetApi(Build.VERSION_CODES.GINGERBREAD)
     @Override

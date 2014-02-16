@@ -81,6 +81,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
     CacheRatingsRenderer cacheRatingsRenderer;
     
     DownloadImagesFragment downloadImagesFragment;
+    OnlyWithTrackablesFragment onlyWithTrackablesFragment;
     
     private ValidationUtils validationUtils;
     
@@ -92,6 +93,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
     String maxNumOfCachesText;
     String maxCacheDistanceText;
     String downloadImagesStrategy;
+    boolean onlyWithTrackables;
     AlertDialog paramsDialog;
     AlertDialog progressDialog;
     
@@ -162,6 +164,8 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
             config.getString("Locus.downloadImagesStrategy",
                 config.getString("downloadImagesStrategy", 
                     TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI));
+        onlyWithTrackables = config.getBoolean("Locus.onlyWithTrackables", 
+            config.getBoolean("onlyWithTrackables", false));
         cacheTypesConfig = new CacheTypesConfig();
         cacheTypesConfig.parseFromConfigString(config.getString("Locus.cacheTypes", 
             config.getString("cacheTypes", cacheTypesConfig.getDefaultConfig())));
@@ -315,10 +319,13 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         
         downloadImagesFragment = new DownloadImagesFragment();
         downloadImagesFragment.onCreate(view);
+        onlyWithTrackablesFragment = new OnlyWithTrackablesFragment();
+        onlyWithTrackablesFragment.onCreate(view);
         
         editMaxCacheDistance.setText(maxCacheDistanceText);
         editMaxNumOfCaches.setText(maxNumOfCachesText);
         downloadImagesFragment.setCurrentDownloadImagesStrategy(downloadImagesStrategy);
+        onlyWithTrackablesFragment.setOnlyWithTrackables(onlyWithTrackables);
         
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
         dialogBuilder.setTitle(R.string.titleLocusSearch);
@@ -343,6 +350,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         
         paramsDialog = dialogBuilder.create();
         downloadImagesFragment.setWindow(paramsDialog.getWindow());
+        onlyWithTrackablesFragment.setWindow(paramsDialog.getWindow());
         paramsDialog.setOnDismissListener(new DialogInterface.OnDismissListener()
         {
             @Override
@@ -355,6 +363,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
                 editor.putString("Locus.maxCacheDistance", AndroidUtils.toString(editMaxCacheDistance.getText()));
                 editor.putString("Locus.maxNumOfCaches", AndroidUtils.toString(editMaxNumOfCaches.getText()));
                 editor.putString("Locus.downloadImagesStrategy", downloadImagesFragment.getCurrentDownloadImagesStrategy());
+                editor.putBoolean("Locus.onlyWithTrackables", onlyWithTrackablesFragment.isOnlyWithTrackables());
                 editor.putString("Locus.cacheTypes", cacheTypesConfig.serializeToConfigString());
                 editor.putString("Locus.cacheTaskDifficulty", cacheTaskDifficultyConfig.serializeToConfigString());
                 editor.putString("Locus.cacheTerrainDifficulty", cacheTerrainDifficultyConfig.serializeToConfigString());
@@ -390,6 +399,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         maxNumOfCachesText = AndroidUtils.toString(editMaxNumOfCaches.getText());
         maxCacheDistanceText = AndroidUtils.toString(editMaxCacheDistance.getText());
         downloadImagesStrategy = downloadImagesFragment.getCurrentDownloadImagesStrategy();
+        onlyWithTrackables = onlyWithTrackablesFragment.isOnlyWithTrackables();
         validationUtils.resetViewErrors();
         startDownload();
     }
@@ -404,6 +414,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         taskConfiguration.setMaxNumOfCaches(maxNumOfCachesText);
         taskConfiguration.setMaxCacheDistance(maxCacheDistanceText);
         taskConfiguration.setDownloadImagesStrategy(downloadImagesStrategy);
+        taskConfiguration.setOnlyWithTrackables(onlyWithTrackables);
         taskConfiguration.setDoLocusImport(true);
         taskConfiguration.setCacheTypes(cacheTypesConfig.serializeToWebServiceString());
         taskConfiguration.setCacheTaskDifficulty(cacheTaskDifficultyConfig.serializeToWebServiceString());

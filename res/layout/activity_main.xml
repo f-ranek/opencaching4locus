@@ -246,6 +246,39 @@
                     android:textAppearance="?android:attr/textAppearanceLarge" />
 
             </TableRow>
+
+            <TableRow
+                android:id="@+id/tableRowWithTrackablesOnly"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" >
+
+                <LinearLayout
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_span="2"
+                    android:orientation="horizontal"
+                    android:weightSum="10"
+                    tools:ignore="UselessParent" >
+
+                    <TextView
+                        android:id="@+id/textViewWithTrackablesOnly"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:layout_weight="10"
+                        android:text="@string/cachesWithTrackablesOnly"
+                        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+                    <CheckBox
+                        android:id="@+id/checkBoxWithTrackablesOnly"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:checked="true"
+                        android:focusable="true"
+                        android:gravity="right|center_vertical" />
+                </LinearLayout>
+            </TableRow>
             
             <TableRow
                 android:layout_width="fill_parent"
@@ -282,7 +315,6 @@
                 </LinearLayout>
             </TableRow>
 
-
             <TableRow
                 android:id="@+id/tableRowAutoLocusImport"
                 android:layout_width="fill_parent"
@@ -315,8 +347,8 @@
                         android:gravity="right|center_vertical" />
 
                 </LinearLayout>
-            </TableRow>
-
+            </TableRow>            
+            
             <TableRow
                 android:layout_width="fill_parent"
                 android:layout_height="wrap_content" >

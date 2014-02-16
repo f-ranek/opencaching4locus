@@ -36,6 +36,8 @@
     <string name="gpsDisabled">GPS wyłączony, pobieram lokalizację z sieci</string>
     <string name="noLocationInfo">Nie można pobrać informacji o lokalizacji</string>
 
+    <string name="cachesWithTrackablesOnly">Kesze tylko z Geokretem</string>
+    
     <string name="validationErrors">Przed kontynuacją popraw zaznaczone błędy</string>
     <string name="validationWarnings">Wystąpiły pewne problemy. Zweryfikuj dane, po czym ponownie kliknij \'Start\'</string>
     <string name="validationIncompleteLocation">Położenie geograficzne jest niepełne</string>

@@ -328,6 +328,8 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         protected void appendSearchParameters(StringBuilder query, String userUuid) 
         throws JSONException
         {
+            final SharedPreferences config = getSharedPreferences("egpx", Context.MODE_PRIVATE);
+            
             query.append("search_method=services/caches/search/nearest");
             query.append("&search_params=");
 
@@ -357,7 +359,9 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             if (taskConfig.getCacheRecommendations() != null){
                 searchParams.put("min_rcmds", taskConfig.getCacheRecommendations());
             }
-            SharedPreferences config = getSharedPreferences("egpx", Context.MODE_PRIVATE);
+            if (taskConfig.isOnlyWithTrackables() && config.getBoolean("listTrackables", true)){
+                searchParams.put("with_trackables_only", "true");
+            }
             if (userUuid != null){
                 if (TaskConfiguration.FOUND_STRATEGY_SKIP.equals(config.getString("foundStrategy", TaskConfiguration.FOUND_STRATEGY_MARK))){
                     searchParams.put("not_found_by", userUuid);

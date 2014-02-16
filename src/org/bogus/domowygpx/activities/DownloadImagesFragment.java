@@ -8,6 +8,9 @@ import org.bogus.android.SimpleQueue;
 import org.bogus.geocaching.egpx.R;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Looper;
@@ -19,7 +22,7 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 
-public class DownloadImagesFragment
+public class DownloadImagesFragment implements OnSharedPreferenceChangeListener
 {
     private ConnectivityManager conectivityManager;
 
@@ -83,6 +86,9 @@ public class DownloadImagesFragment
                 AndroidUtils.hideSoftKeyboard(window);
             }
         });
+        
+        SharedPreferences config = view.getContext().getSharedPreferences("egpx", Context.MODE_PRIVATE);
+        config.registerOnSharedPreferenceChangeListener(this);
     }
 
     void updateDownloadImagesState()
@@ -198,4 +204,12 @@ public class DownloadImagesFragment
         this.window = window;
     }
 
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences config, String key) {    
+        if ("downloadImagesStrategy".equals(key)){
+            setCurrentDownloadImagesStrategy(
+                config.getString("downloadImagesStrategy", TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI));
+        }
+    }
+    
 }
