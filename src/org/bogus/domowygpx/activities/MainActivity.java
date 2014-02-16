@@ -154,9 +154,7 @@ public class MainActivity extends Activity
             }
         });
 		
-		onlyWithTrackablesFragment = new OnlyWithTrackablesFragment();
-		onlyWithTrackablesFragment.onCreate(view);
-		onlyWithTrackablesFragment.setWindow(getWindow());
+		onlyWithTrackablesFragment = new OnlyWithTrackablesFragment(view, getWindow());
 		
 		final TextView editCacheTypes = (TextView) findViewById(R.id.editCacheTypes);
 		cacheTypesConfig = new CacheTypesConfig();
@@ -207,9 +205,7 @@ public class MainActivity extends Activity
         
         locman = (LocationManager)getSystemService(LOCATION_SERVICE);
 
-        downloadImagesFragment = new DownloadImagesFragment();
-        downloadImagesFragment.onCreate(view);
-        downloadImagesFragment.setWindow(getWindow());
+        downloadImagesFragment = new DownloadImagesFragment(view, getWindow());
         
         final boolean hasLocus = locus.api.android.utils.LocusUtils.isLocusAvailable(this, 200);
         tableRowAutoLocusImport.setVisibility(hasLocus ? View.VISIBLE : View.GONE);

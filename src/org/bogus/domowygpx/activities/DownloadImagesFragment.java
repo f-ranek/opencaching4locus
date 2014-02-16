@@ -32,19 +32,18 @@ public class DownloadImagesFragment implements OnSharedPreferenceChangeListener
     
     boolean preventEvents;
 
-    Window window;
     ViewGroup view;
     
     private LockableScrollView lockableScrollViewCache;
     private boolean lockableScrollViewCached;
     
-    public void onCreate(final ViewGroup owner)
+    public DownloadImagesFragment(final ViewGroup view, final Window window)
     {
-        this.view = owner;
-        conectivityManager = (ConnectivityManager)owner.getContext().getSystemService(
+        this.view = view;
+        conectivityManager = (ConnectivityManager)view.getContext().getSystemService(
             Activity.CONNECTIVITY_SERVICE);
 
-        checkBoxDownloadImages = (CheckBox) owner.findViewById(R.id.checkBoxDownloadImages);
+        checkBoxDownloadImages = (CheckBox) view.findViewById(R.id.checkBoxDownloadImages);
         checkBoxDownloadImages.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
         {
             @Override
@@ -62,7 +61,7 @@ public class DownloadImagesFragment implements OnSharedPreferenceChangeListener
                 AndroidUtils.hideSoftKeyboard(window);
             }
         });
-        textViewDownloadImages = (TextView) owner.findViewById(R.id.textViewDownloadImages);
+        textViewDownloadImages = (TextView) view.findViewById(R.id.textViewDownloadImages);
         textViewDownloadImages.setOnClickListener(new View.OnClickListener()
         {
             @Override
@@ -192,16 +191,6 @@ public class DownloadImagesFragment implements OnSharedPreferenceChangeListener
             this.currentDownloadImagesStrategy = currentDownloadImagesStrategy;
             updateDownloadImagesState();
         }
-    }
-
-    public Window getWindow()
-    {
-        return window;
-    }
-
-    public void setWindow(Window window)
-    {
-        this.window = window;
     }
 
     @Override

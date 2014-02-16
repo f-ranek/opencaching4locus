@@ -317,15 +317,8 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         validationUtils.setOwnerView(view);
         validationUtils.resetViewErrors();
         
-        downloadImagesFragment = new DownloadImagesFragment();
-        downloadImagesFragment.onCreate(view);
-        onlyWithTrackablesFragment = new OnlyWithTrackablesFragment();
-        onlyWithTrackablesFragment.onCreate(view);
-        
         editMaxCacheDistance.setText(maxCacheDistanceText);
         editMaxNumOfCaches.setText(maxNumOfCachesText);
-        downloadImagesFragment.setCurrentDownloadImagesStrategy(downloadImagesStrategy);
-        onlyWithTrackablesFragment.setOnlyWithTrackables(onlyWithTrackables);
         
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
         dialogBuilder.setTitle(R.string.titleLocusSearch);
@@ -349,8 +342,13 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         dialogBuilder.setView(view);
         
         paramsDialog = dialogBuilder.create();
-        downloadImagesFragment.setWindow(paramsDialog.getWindow());
-        onlyWithTrackablesFragment.setWindow(paramsDialog.getWindow());
+        final Window window = paramsDialog.getWindow();
+        downloadImagesFragment = new DownloadImagesFragment(view, window);
+        onlyWithTrackablesFragment = new OnlyWithTrackablesFragment(view, window);
+
+        downloadImagesFragment.setCurrentDownloadImagesStrategy(downloadImagesStrategy);
+        onlyWithTrackablesFragment.setOnlyWithTrackables(onlyWithTrackables);
+        
         paramsDialog.setOnDismissListener(new DialogInterface.OnDismissListener()
         {
             @Override

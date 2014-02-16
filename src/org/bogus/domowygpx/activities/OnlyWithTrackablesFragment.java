@@ -18,15 +18,10 @@ public class OnlyWithTrackablesFragment implements OnSharedPreferenceChangeListe
     ViewGroup tableRowWithTrackablesOnly;
     CheckBox checkBoxWithTrackablesOnly;
     
-    Window window;
-    ViewGroup view;
-    
-    public void onCreate(final ViewGroup owner)
+    public OnlyWithTrackablesFragment(final ViewGroup view, final Window window)
     {
-        this.view = owner;
-
-        tableRowWithTrackablesOnly = (ViewGroup) owner.findViewById(R.id.tableRowWithTrackablesOnly);
-        checkBoxWithTrackablesOnly = (CheckBox) owner.findViewById(R.id.checkBoxWithTrackablesOnly);
+        tableRowWithTrackablesOnly = (ViewGroup) view.findViewById(R.id.tableRowWithTrackablesOnly);
+        checkBoxWithTrackablesOnly = (CheckBox) view.findViewById(R.id.checkBoxWithTrackablesOnly);
         checkBoxWithTrackablesOnly.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
         {
             @Override
@@ -35,7 +30,7 @@ public class OnlyWithTrackablesFragment implements OnSharedPreferenceChangeListe
                 AndroidUtils.hideSoftKeyboard(window);
             }
         });
-        TextView textViewWithTrackablesOnly = (TextView) owner.findViewById(R.id.textViewWithTrackablesOnly);
+        TextView textViewWithTrackablesOnly = (TextView) view.findViewById(R.id.textViewWithTrackablesOnly);
         textViewWithTrackablesOnly.setOnClickListener(new View.OnClickListener()
         {
             @Override
@@ -64,16 +59,6 @@ public class OnlyWithTrackablesFragment implements OnSharedPreferenceChangeListe
     public void setOnlyWithTrackables(boolean onlyWithTrackables)
     {
         checkBoxWithTrackablesOnly.setChecked(onlyWithTrackables);
-    }
-
-    public Window getWindow()
-    {
-        return window;
-    }
-
-    public void setWindow(Window window)
-    {
-        this.window = window;
     }
 
     @Override
