@@ -541,7 +541,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
     @Override
     public void onTaskEvent(GpxTaskEvent event, GpxTask task)
     {
-        if (task.taskId == gpxListItem.taskId && gpxListItem != null){
+        if (gpxListItem != null && task.taskId == gpxListItem.taskId){
             gpxListItem.onGpxEvent(task, event);
             gpxListItem.applyToView(listItemViewHolder, true);
             gpxListItem.updateProgressRow(listItemViewHolder);

@@ -821,8 +821,9 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                                 Intent.FLAG_ACTIVITY_NEW_TASK);
                         }catch(Exception e){
                             Log.e(LOG_TAG, "Failed to start Locus", e);
-                            final Resources res = getResources();
-                            sendProgressInfo(res.getString(R.string.gpx_downloader_error_locus_import));
+                            sendWarnErrorInfo(
+                                getResources().getString(R.string.gpx_downloader_error_locus_import), 
+                                GpxTaskEvent.EVENT_TYPE_ERROR);
                         }
                     }
                 }, 500);
@@ -922,7 +923,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             event.totalKB = (int)(ResponseUtils.getBytesRead(mainResponse) / 1024L);
             if (canceled || cancelledByUser){
                 taskState.stateCode = event.eventType = GpxTaskEvent.EVENT_TYPE_FINISHED_CANCEL;
-                taskState.stateDescription = event.description = "Przerwano"; 
+                taskState.stateDescription = event.description = "Przerwano"; // XXX TRANSLATION!
             } else {
                 taskState.stateCode = event.eventType = GpxTaskEvent.EVENT_TYPE_FINISHED_ERROR;
                 if (hasErrorDescription){
@@ -1180,6 +1181,10 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         builder.setContentIntent(resultPendingIntent);
 
         builder.setAutoCancel(!foreground);
+        if (!foreground){
+            builder.setDefaults(Notification.DEFAULT_VIBRATE); // XXX
+            builder.setTicker("Pobieranie GPX zakończone");
+        }
         
         final NotificationManager notificationManager = 
                 (NotificationManager)getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
