@@ -546,20 +546,20 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
             gpxListItem.applyToView(listItemViewHolder, true);
             gpxListItem.updateProgressRow(listItemViewHolder);
             boolean prevGpxTaskFinished = gpxTaskFinished;
-            int dialogTiemout = -1;
+            int dialogTimeout = -1;
             final int stateCode = task.stateCode;
             final int totalCacheCount = task.totalCacheCount;
             if (stateCode == GpxTask.STATE_ERROR || 
                     (stateCode == GpxTask.STATE_DONE && totalCacheCount == 0))
             {
                 gpxTaskFinished = true;
-                dialogTiemout = 3000;
+                dialogTimeout = 3000;
             } else
             if (stateCode == GpxTask.STATE_DONE || 
                     stateCode == GpxTask.STATE_CANCELED)
             {
                 gpxTaskFinished = true;
-                dialogTiemout = 450; 
+                dialogTimeout = 450; 
                 
             }
             if (!prevGpxTaskFinished && gpxTaskFinished){
@@ -576,7 +576,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
                         finish((stateCode == GpxTask.STATE_DONE && totalCacheCount > 0) ? 
                                 Activity.RESULT_OK : Activity.RESULT_CANCELED);
                     }
-                }, dialogTiemout); 
+                }, dialogTimeout); 
             }
         }
     }

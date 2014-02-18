@@ -225,6 +225,7 @@
     <string name="gpx_downloader_error_invalid_gpx">Błąd przetwarzania GPXa</string>
     <string name="gpx_downloader_error_images_downloading">Błąd pobierania obrazów</string>
     <string name="gpx_downloader_error_locus_import">Błąd importu do Locusa</string>
+    <string name="gpx_downloader_cancelled">Przerwano</string>
     <string name="gpx_downloader_progress_finish">Gotowe</string>
     <string name="gpx_downloader_progress_no_caches">Brak keszy</string>
     <string name="gpx_downloader_unknown_error">Wystąpił nieznany błąd</string>

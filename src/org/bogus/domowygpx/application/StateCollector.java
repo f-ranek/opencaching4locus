@@ -57,7 +57,6 @@ public class StateCollector
     {
         this.context = context;
     }
-    
 
     private void collectLogCatOutput(List<File> files, File root)
     {

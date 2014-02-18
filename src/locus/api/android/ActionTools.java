@@ -16,6 +16,9 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.text.TextUtils;
 
+/**
+ * Changes against @version 4e92fabf7cf9 
+ */
 public class ActionTools {
 
 	private static final String TAG = "ActionTools";
@@ -58,10 +61,12 @@ public class ActionTools {
 	private static void intentPick(String action, Activity activity, int requestCode,
 			String title, String[] filter) {
 		Intent intent = new Intent(action);
-		if (title != null && title.length() > 0)
+		if (title != null && title.length() > 0) {
 			intent.putExtra("org.openintents.extra.TITLE", title);
-		if (filter != null && filter.length > 0)
+		}
+		if (filter != null && filter.length > 0) {
 			intent.putExtra("org.openintents.extra.FILTER", filter);
+		}
 		activity.startActivityForResult(intent, requestCode);
 	}
 	
@@ -133,7 +138,7 @@ public class ActionTools {
 	}
 	
 	/**************************************************/
-	/*               BROADCAST INTENTS                */
+	/*               TRACK RECORDING                  */
 	/**************************************************/
 	
 	public static void actionTrackRecordStart(Activity act, String packageName) 
@@ -174,7 +179,7 @@ public class ActionTools {
 	}
 	
 	/**************************************************/
-	/*                  DATA HANDLING                 */
+	/*               WAYPOINTS HANDLING               */
 	/**************************************************/
 	
 	/**
@@ -188,28 +193,28 @@ public class ActionTools {
 	 */
 	public static Waypoint getLocusWaypoint(Context context, long wptId) 
 			throws RequiredVersionMissingException {
-		// generate cursor
-		String scheme = getContentProviderScheme(context,
-				LocusUtils.LOCUS_API_SINCE_VERSION);
-		if (scheme == null) {
+        // generate cursor
+        String scheme = getContentProviderScheme(context,
+                LocusUtils.LOCUS_API_SINCE_VERSION);
+        if (scheme == null) {
             throw new RequiredVersionMissingException(LocusUtils.LOCUS_API_SINCE_VERSION);
-		}
-		Cursor cursor = context.getContentResolver().query(
-					Uri.parse(scheme + "waypoint"),
-					null, "getWaypoint", new String[] {String.valueOf(wptId)}, null);
+        }
+        Cursor cursor = context.getContentResolver().query(
+                    Uri.parse(scheme + "waypoint"),
+                    null, "getWaypoint", new String[] {String.valueOf(wptId)}, null);
 
-		if (cursor == null){
-		    cursor = context.getContentResolver().query(
+        if (cursor == null){
+            cursor = context.getContentResolver().query(
                 Uri.parse(scheme + "waypoint/" + wptId),
                 null, null, null, null);
-		}
-		
-		if (cursor == null){
-		    Logger.logW(TAG, "getLocusWaypoint(" + context + ", " + wptId + "): can not query locus");
-		    return null;
-		}
-		
-		// handle result
+        }
+        
+        if (cursor == null){
+            Logger.logW(TAG, "getLocusWaypoint(" + context + ", " + wptId + "): can not query locus");
+            return null;
+        }
+        
+        // handle result
 		try {
 			cursor.moveToFirst();
 			Waypoint wpt = new Waypoint(cursor.getBlob(1));
@@ -231,9 +236,9 @@ public class ActionTools {
 	 * <br /><br />
 	 * 1. search for point that has exact name "Cinema", just write "Cinema" as wptName
 	 * <br />
-	 * 2. search for point that starts with "Cinema", just write "%Cinema" as wptName
+	 * 2. search for point that starts with "Cinema", just write "Cinema%" as wptName
 	 * <br />
-	 * 3. search for point that contains word "cinema", just write "%Cinema%" as wptName
+	 * 3. search for point that contains word "cinema", just write "%cinema%" as wptName
 	 * @param context current context
 	 * @param wptName name (or part of name) you search
 	 * @return array of waypoint ids. Returns <code>null</code> in case, any problem happen, or
@@ -269,6 +274,11 @@ public class ActionTools {
 		return result;
 	}
 	
+	public static int updateLocusWaypoint(Context context, Waypoint wpt, boolean forceOverwrite) 
+			throws RequiredVersionMissingException {
+		return updateLocusWaypoint(context, wpt, forceOverwrite, false);
+	}
+
 	/**
 	 * Update waypoint in Locus
 	 * @param context current context
@@ -276,10 +286,13 @@ public class ActionTools {
 	 * @param forceOverwrite if set to <code>true</code>, new waypoint will completely rewrite all
 	 *  user's data (do not use if necessary). If set to <code>false</code>, Locus will handle update based on user's 
 	 *  settings (if user have defined "keep values", it will keep it)
+	 * @param loadAllGcWaypoints allow to force Locus to load all GeocacheWaypoints (of course
+	 * if point is Geocache and is visible on map)
 	 * @return number of affected waypoints
 	 * @throws RequiredVersionMissingException if Locus in required version is missing
 	 */
-	public static int updateLocusWaypoint(Context context, Waypoint wpt, boolean forceOverwrite) 
+	public static int updateLocusWaypoint(Context context, Waypoint wpt, 
+			boolean forceOverwrite, boolean loadAllGcWaypoints) 
 			throws RequiredVersionMissingException {
 		// generate cursor
 		String scheme = getContentProviderScheme(context,
@@ -289,6 +302,7 @@ public class ActionTools {
 			ContentValues cv = new ContentValues();
 			cv.put("waypoint", wpt.getAsBytes());
 			cv.put("forceOverwrite", forceOverwrite);
+			cv.put("loadAllGcWaypoints", loadAllGcWaypoints);
 			return context.getContentResolver().update(
 					Uri.parse(scheme + "waypoint"), cv, null, null);
 		} else {

@@ -214,6 +214,7 @@
     <string name="gpx_downloader_error_invalid_gpx">Error: The GPX file seems to be invalid</string>
     <string name="gpx_downloader_error_images_downloading">Error while downloading images</string>
     <string name="gpx_downloader_error_locus_import">Error while importing to Locus</string>
+    <string name="gpx_downloader_cancelled">Cancelled</string>
     <string name="gpx_downloader_progress_finish">Finished</string>
     <string name="gpx_downloader_progress_no_caches">No geocaches found</string>
     <string name="gpx_downloader_unknown_error">Unknown error has occurred</string>

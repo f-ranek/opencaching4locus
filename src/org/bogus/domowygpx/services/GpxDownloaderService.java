@@ -520,7 +520,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                         final JSONObject obj = (JSONObject)ResponseUtils.getJSONObjectFromResponse(LOG_TAG, get, resp);
                         userUuid = (String)obj.opt("uuid");
                         if (userUuid == null){
-                            sendWarnErrorInfo(res.getString(R.string.gpx_downloader_no_such_user, userName), GpxTaskEvent.EVENT_TYPE_WARN); 
+                            throw new IllegalStateException("userUuid is null"); 
                         } else {
                             config.edit().putString(key, userUuid).commit();
                         }
@@ -529,7 +529,12 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 }
             }catch(Exception e){
                 Log.e(LOG_TAG, "Failed to get user UUID for userName=" + userName);
-                // setErrorDescription("Nie udało się pobrać danych użytkownika", e);
+                if (hasOAuth3){
+                    setErrorDescription(res.getString(R.string.gpx_downloader_failed_to_get_user), e); 
+                } else {
+                    setErrorDescription(res.getString(R.string.gpx_downloader_no_such_user, userName), e); 
+                }
+                // 
                 throw e;
             }finally{
                 ResponseUtils.closeResponse(resp);
@@ -821,9 +826,10 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                                 Intent.FLAG_ACTIVITY_NEW_TASK);
                         }catch(Exception e){
                             Log.e(LOG_TAG, "Failed to start Locus", e);
-                            sendWarnErrorInfo(
+                            sendProgressInfo(
                                 getResources().getString(R.string.gpx_downloader_error_locus_import), 
-                                GpxTaskEvent.EVENT_TYPE_ERROR);
+                                GpxTaskEvent.EVENT_TYPE_ERROR,
+                                GpxTask.STATE_ERROR);
                         }
                     }
                 }, 500);
@@ -919,17 +925,17 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 taskState.exception = null;
             }
             
+            final Resources res = getResources();
             final GpxTaskEvent event = taskState.createTaskEvent();
             event.totalKB = (int)(ResponseUtils.getBytesRead(mainResponse) / 1024L);
             if (canceled || cancelledByUser){
                 taskState.stateCode = event.eventType = GpxTaskEvent.EVENT_TYPE_FINISHED_CANCEL;
-                taskState.stateDescription = event.description = "Przerwano"; // XXX TRANSLATION!
+                taskState.stateDescription = event.description = res.getString(R.string.gpx_downloader_cancelled);
             } else {
                 taskState.stateCode = event.eventType = GpxTaskEvent.EVENT_TYPE_FINISHED_ERROR;
                 if (hasErrorDescription){
                     event.description = taskState.stateDescription;
                 } else {
-                    final Resources res = getResources();
                     taskState.stateDescription = event.description = res.getString(R.string.gpx_downloader_unknown_error); 
                 }
             }
@@ -948,8 +954,22 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
          */
         protected final void sendProgressInfo(String description)
         {
+            sendProgressInfo(description, GpxTaskEvent.EVENT_TYPE_LOG, -1);
+        }
+        
+        /**
+         * Updates current task state, prepares and sends event info of a given type
+         * @param description
+         * @param eventType
+         * @param stateCode
+         */
+        protected final void sendProgressInfo(String description, int eventType, int stateCode)
+        {
             final GpxTaskEvent event = taskState.createTaskEvent();
             event.eventType = GpxTaskEvent.EVENT_TYPE_LOG;
+            if (stateCode != -1){
+                taskState.stateCode = stateCode;
+            }
             taskState.stateDescription = event.description = description;
 
             // update db
@@ -957,23 +977,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             
             // send notification
             broadcastEvent(event, taskState);
-        }
-        
-        /**
-         * Prepares and sends event info, but unlike {@link #sendProgressInfo(String)}
-         * does not update current task state. Aim of this method is to log and show
-         * this event to the user 
-         * @param description
-         * @param eventType
-         */
-        protected final void sendWarnErrorInfo(String description, int eventType)
-        {
-            final GpxTaskEvent event = taskState.createTaskEvent();
-            event.eventType = eventType;
-            event.description = description;
-            saveEventToDatabase(event);
-            taskState.lastTaskEvent = event;
-            broadcastEvent(event, null);
         }
         
         /**
