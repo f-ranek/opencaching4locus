@@ -33,6 +33,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.sqlite.SQLiteDatabase;
@@ -56,7 +57,6 @@ public class StateCollector
     {
         this.context = context;
     }
-    
 
     private void collectLogCatOutput(List<File> files, File root)
     {
@@ -279,6 +279,25 @@ public class StateCollector
         }
     }
     
+    private void saveAppInfo(String packageName, StringBuilder sb)
+    {
+        try{
+            PackageInfo info = context.getPackageManager().getPackageInfo(packageName, 0);
+            if (info == null)
+                return ;
+            sb.append(packageName);
+            sb.append(": ").append(info.versionName).append(" (").append(info.versionCode).append(')');
+            ApplicationInfo appInfo = info.applicationInfo;
+            if (!appInfo.enabled){
+                sb.append(" (disabled)");
+            }
+            sb.append('\n');
+        }catch(NameNotFoundException nnfe){
+            
+        }
+         
+    }
+    
     @SuppressLint("SimpleDateFormat")
     private void saveDeviceInfo(List<File> files, File root, long errorTimeStamp)
     throws IOException
@@ -287,13 +306,13 @@ public class StateCollector
         
         StringBuilder sb = new StringBuilder(512);
         final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        sb.append("Data bieżąca: ").append(sdf.format(new Date())).append('\n');
+        sb.append("Current date: ").append(sdf.format(new Date())).append('\n');
         if (errorTimeStamp > 0){
-            sb.append("Data błędu: ").append(sdf.format(new Date(errorTimeStamp))).append('\n');
+            sb.append("Error date: ").append(sdf.format(new Date(errorTimeStamp))).append('\n');
         }
         try{
             final String packageName = context.getPackageName();
-            sb.append("Aplikacja: ");
+            sb.append("Application: ");
             final PackageInfo packageInfo = context.getPackageManager().getPackageInfo(packageName, 0);
             sb.append(packageInfo.versionName).append(" (").append(org.bogus.geocaching.egpx.BuildInfo.GIT_VERSION).append(")");
         }catch(NameNotFoundException nnfe){
@@ -306,8 +325,12 @@ public class StateCollector
         sb.append("\nDevice: ").append(android.os.Build.DEVICE);
         sb.append("\nModel (and Product): ").append(android.os.Build.MODEL).append(" (").append(android.os.Build.PRODUCT).append(")");
         
-        sb.append("\n\nID urządzenia: ").append(Secure.getString(context.getContentResolver(), Secure.ANDROID_ID));
+        sb.append("\n\nDevice ID: ").append(Secure.getString(context.getContentResolver(), Secure.ANDROID_ID));
 
+        sb.append("\n\n");
+        saveAppInfo("menion.android.locus", sb);
+        saveAppInfo("menion.android.locus.pro", sb);
+        
         OutputStream os = null;
         try{
             os = new FileOutputStream(output);
