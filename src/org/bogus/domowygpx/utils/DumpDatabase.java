@@ -42,7 +42,7 @@ public class DumpDatabase
     }
     protected String escapeData(String str)
     {
-        return str.replace("<", "&lt;").replace(">", "&gt;");
+        return str.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
     
     protected void dumpTableData(SQLiteDatabase database, String tableName, PrintWriter pw)
@@ -88,7 +88,11 @@ public class DumpDatabase
                         pw.print(escapeAttr(colName));
                         pw.print("\" type=\"");
                         pw.print(escapeAttr(colType));
-                        pw.println("\">");
+                        if (pk > 0){
+                            pw.print("\" pk=\"");
+                            pw.print(pk);
+                        }
+                        pw.println("\" />");
                         if (columns.length() > 0){
                             columns.append(',');
                         }
@@ -154,7 +158,7 @@ public class DumpDatabase
                                     }
                                     pw.println("</column>");
                                 } else {
-                                    pw.println(" />");
+                                    pw.println("\" />");
                                 }
                             }
                             pw.println("</row>");
