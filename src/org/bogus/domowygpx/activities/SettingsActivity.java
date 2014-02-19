@@ -63,6 +63,7 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
     @SuppressWarnings("deprecation")
     private void setupSimplePreferencesScreen()
     {
+        final SharedPreferences config = getPreferenceManager().getSharedPreferences();
         final OAuth oauth = OKAPI.getInstance(SettingsActivity.this).getOAuth();
 
         addPreferencesFromResource(R.xml.pref_header);
@@ -92,15 +93,20 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
             CompoundPreferenceChangeListener.add(downloadImagesStrategyPref, 
                 new Preference.OnPreferenceChangeListener(){
                 @Override
-                public boolean onPreferenceChange(Preference preference, Object newValue)
+                public boolean onPreferenceChange(Preference preference, Object newValueO)
                 {
-                    Editor editor = preference.getSharedPreferences().edit();
-                    editor.putString("Locus.downloadImagesStrategy", AndroidUtils.toString(newValue));
-                    editor.commit();
+                    String oldValue = config.getString("Locus.downloadImagesStrategy", null);
+                    String newValue = (String)newValueO;
+                    if (oldValue == newValue || oldValue != null && oldValue.equals(newValue)){
+                        // no change
+                    } else {
+                        Editor editor = config.edit();
+                        editor.putString("Locus.downloadImagesStrategy", newValue);
+                        AndroidUtils.applySharedPrefsEditor(editor);
+                    }
                     return true;
                 }});
         }
-        final SharedPreferences config = getPreferenceManager().getSharedPreferences();
         final Map<String, ?> allConfigValues = config.getAll();
         setupPrefereneHierarchy(getPreferenceScreen(), allConfigValues);
         
@@ -331,7 +337,7 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
                 // For list preferences, look up the correct display value in
                 // the preference's 'entries' list.
                 ListPreference listPreference = (ListPreference)preference;
-                String stringValue2 = value.toString();
+                String stringValue2 = value == null ? "" : value.toString();
                 int index = listPreference.findIndexOfValue(stringValue2);
 
                 // Set the summary to reflect the new value.

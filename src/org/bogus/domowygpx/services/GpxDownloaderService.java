@@ -36,16 +36,17 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.bogus.ToStringBuilder;
+import org.bogus.android.AndroidUtils;
 import org.bogus.domowygpx.activities.DownloadListActivity;
 import org.bogus.domowygpx.activities.TaskConfiguration;
 import org.bogus.domowygpx.apache.http.client.utils.ResponseUtils;
 import org.bogus.domowygpx.application.Application;
-import org.bogus.domowygpx.gpx.GpxProcessMonitor;
-import org.bogus.domowygpx.gpx.GpxProcessor;
-import org.bogus.domowygpx.html.HTMLProcessor;
-import org.bogus.domowygpx.html.ImageUrlProcessor;
 import org.bogus.domowygpx.oauth.OKAPI;
 import org.bogus.domowygpx.services.downloader.FileData;
+import org.bogus.domowygpx.services.gpx.GpxProcessMonitor;
+import org.bogus.domowygpx.services.gpx.GpxProcessor;
+import org.bogus.domowygpx.services.html.HTMLProcessor;
+import org.bogus.domowygpx.services.html.ImageUrlProcessor;
 import org.bogus.domowygpx.utils.DumpDatabase;
 import org.bogus.domowygpx.utils.HttpClientFactory;
 import org.bogus.domowygpx.utils.HttpClientFactory.CreateHttpClientConfig;
@@ -68,6 +69,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
@@ -327,6 +329,8 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         protected void appendSearchParameters(StringBuilder query, String userUuid) 
         throws JSONException
         {
+            final SharedPreferences config = getSharedPreferences("egpx", Context.MODE_PRIVATE);
+            
             query.append("search_method=services/caches/search/nearest");
             query.append("&search_params=");
 
@@ -341,7 +345,28 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             if (taskConfig.getOutMaxCacheDistance() > 0){
                 searchParams.put("radius", taskConfig.getOutMaxCacheDistance());
             }
-            SharedPreferences config = getSharedPreferences("egpx", Context.MODE_PRIVATE);
+            if (taskConfig.getCacheTypes() != null){
+                searchParams.put("type", taskConfig.getCacheTypes());
+            }
+            if (taskConfig.getCacheTaskDifficulty() != null){
+                searchParams.put("difficulty", taskConfig.getCacheTaskDifficulty());
+            }
+            if (taskConfig.getCacheTerrainDifficulty() != null){
+                searchParams.put("terrain", taskConfig.getCacheTerrainDifficulty());
+            }
+            if (taskConfig.getCacheRatings() != null){
+                searchParams.put("rating", taskConfig.getCacheRatings());
+            }
+            if (taskConfig.getCacheRecommendations() != null){
+                searchParams.put("min_rcmds", taskConfig.getCacheRecommendations());
+            }
+            if (taskConfig.isOnlyWithTrackables() && config.getBoolean("listTrackables", true)){
+                searchParams.put("with_trackables_only", "true");
+            }
+            final String cacheAvailability = config.getString("cacheAvailability", null);
+            if (cacheAvailability != null && cacheAvailability.length() > 0){
+                searchParams.put("status", cacheAvailability);
+            }
             if (userUuid != null){
                 if (TaskConfiguration.FOUND_STRATEGY_SKIP.equals(config.getString("foundStrategy", TaskConfiguration.FOUND_STRATEGY_MARK))){
                     searchParams.put("not_found_by", userUuid);
@@ -358,7 +383,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 searchParams.put("location_source", "alt_wpt:user-coords");
             }
             
-            searchParams.put("status", "Available");
             query.append(urlEncode(searchParams));
         }
         
@@ -369,7 +393,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             final boolean searchAndRetrieve = true;
             JSONObject retrParams = new JSONObject();
             
-            retrParams.put("langpref","pl|en");
+            retrParams.put("langpref","pl|en"); // XXX configurable!
             retrParams.put("ns_ground", "true");
             retrParams.put("ns_gsak", "true");
             retrParams.put("ns_ox", "true");
@@ -446,6 +470,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         private String getUserUuid() 
         throws Exception
         {
+            final Resources res = getResources();
             final SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
             String userUuid = config.getString("userUuid", null);
             if (userUuid != null){
@@ -468,13 +493,13 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     userUuid = (String)obj.opt("uuid");
                     userName = (String)obj.opt("username"); 
                     if (userUuid == null || userUuid.length() == 0){
-                        throw new IllegalStateException("Błąd pobierania danych użytkownika");
+                        throw new IllegalStateException(res.getString(R.string.gpx_downloader_failed_to_get_user));
                     } 
                     Editor editor = config.edit();
                     editor.putString("userName", userName);
                     editor.putString("userUuid", userUuid);
                     editor.putString("userUUID:" + userName, userUuid);
-                    editor.commit();
+                    AndroidUtils.applySharedPrefsEditor(editor);
                    
                     return userUuid;
                 } else {
@@ -505,9 +530,9 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             }catch(Exception e){
                 Log.e(LOG_TAG, "Failed to get user UUID for userName=" + userName);
                 if (hasOAuth3){
-                    setErrorDescription("Nie udało się pobrać danych użytkownika", e); 
+                    setErrorDescription(res.getString(R.string.gpx_downloader_failed_to_get_user), e); 
                 } else {
-                    setErrorDescription("Brak użytkownika " + userName, e); 
+                    setErrorDescription(res.getString(R.string.gpx_downloader_no_such_user, userName), e); 
                 }
                 // 
                 throw e;
@@ -527,14 +552,15 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         
         private boolean processDefaultException(Exception e)
         {
+            final Resources res = getResources();
             if (e instanceof org.apache.http.conn.ConnectionPoolTimeoutException){
-                setErrorDescription("Za dużo połączeń sieciowych", e); 
+                setErrorDescription(res.getString(R.string.gpx_downloader_too_many_connections), e); 
                 return true;
             }
             if (e instanceof java.net.SocketTimeoutException ||
                     e instanceof org.apache.http.conn.ConnectTimeoutException
             ){
-                setErrorDescription("Przekroczono czas oczekiwania na dane z sieci", e); 
+                setErrorDescription(res.getString(R.string.gpx_downloader_data_timeout), e); 
                 return true;
             }
             if (e instanceof java.net.SocketException || 
@@ -543,11 +569,11 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     e instanceof org.apache.http.client.ClientProtocolException ||
                     e instanceof org.apache.http.ConnectionClosedException)
             {
-                setErrorDescription("Błąd komunikacji sieciowej", e); 
+                setErrorDescription(res.getString(R.string.gpx_downloader_network_error), e); 
                 return true;
             }
             if (e instanceof javax.net.ssl.SSLException){
-                setErrorDescription("Błąd SSL", e); 
+                setErrorDescription(res.getString(R.string.gpx_downloader_ssl_error), e); 
                 return true;
             }
             if (e instanceof HttpException){
@@ -557,18 +583,18 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     return true;
                 }
                 if (he.httpCode == 400){
-                    setErrorDescription("Serwer nie zrozumiał żądania", e); 
+                    setErrorDescription(res.getString(R.string.gpx_downloader_server_request_error), e); 
                     return true;
                 }
                 if (he.httpCode == 401 && okApi.getOAuth().hasOAuth3()){
-                    setErrorDescription("Błąd logowania do serwera", e); 
+                    setErrorDescription(res.getString(R.string.gpx_downloader_login_error), e); 
                     return true;
                 }
             }   
             if (e instanceof HttpException || 
                     e instanceof FileNotFoundException)
             {
-                setErrorDescription("Błąd serwera", e); 
+                setErrorDescription(res.getString(R.string.gpx_downloader_server_error), e); 
                 return true;
             }
             return false;
@@ -584,12 +610,14 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             InputStream is = null;
             GpxProcessor gpxProcessor = null;
 
+            final Resources res = getResources();
+            
             final InputStreamHolder mis = new InputStreamHolder();
             // cos = new CountingInputStream(mis);
             touchedFiles = new ArrayList<File>();
             try{
                 final SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
-                sendProgressInfo("Przygotowuję parametry"); 
+                sendProgressInfo(res.getString(R.string.gpx_downloader_progress_init)); 
                 final String userUuid = getUserUuid();
                 
                 touchedFiles.add(taskConfig.getOutTargetFileName());
@@ -604,7 +632,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 try{
                     gpxProcessor.preCreateOutputStream();
                 }catch(IOException e){
-                    setErrorDescription("Nie udało się utworzyć docelowego pliku", e); 
+                    setErrorDescription(res.getString(R.string.gpx_downloader_error_file_creation), e); 
                     throw e;
                 }
                 
@@ -618,7 +646,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
 
                 checkInterrupted();
                 
-                HttpResponse resp = null;
                 try{
                     StringBuilder requestURL = new StringBuilder(256);
                     requestURL.append(okApi.getAPIUrl());
@@ -628,7 +655,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     appendReturnParameters(requestURL, userUuid);
                     
                     // execute requestURL and process response
-                    sendProgressInfo("Szukam keszy"); 
+                    sendProgressInfo(res.getString(R.string.gpx_downloader_progress_search)); 
                     final String url = requestURL.toString();
                     Log.i(LOG_TAG, url);
                     final HttpGet get = new HttpGet(url);
@@ -646,13 +673,11 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     }
                     
                 }catch(Exception e){
-                    ResponseUtils.abortResponse(resp);
+                    ResponseUtils.abortResponse(mainResponse);
                     if (!processDefaultException(e)){
-                        setErrorDescription("Błąd wyszukiwania keszy", e); 
+                        setErrorDescription(res.getString(R.string.gpx_downloader_error_search), e); 
                     }
                     throw e;
-                }finally{
-                    ResponseUtils.closeResponse(resp);
                 }
                 
                 checkInterrupted();
@@ -668,7 +693,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     final TeeInputStream tee = new TeeInputStream(is, os);
                     mis.setInputStream(tee);
                 }catch(Exception e){   
-                    setErrorDescription("Błąd systemu plików", e); 
+                    setErrorDescription(res.getString(R.string.gpx_downloader_error_fs), e); 
                     throw e;
                 }
                 
@@ -676,14 +701,14 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 
                 try{
                     setPriority(Thread.NORM_PRIORITY-1);
-                    sendProgressInfo("Pobieram GPXa");
+                    sendProgressInfo(res.getString(R.string.gpx_downloader_progress_downloading));
                     gpxProcessor.processGpx();
                     
                     onStartedCacheCode(null, null);
                     
                 }catch(Exception e){   
                     if (!processDefaultException(e)) {
-                        setErrorDescription("Błąd przetwarzania GPXa", e); 
+                        setErrorDescription(res.getString(R.string.gpx_downloader_error_invalid_gpx), e); 
                     }
                     throw e;
                 }finally{
@@ -780,8 +805,9 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 Log.i(LOG_TAG, "Image stats: " + imageStats);
                 taskState.imageFileStats = imageStats;
                 
-            }catch(Exception e){   
-                setErrorDescription("Błąd pobierania obrazów", e); 
+            }catch(Exception e){
+                final Resources res = getResources();
+                setErrorDescription(res.getString(R.string.gpx_downloader_error_images_downloading), e); 
                 throw e;
             }
         }
@@ -801,7 +827,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                         }catch(Exception e){
                             Log.e(LOG_TAG, "Failed to start Locus", e);
                             sendProgressInfo(
-                                "Błąd importu do Locusa", 
+                                getResources().getString(R.string.gpx_downloader_error_locus_import), 
                                 GpxTaskEvent.EVENT_TYPE_ERROR,
                                 GpxTask.STATE_ERROR);
                         }
@@ -873,10 +899,11 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             final GpxTaskEvent event = taskState.createTaskEvent();
             event.eventType = GpxTaskEvent.EVENT_TYPE_FINISHED_OK;
             event.totalKB = (int)(ResponseUtils.getBytesRead(mainResponse) / 1024L);
+            final Resources res = getResources();
             if (taskState.totalCacheCount == 0){
-                event.description = "Brak keszy";
+                event.description = res.getString(R.string.gpx_downloader_progress_no_caches);
             } else {
-                event.description = "Gotowe";
+                event.description = res.getString(R.string.gpx_downloader_progress_finish);
             }
             
             taskState.stateCode = event.eventType;
@@ -898,17 +925,18 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 taskState.exception = null;
             }
             
+            final Resources res = getResources();
             final GpxTaskEvent event = taskState.createTaskEvent();
             event.totalKB = (int)(ResponseUtils.getBytesRead(mainResponse) / 1024L);
             if (canceled || cancelledByUser){
                 taskState.stateCode = event.eventType = GpxTaskEvent.EVENT_TYPE_FINISHED_CANCEL;
-                taskState.stateDescription = event.description = "Przerwano";
+                taskState.stateDescription = event.description = res.getString(R.string.gpx_downloader_cancelled);
             } else {
                 taskState.stateCode = event.eventType = GpxTaskEvent.EVENT_TYPE_FINISHED_ERROR;
                 if (hasErrorDescription){
                     event.description = taskState.stateDescription;
                 } else {
-                    taskState.stateDescription = event.description = "Wystąpił nieznany błąd"; 
+                    taskState.stateDescription = event.description = res.getString(R.string.gpx_downloader_unknown_error); 
                 }
             }
             taskState.totalKB = event.totalKB = (int)(ResponseUtils.getBytesRead(mainResponse) / 1024L);
@@ -1156,6 +1184,10 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         builder.setContentIntent(resultPendingIntent);
 
         builder.setAutoCancel(!foreground);
+        if (!foreground){
+            //builder.setDefaults(Notification.DEFAULT_VIBRATE); // XXX
+            //builder.setTicker("Pobieranie GPX zakończone");
+        }
         
         final NotificationManager notificationManager = 
                 (NotificationManager)getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
@@ -1174,13 +1206,15 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         final int runningCount = threads.size();
         final NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setOngoing(runningCount != 0);
+        
+        final Resources res = getResources();
         if (runningCount == 0){
-            builder.setContentTitle("Pobieranie GPX zakończone"); 
-        } else
+            builder.setContentTitle(res.getText(R.string.gpx_downloader_notif_finished));   
+        } else 
         if (runningCount == 1){
-            builder.setContentTitle("Pobieram GPXa"); 
-        } else {
-            builder.setContentTitle("Pobieram GPXy"); 
+            builder.setContentTitle(res.getText(R.string.gpx_downloader_notif_state_1));   
+        } else {    
+            builder.setContentTitle(res.getText(R.string.gpx_downloader_notif_state_n));   
         }
         int[] runningStats = getStateStats();
         final int dbCountError = runningStats[1];
@@ -1192,20 +1226,19 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         }
         final StringBuilder sb = new StringBuilder();
         if (runningCount > 0){
-            sb.append(runningCount);
-            sb.append(" w trakcie"); 
+            sb.append(res.getString(R.string.gpx_downloader_notif_in_progress, runningCount));
         }
         if (dbCountDone > 0){
             if (sb.length() > 0){
                 sb.append(", "); 
             }
-            sb.append(getResources().getQuantityString(R.plurals.finished, dbCountDone, dbCountDone));
+            sb.append(res.getQuantityString(R.plurals.downloader_finished, dbCountDone, dbCountDone));
         }
         if (dbCountError > 0){
             if (sb.length() > 0){
                 sb.append(", "); 
             }
-            sb.append(dbCountError).append(" błędnie"); 
+            sb.append(res.getString(R.string.gpx_downloader_notif_with_error, dbCountError));
         }
         
         if (sb.length() > 0){

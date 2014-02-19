@@ -146,6 +146,10 @@ public class LocationUtils
             boolean negative = startCh == 'W' || startCh == 'w' || startCh == 'S' || startCh == 's';
             String coordinate = coordinate0.substring(1).trim();
             int degIdx = coordinate.indexOf('°');
+            int deg2Idx = coordinate.indexOf(0xBA);
+            if (degIdx == -1 && deg2Idx != -1){
+                degIdx = deg2Idx;
+            }
             if (degIdx == -1 || degIdx == coordinate.length()-1){
                 if (degIdx == coordinate.length()-1){
                     coordinate = coordinate.substring(0, coordinate.length()-1);

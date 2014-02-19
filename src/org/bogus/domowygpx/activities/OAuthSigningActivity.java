@@ -10,6 +10,7 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.bogus.android.AndroidUtils;
 import org.bogus.domowygpx.apache.http.client.utils.ResponseUtils;
 import org.bogus.domowygpx.oauth.OAuth;
 import org.bogus.domowygpx.oauth.OKAPI;
@@ -184,7 +185,7 @@ public class OAuthSigningActivity extends Activity
     private void prepareSignInDialog()
     {
         final LayoutInflater inflater = LayoutInflater.from(this);
-        final ViewGroup view = (ViewGroup)inflater.inflate(R.layout.activity_oauth_signing, null);
+        final ViewGroup view = (ViewGroup)inflater.inflate(R.layout.dialog_oauth_signing, null);
         
         btnAuthorize = (Button)view.findViewById(R.id.oauthBtnAuthorize);
         btnAuthorize.setOnClickListener(new View.OnClickListener()
@@ -285,7 +286,7 @@ public class OAuthSigningActivity extends Activity
                                 editor.putString("userName", userName);
                                 editor.putString("userUuid", userUuid);
                                 editor.putString("userUUID:" + userName, userUuid);
-                                editor.commit();
+                                AndroidUtils.applySharedPrefsEditor(editor);
                             }
                             
                         } catch (Exception e) {

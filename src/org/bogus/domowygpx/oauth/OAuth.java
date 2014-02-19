@@ -22,6 +22,7 @@ import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.bogus.android.AndroidUtils;
 import org.bogus.geocaching.egpx.BuildConfig;
 
 import android.content.Context;
@@ -266,7 +267,7 @@ public class OAuth
         editor.putString("oauth2_token", token);
         editor.putString("oauth2_token_secret", secret);
         editor.putLong("oauth2_token_time", System.currentTimeMillis());
-        editor.commit();
+        AndroidUtils.applySharedPrefsEditor(editor);
     }
     
     /**
@@ -348,7 +349,7 @@ public class OAuth
         editor.remove("oauth2_token_time");
         editor.remove("oauth2_token");
         editor.remove("oauth2_token_secret");
-        editor.commit();
+        AndroidUtils.applySharedPrefsEditor(editor);
     }
     
     public synchronized void forgetOAuthCredentials()
@@ -359,7 +360,7 @@ public class OAuth
         editor.remove("oauth2_token_secret");
         editor.remove("oauth3_token");
         editor.remove("oauth3_token_secret");
-        editor.commit();        
+        AndroidUtils.applySharedPrefsEditor(editor);        
     }
     
     /**

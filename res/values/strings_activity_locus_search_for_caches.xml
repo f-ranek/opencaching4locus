@@ -1,8 +1,9 @@
-<resources>
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
-    <string name="titleLocusSearch">Szukaj keszy w pobliżu</string>
-    <string name="titleLocusSearchInProgress">Pracuję&#8230;</string>
-    <string name="dontAskAgain">Nie pytaj więcej</string>
-    <string name="btnClose">Zamknij</string>
-    <string name="msgDownloadInBackground">Pobieranie w tle</string>
+    <string name="titleLocusSearch">Search for geocaches nearby</string>
+    <string name="titleLocusSearchInProgress">Working&#8230;</string>
+    <string name="dontAskAgain">Don\'t ask again</string>
+    <string name="btnClose">Close</string>
+    <string name="msgDownloadInBackground">Downloading in background</string>
 </resources>

@@ -1,0 +1,61 @@
+<ScrollView xmlns:app1="http://schemas.android.com/apk/res/org.bogus.geocaching.egpx"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content" >
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:text="@string/difficultyTask"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <org.bogus.android.RangeBar
+            android:id="@+id/rangeDifficultyTask"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="12dp"
+            android:paddingLeft="9dp"
+            android:paddingRight="9dp"
+            app1:barWeight="3dp"
+            app1:connectingLineWeight="1dp"
+            app1:labels="@array/difficultyLables"
+            app1:labelsTopSpace="10dp"
+            app1:textAppearance="?android:attr/textAppearanceSmall"
+            app1:tickCount="5"
+            app1:tickHeight="12dp"
+            app1:tickWidth="1dp" />
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:text="@string/difficultyTerrain"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <org.bogus.android.RangeBar
+            android:id="@+id/rangeDifficultyTerrain"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="12dp"
+            android:paddingLeft="9dp"
+            android:paddingRight="9dp"
+            app1:barWeight="3dp"
+            app1:connectingLineWeight="1dp"
+            app1:labels="@array/difficultyLables"
+            app1:labelsTopSpace="10dp"
+            app1:textAppearance="?android:attr/textAppearanceSmall"
+            app1:tickCount="5"
+            app1:tickHeight="12dp"
+            app1:tickWidth="1dp" />
+    </LinearLayout>
+
+</ScrollView>

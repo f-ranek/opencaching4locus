@@ -1,0 +1,24 @@
+<resources>
+
+    <declare-styleable name="RangeBar">
+        <attr name="tickCount" format="integer" />
+        <attr name="leftIndex" format="integer" />
+        <attr name="rightIndex" format="integer" />
+        <attr name="tickHeight" format="dimension" />
+        <attr name="tickWidth" format="dimension" />
+        <attr name="secondaryTickCount" format="integer" />
+        <attr name="secondaryTickHeight" format="dimension" />
+        <attr name="secondaryTickWidth" format="dimension" />
+        <attr name="barWeight" format="dimension" />
+        <attr name="labelsTopSpace" format="dimension" />
+        <attr name="barColor" format="reference|color" />
+        <attr name="connectingLineWeight" format="dimension" />
+        <attr name="connectingLineColor" format="reference|color" />
+        <attr name="thumbImage" format="reference" />
+        <attr name="labels" format="reference" />
+        <attr name="textColor" format="reference|color" />
+        <attr name="textSize" format="dimension" />
+        <attr name="textAppearance" format="reference" />
+    </declare-styleable>
+
+</resources>

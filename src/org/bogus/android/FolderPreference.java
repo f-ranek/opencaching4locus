@@ -224,29 +224,29 @@ public class FolderPreference extends EditTextPreference
     protected boolean validate()
     {
         File dir = null;
-        String message = null;
+        int message = -1;
         CharSequence currentFolder = getEditText().getText();
         if (currentFolder == null || currentFolder.length() == 0){
-            message = "Wybierz katalog";
+            message = R.string.pref_btn_choose_directory_no_dir;
         } else {
             dir = new File(currentFolder.toString());
             if (dir.isFile()){
-                message = "Wybierz katalog, nie plik";
+                message = R.string.pref_btn_choose_directory_got_file;
             } else {
                 dir.mkdirs();
                 if (!dir.exists()){
-                    message = "Ups, nie mogę stworzyć katalogu";
+                    message = R.string.pref_btn_choose_directory_cant_create_dir;
                 } else {
                     if (!dir.canWrite()){
-                        message = "Nie mogę zapisywać do wybranego przez Ciebie katalogu";
+                        message = R.string.pref_btn_choose_directory_cant_write;
                     }
                 }
             }
         }        
-        if (message != null){
+        if (message > 0){
             AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
             builder.setMessage(message);
-            builder.setNegativeButton("OK", null);
+            builder.setNegativeButton(android.R.string.ok, null);
             builder.show();
             return false;
         } else {
