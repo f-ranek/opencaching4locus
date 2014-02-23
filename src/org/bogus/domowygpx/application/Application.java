@@ -471,9 +471,8 @@ public class Application extends android.app.Application implements OnSharedPref
         }
         
         editor.putString("gpxTargetDirName", gpxTargetDirName.toString());
-        editor.putString("gpxTargetDirNameTemp", gpxTargetDirNameTemp.toString()); 
-        editor.putString("imagesTargetDirName", imagesTargetDirName.toString());
-        
+        AndroidUtils.savePrefValueWithHistory(config, editor, "gpxTargetDirNameTemp", gpxTargetDirNameTemp.toString()); 
+        AndroidUtils.savePrefValueWithHistory(config, editor, "imagesTargetDirName", imagesTargetDirName.toString());
     }
     
     private boolean createDirectories(SharedPreferences config, String key)
@@ -501,8 +500,8 @@ public class Application extends android.app.Application implements OnSharedPref
                     editor.putString("gpxTargetDirName", tdn.toString());
                     File tdnp = tdn.getParentFile();
                     if (tdnp != null){
-                        editor.putString("gpxTargetDirNameTemp", new File(tdnp, tdn.getName() + "-temp").toString());
-                        editor.putString("imagesTargetDirName", new File(tdnp, ".cacheImages").toString()); 
+                        AndroidUtils.savePrefValueWithHistory(config, editor, "gpxTargetDirNameTemp", new File(tdnp, tdn.getName() + "-temp").toString());
+                        AndroidUtils.savePrefValueWithHistory(config, editor, "imagesTargetDirName", new File(tdnp, ".cacheImages").toString()); 
                     }
                 }
             }

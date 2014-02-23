@@ -2,6 +2,8 @@ package org.bogus.android;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.bogus.geocaching.egpx.R;
 
@@ -9,6 +11,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Color;
 import android.graphics.PorterDuff.Mode;
@@ -137,6 +140,24 @@ public class AndroidUtils
             task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, params);
         } else {
             task.execute(params);
+        }
+    }
+    
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public static void savePrefValueWithHistory(SharedPreferences config, Editor editor, String key, String value)
+    {
+        editor.putString(key, value);
+        if (value != null){
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
+                final String key2 = key + ".history";
+                final Set<String> history = config.getStringSet(key2, new HashSet<String>());
+                history.add(value);
+                final String prev = config.getString(key, null);
+                if (prev != null){
+                    history.add(prev);
+                }
+                editor.putStringSet(key2, history);
+            }
         }
     }
 }

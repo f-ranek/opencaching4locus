@@ -1397,8 +1397,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             long timeStamp = System.currentTimeMillis() - 6L*60L*60L*1000L;
             for (String f : tempFiles){
                 // TODO: create a framework for such temp files keeping
-                boolean isMyCacheFile = f.startsWith("gpx_") && f.endsWith(".xml.gz")
-                        || f.startsWith("images_list_") && f.endsWith(".bin.gz"); 
+                boolean isMyCacheFile = f.startsWith("gpx_") && f.endsWith(".xml.gz"); 
                 if (isMyCacheFile){
                     File f2 = new File(cacheDir, f);
                     if (f2.lastModified() < timeStamp){

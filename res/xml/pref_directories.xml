@@ -7,11 +7,13 @@
     
     <org.bogus.android.FolderPreference
         android:key="gpxTargetDirNameTemp"
+        android:persistent="false"
         android:title="@string/pref_directories_target_dir_temp"
         />
     
     <org.bogus.android.FolderPreference
         android:key="imagesTargetDirName"
+        android:persistent="false"
         android:title="@string/pref_directories_target_images"
         />
     <org.bogus.android.ButtonPreference

@@ -292,6 +292,26 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
                     SettingsActivity.this.startActivityForResult(intent, 0);
                 }});
         }
+        {
+            Preference.OnPreferenceChangeListener historySaver = new Preference.OnPreferenceChangeListener()
+            {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue)
+                {
+                    Editor editor = config.edit();
+                    AndroidUtils.savePrefValueWithHistory(config, editor, preference.getKey(), (String)newValue);
+                    AndroidUtils.applySharedPrefsEditor(editor);
+                    return true;
+                }
+                
+            };
+            final FolderPreference gpxTargetDirNameTemp = (FolderPreference)findPreference("gpxTargetDirNameTemp");
+            gpxTargetDirNameTemp.setText(config.getString(gpxTargetDirNameTemp.getKey(), ""));
+            CompoundPreferenceChangeListener.add(gpxTargetDirNameTemp, historySaver);
+            final FolderPreference imagesTargetDirName = (FolderPreference)findPreference("imagesTargetDirName");
+            imagesTargetDirName.setText(config.getString(imagesTargetDirName.getKey(), ""));
+            CompoundPreferenceChangeListener.add(imagesTargetDirName, historySaver);
+        }
     }
 
     private void setupPrefereneHierarchy(PreferenceGroup group, Map<String, ?> values)
@@ -375,7 +395,7 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
      * 
      * @see #sBindPreferenceSummaryToValueListener
      */
-    static void bindPreferenceSummaryToValue(Preference preference)
+    /*static void bindPreferenceSummaryToValue(Preference preference)
     {
         // Set the listener to watch for value changes.
         CompoundPreferenceChangeListener.add(preference, sBindPreferenceSummaryToValueListener);
@@ -383,7 +403,7 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
         
         sBindPreferenceSummaryToValueListener.onPreferenceChange(preference, 
             preferences.getString(preference.getKey(), ""));
-    }
+    }*/
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
