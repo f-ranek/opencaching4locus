@@ -37,6 +37,7 @@ public class Application extends android.app.Application implements OnSharedPref
     private volatile OKAPI okApi;
     private int notificationIconResid;
     
+    StateCollector stateCollector; 
     File offlineDump;
     long offlineDumpPostpone;
     
@@ -84,6 +85,8 @@ public class Application extends android.app.Application implements OnSharedPref
     
     public boolean showErrorDumpInfo(final Activity activity)
     {
+        stateCollector.checkSmallStateDump();
+        
         if (offlineDump != null && System.currentTimeMillis() > offlineDumpPostpone){
             if (!offlineDump.exists()){
                 cleanupOfflineDumpState();
@@ -150,7 +153,7 @@ public class Application extends android.app.Application implements OnSharedPref
         
         final SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
         
-        final StateCollector stateCollector = new StateCollector(this);
+        stateCollector = new StateCollector(this);
         final long offlineDumpTimestamp = stateCollector.hasOfflineDump();
         if (offlineDumpTimestamp > 0){
             try{
@@ -194,7 +197,7 @@ public class Application extends android.app.Application implements OnSharedPref
                 };
                 // don't bother with previous dump, we are preparing the next one :-]
                 cleanupOfflineDumpState();
-                dumpTask.execute();    
+                AndroidUtils.executeAsyncTask(dumpTask);
                 offlineDumpReady.acquireUninterruptibly();
             }catch(Exception e){
                 Log.e(LOG_TAG, "Failed to create offline dump", e);
@@ -206,6 +209,9 @@ public class Application extends android.app.Application implements OnSharedPref
                 offlineDumpPostpone = config.getLong("Dump.offlineDumpPostpone", 0);
             }
         }
+        
+        // this may execute serially with other tasks in one background thread
+        stateCollector.checkSmallStateDump();
         
         final Thread main = Thread.currentThread();
         final UncaughtExceptionHandler mueh = main.getUncaughtExceptionHandler();
@@ -220,6 +226,11 @@ public class Application extends android.app.Application implements OnSharedPref
                     thread.setUncaughtExceptionHandler(mueh);
                 }
                 Log.e(LOG_TAG, "Error in threadId=" + thread.getId() + " [" + thread.getName() + "]", ex);
+                try{
+                    stateCollector.createSmallStateDump();
+                }catch(Exception e){
+                    Log.e(LOG_TAG, "Failed to create ssd", e);
+                }
                 try{
                     stateCollector.createEmergencyDump();
                 }catch(Exception e){
