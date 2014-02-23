@@ -250,8 +250,16 @@ public class Application extends android.app.Application implements OnSharedPref
             }});
         
         setupPreferences();
-        cleanupDevDumps();
-        cleanupTempGpx(config);
+        AsyncTask<Void, Void, Void> cleanupTask = new AsyncTask<Void, Void, Void>(){
+
+            @Override
+            protected Void doInBackground(Void... params){
+                cleanupDevDumps();
+                cleanupTempGpx(config);
+                return null;
+            }
+        };
+        AndroidUtils.executeAsyncTask(cleanupTask);
         
         config.registerOnSharedPreferenceChangeListener(this);
         
@@ -282,7 +290,7 @@ public class Application extends android.app.Application implements OnSharedPref
             }});
     }
     
-    private void cleanupDevDumps()
+    protected void cleanupDevDumps()
     {
         try{
             final File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
@@ -391,7 +399,7 @@ public class Application extends android.app.Application implements OnSharedPref
         }
     }
 
-    private void cleanupTempGpx(SharedPreferences config)
+    protected void cleanupTempGpx(SharedPreferences config)
     {
         String dir = config.getString("gpxTargetDirNameTemp", null);
         if (dir == null){

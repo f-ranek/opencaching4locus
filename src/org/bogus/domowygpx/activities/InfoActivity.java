@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.bogus.android.AndroidUtils;
 import org.bogus.domowygpx.application.Application;
 import org.bogus.domowygpx.application.StateCollector;
 import org.bogus.geocaching.egpx.BuildInfo;
@@ -146,7 +147,7 @@ public class InfoActivity extends Activity
                 }
             }
         };
-        task.execute();
+        AndroidUtils.executeAsyncTask(task);
     }
     
     

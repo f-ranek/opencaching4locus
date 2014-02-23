@@ -219,7 +219,7 @@ public class OAuthSigningActivity extends Activity
                         }
                     }
                 };
-                currentTask.execute(uri1);
+                AndroidUtils.executeAsyncTask(currentTask, uri1);
             }
         });
         edtPin = (EditText)view.findViewById(R.id.oauthEditNip);
@@ -325,7 +325,7 @@ public class OAuthSigningActivity extends Activity
                         refreshSigninDialogControls();
                     }
                 };
-                currentTask.execute(uri3);
+                AndroidUtils.executeAsyncTask(currentTask, uri3);
             }
         });
         

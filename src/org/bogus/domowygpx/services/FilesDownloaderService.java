@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.http.ConnectionClosedException;
 import org.apache.http.client.HttpClient;
 import org.bogus.ToStringBuilder;
+import org.bogus.android.AndroidUtils;
 import org.bogus.domowygpx.activities.DownloadListActivity;
 import org.bogus.domowygpx.application.Application;
 import org.bogus.domowygpx.services.downloader.DownloadProgressMonitor;
@@ -617,7 +618,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                 startTaskFromDatabaseInThread(task, dpm, restartFromScratch);
                 return null;
             }};
-        task2.execute();
+            AndroidUtils.executeAsyncTask(task2);
     }
 
     protected void startTaskFromDatabaseInThread(

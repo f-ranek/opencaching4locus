@@ -153,7 +153,7 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
                             }
                         }
                     };
-                    task.execute();
+                    AndroidUtils.executeAsyncTask(task);
                 }
             });
         }
