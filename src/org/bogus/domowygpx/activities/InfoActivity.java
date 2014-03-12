@@ -24,6 +24,7 @@ import android.text.method.LinkMovementMethod;
 import android.text.method.MovementMethod;
 import android.text.style.URLSpan;
 import android.view.View;
+import android.view.View.OnLongClickListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -52,6 +53,16 @@ public class InfoActivity extends Activity
                 BuildInfo.GIT_VERSION
             );
             buildInfo.setText(versionInfoText);
+            buildInfo.setOnLongClickListener(new OnLongClickListener()
+            {
+                @Override
+                public boolean onLongClick(View v)
+                {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.youtube.com/watch?v=3N4llxYLOmA"));
+                    startActivity(intent);
+                    return false;
+                }
+            });
         }
         {
             final TextView helpInfo = (TextView) findViewById(R.id.helpInfo);
