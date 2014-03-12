@@ -418,6 +418,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         }
         if (listItemContext.gpxDownloader != null){
             listItemContext.gpxDownloader.unregisterEventListener(this);
+            listItemContext.gpxDownloader = null;
         }
         if (serviceBound){
             unbindService(gpxDownloaderServiceConnection);
