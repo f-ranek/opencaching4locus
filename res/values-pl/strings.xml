@@ -133,12 +133,12 @@
     <string name="infoAboutTitle">Dobra, jakiś sensowny opis poproszę ;)</string>
     <string name="infoAbout">Program przygotowany został do współpracy z programami Locus i Columbus trochę też. Pozwala na pobieranie informacji o keszach z serwisu opencaching.pl. Ponadto pozwala na pobranie „z góry” dołączonych do keszy zdjęć i obrazków.</string>
     <string name="infoHelpTitle">Pomocy!</string>
-    <string name="infoHelp" formatted="false">(Instrukcja obsługi=%0)\n\n(Forum=%1)</string>
+    <string name="infoHelp" formatted="false">(Instrukcja obsługi=%0)\t(Forum=%1)</string>
     <string name="versionInfoTitle">Informacje o wersji</string>
     <string name="versionInfo">Wersja:\t\t\t%1$s\nData:\t\t\t\t%2$s\nGit:\t\t\t\t\t%3$s</string>
     
     <string name="historyTitle">Historia zmian</string>
-    <string name="history">1.0 – pierwsza wersja, na bazie programu Awaryjny GPX\n1.1 – dodano integrację z Locusem\n1.2 – dodano możliwość logowania do oc.pl\n1.3 – rozszerzono filtry wyszukiwania</string>
+    <string name="history">1.0 – pierwsza wersja, na bazie programu Awaryjny GPX\n1.1 – dodano integrację z Locusem\n1.2 – dodano możliwość logowania do oc.pl\n1.3,1.4 – rozszerzono filtry wyszukiwania, angielska wersja językowa</string>
 
     <string name="infoDeveloperInfoTitle">Informacje dla programisty</string>
     <string name="infoDeveloperInfoDesc" tools:ignore="Typos">Generuje informacje przydatne programiście w celu diagnozowania i poprawy błędów. Wygenerowany plik zostanie zapisany w pamięci wewnętrznej, a następnie udostępniony do wysłania e-mailem. Podaj proszę również opis problemu bądź błędu.\n\nJeżeli nie masz skonfigurowanego klienta poczty, plik możesz przesłać w inny sposób na adres awaryjniejszy-gpx@10g.pl.\n\nPlik zawiera następujące dane:\n * informacje o urządzeniu (bez nr telefonu i innych prywatnych danych)\n * konfigurację i dane programu\n * logi systemu</string>

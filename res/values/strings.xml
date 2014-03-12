@@ -125,10 +125,10 @@
     <string name="infoHelpTitle">Help!</string>
     <string name="infoHelp" formatted="false">(User\'s manual=%0)\t(Forum=%1)\t(both in Polish)</string>
     <string name="versionInfoTitle">Version info</string>
-    <string name="versionInfo">Version:\t\t%1$s\nDate:\t\t\t\t%2$s\nGit:\t\t\t\t\t%3$s</string>
+    <string name="versionInfo">Version:\t\t%1$s\nDate:\t\t\t%2$s\nGit:\t\t\t\t%3$s</string>
 
     <string name="historyTitle">Change history</string>
-    <string name="history">1.0 – first version, based on Awaryjny GPX\n1.1 – added Locus integration\n1.2 – added integration with oc.pl\n1.3 – new search filters</string>
+    <string name="history">1.0 – first version, based on Awaryjny GPX\n1.1 – added Locus integration\n1.2 – added integration with oc.pl\n1.3,1.4 – new search filters, English localization</string>
 
     <string name="infoDeveloperInfoTitle">Developer info</string>
     <string name="infoDeveloperInfoDesc">Generates a state dump file, which can be very useful for the developers when they try to diagnose and fix application bugs. The file is saved in internal storage, and later can be sent by e-mail. Please include a brief description of the problem in the e-mail.\n\nIf you don\'t have e-mail client configured, you can send the file to awaryjniejszy-gpx@10g.pl by other means.\n\nThe dump consists of the following information:\n * device info (without your phone number, contacts data, sms and other personal information)\n * application config and state files\n * system logs</string>
