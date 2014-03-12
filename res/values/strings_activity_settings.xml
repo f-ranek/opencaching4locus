@@ -1,129 +1,108 @@
-<resources>
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
-    <string name="title_activity_settings">Konfiguracja</string>
+    <string name="title_activity_settings">Settings</string>
 
     <!-- Strings related to Settings -->
 
     <!-- My account -->
-    <string name="pref_title_my_account">Ja w oc.pl</string>
+    <string name="pref_title_my_account">My oc.pl account</string>
     <string name="pref_my_account_login">Login</string>
-    <string name="pref_my_account_found_strategy">Znalezione skrzynki</string>
+    <string name="pref_my_account_found_strategy">Found caches</string>
     <string-array name="pref_my_account_found_strategy_titles">
-        <item>pomiń</item>
-        <item>oznacz</item>
-    </string-array>
-    <string-array name="pref_my_account_found_strategy_values">
         <item>skip</item>
         <item>mark</item>
     </string-array>
-    
-    <string name="pref_my_account_my_notes">Własne notatki</string>
+
+    <string name="pref_my_account_my_notes">Personal cache notes</string>
     <string-array name="pref_my_account_my_notes_titles">
-        <item>nie pobieraj</item>
-        <item>w opisie skrzynki</item>
-        <item>w atrybutach skrzynki</item>
-        <item>w opisie i atrybutach skrzynki</item>
-    </string-array>
-    <string-array name="pref_my_account_my_notes_values">
         <item>none</item>
-        <item>desc:text</item>
-        <item>gc:personal_note</item>
-        <item>desc:text|gc:personal_note</item>
+        <item>in cache description</item>
+        <item>in cache attributes</item>
+        <item>in both cache description and attributes</item>
     </string-array>
-        
-    
-    <string name="pref_my_account_sign">Zaloguj w oc.pl</string>
-    <string name="pref_my_account_sign_desc">Zalogowanie w serwisie umożliwia pobieranie np. własnych notatek do skrzynek</string>
-    <string name="pref_my_account_sign_btn">Zaloguj</string>
-    
-    <string name="pref_my_account_sign_forget">Zapomnij mnie w oc.pl</string>
-    <string name="pref_my_account_sign_forget_desc">Wylogowuje z serwisu</string>
-    <string name="pref_my_account_sign_forget_btn">Zapomnij</string>
-    
-    <string name="pref_my_account_exclude_my_own">Pomijaj własne skrzynki</string>
-    <string name="pref_my_account_exclude_my_own_desc">Gdy zaznaczone, własne skrzynki są pomijane</string>
-    
-    <string name="pref_my_account_exclude_ignored">Pomijaj ignorowane skrzynki</string>
-    <string name="pref_my_account_exclude_ignored_desc">Gdy zaznaczone, ignorowane skrzynki są pomijane</string>
-    
-    <string name="pref_my_account_user_coords_as_default">Własne współrzędne jako domyślne</string>
-    <string name="pref_my_account_user_coords_as_default_desc">Gdy zaznaczone, przenosi skrzynkę pod własne współrzędne, wprowadzone przez użytkownika na stronie oc.pl</string>
-    
+
+
+    <string name="pref_my_account_sign">Log into oc.pl</string>
+    <string name="pref_my_account_sign_desc">Logging into service lets you i.e. download personal cache notes</string>
+    <string name="pref_my_account_sign_btn">Login</string>
+
+    <string name="pref_my_account_sign_forget">Log out from oc.pl</string>
+    <string name="pref_my_account_sign_forget_desc">Log out from oc.pl</string>
+    <string name="pref_my_account_sign_forget_btn">Forget</string>
+
+    <string name="pref_my_account_exclude_my_own">Skip my own geocaches</string>
+    <string name="pref_my_account_exclude_my_own_desc">When set, your own geocaches are skipped</string>
+
+    <string name="pref_my_account_exclude_ignored">Skip ignored geocaches</string>
+    <string name="pref_my_account_exclude_ignored_desc">When set, ignored geocaches are skipped</string>
+
+    <string name="pref_my_account_user_coords_as_default">Use personal coordinates by default</string>
+    <string name="pref_my_account_user_coords_as_default_desc">When set, geocaches will be displayed in your alternate (personal) coordinates, the ones which you have provided in the oc.pl webpage</string>
+
     <!-- Directories -->
-    <string name="pref_title_directories">Katalogi zapisu</string>
-    <string name="pref_directories_target_dir">Katalog na GPXy</string>
-    <string name="pref_directories_target_dir_temp">Katalog tymczasowy</string>
-    <string name="pref_directories_target_images">Katalog na obrazy</string>
-    <string name="pref_directories_reload_target_dirs">Wyszukaj ponownie</string>
-    <string name="pref_directories_reload_target_dirs_desc">Ponownie wybiera katalogi zapisu plików</string>
-    <string name="pref_directories_reload_target_dirs_btn">Wyszukaj!</string>
-    <string name="pref_btn_choose_directory">Wybierz</string>
-    <string name="pref_btn_choose_directory_failed">Brak zainstalowanego np. OpenIntents File Manager</string>
-    
+    <string name="pref_title_directories">File locations</string>
+    <string name="pref_directories_target_dir">A folder for GPX files</string>
+    <string name="pref_directories_target_dir_temp">A folder for temporary files</string>
+    <string name="pref_directories_target_images">A folder for the images</string>
+    <string name="pref_directories_reload_target_dirs">Auto-setup</string>
+    <string name="pref_directories_reload_target_dirs_desc">Search for best folders to store the data</string>
+    <string name="pref_directories_reload_target_dirs_btn">Search</string>
+    <string name="pref_btn_choose_directory">Select</string>
+    <string name="pref_btn_choose_directory_failed">A file manager is required in order to use this option (e.g. OpenIntents File Manager)</string>
+    <string name="pref_btn_choose_directory_no_dir">Choose a folder</string>
+    <string name="pref_btn_choose_directory_got_file">Choose a folder, not a file!</string>
+    <string name="pref_btn_choose_directory_cant_create_dir">Could not create a folder here</string>
+    <string name="pref_btn_choose_directory_cant_write">Could not save to the this folder</string>
+
     <!-- Downloads -->
-    <string name="pref_title_downloads">Pobieranie</string>
-    <string name="pref_download_images_strategy">Pobieranie dołączonych obrazów</string>
+    <string name="pref_title_downloads">Download options</string>
+    <string name="pref_download_images_strategy">Download attached images</string>
     <string-array name="pref_download_images_strategy_titles">
-        <item>zawsze</item>
-        <item>gdy na WiFi</item>
-        <item>nigdy</item>
-    </string-array>
-    <string-array name="pref_download_images_strategy_values">
         <item>always</item>
-        <item>onlyOnWIFI</item>
+        <item>only over WiFi</item>
         <item>never</item>
     </string-array>
-    
-    <string name="pref_download_logs_count">Ilość logów na kesz</string>
-    <string-array name="pref_download_logs_count_titles">
-        <item>10</item>
-        <item>20</item>
-        <item>50</item>
-        <item>Wszystkie!</item>
-        <item>Wcale :P</item>
-    </string-array>
-    <integer-array name="pref_download_logs_count_values">
-        <item>10</item>
-        <item>20</item>
-        <item>50</item>
-        <item>-1</item>
-        <item>0</item>
-    </integer-array>
-    
-    <string name="pref_download_list_trackables">Pokaż Geokrety</string>
-    <string name="pref_download_list_trackables_desc">Pobiera listę Geokretów i umieszcza w opisie skrzynki</string>
-    
-    <string name="pref_download_reset_locus_dont_ask_again">Pytaj wyszukując z Locusa</string>
-    <string name="pref_download_reset_locus_dont_ask_again_desc">Przywraca okienko parametrów wyszukiwania keszy z Locusa</string>
-    <string name="pref_download_reset_locus_dont_ask_again_btn">Przywróć!</string>
 
-    <string name="pref_title_advanced">Zaawansowane</string>
-    <string name="pref_advanced_download_thread_pool_size">Liczba wątków pobierania plików</string>
+    <string name="pref_download_logs_count">Number of log entries per cache</string>
+    <string-array name="pref_download_logs_count_titles">
+        <item>None</item>
+        <item>10</item>
+        <item>20</item>
+        <item>50</item>
+        <item>All</item>
+    </string-array>
+
+    <string name="pref_download_cache_availability">Cache availability</string>
+    <string-array name="pref_download_cache_availability_titles">
+        <item>available only</item>
+        <item>available and temporarily unavailable</item>
+        <item>all (including archived)</item>
+    </string-array>
+    
+    <string name="pref_download_list_trackables">Show Geokrets</string>
+    <string name="pref_download_list_trackables_desc">Fetch Geokrets data and store in geocache description</string>
+
+    <string name="pref_download_reset_locus_dont_ask_again">Ask when searching from Locus</string>
+    <string name="pref_download_reset_locus_dont_ask_again_desc">Restore search parameters dialog invoked from Locus</string>
+    <string name="pref_download_reset_locus_dont_ask_again_btn">Restore</string>
+
+    <string name="pref_download_use_existing_images">Use existing images</string>
+    <string name="pref_download_use_existing_images_desc">If images are not being downloaded, but the image file is already present in local storage, then it will be used</string>
+
+    <!-- Advanced -->
+    <string name="pref_title_advanced">Advanced</string>
+    <string name="pref_advanced_download_thread_pool_size">Images downloader thread count</string>
     <string-array name="pref_advanced_download_tps_titles">
         <item>1</item>
         <item>2</item>
         <item>4</item>
     </string-array>
-    <integer-array name="pref_advanced_download_tps_values">
-        <item>1</item>
-        <item>2</item>
-        <item>4</item>
-    </integer-array>
-    <string name="pref_download_use_existing_images">Użyj istniejących obrazów</string>
-    <string name="pref_download_use_existing_images_desc">Jeżeli obrazy nie są pobierane, ale plik obrazu jest już lokalnie, to zostanie użyty</string>
-    
-    <!-- Advanced -->
-    <string name="pref_advanced_http_timeout">Czas oczekiwania na połączenie sieciowe</string>
+    <string name="pref_advanced_http_timeout">Network timeout</string>
     <string-array name="pref_advanced_http_timeout_titles">
-        <item>30 sekund</item>
-        <item>1 minuta</item>
-        <item>2 minuty</item>
-        <item>4 minuty</item>
+        <item>30 seconds</item>
+        <item>1 minute</item>
+        <item>2 minutes</item>
+        <item>4 minutes</item>
     </string-array>
-    <integer-array name="pref_advanced_http_timeout_values">
-        <item>30</item>
-        <item>60</item>
-        <item>120</item>
-        <item>240</item>
-    </integer-array>
 </resources>

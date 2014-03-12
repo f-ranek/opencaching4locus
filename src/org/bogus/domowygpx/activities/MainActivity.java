@@ -1,5 +1,6 @@
 package org.bogus.domowygpx.activities;
 
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -7,6 +8,7 @@ import locus.api.android.utils.LocusConst;
 import locus.api.android.utils.LocusUtils;
 
 import org.bogus.android.AndroidUtils;
+import org.bogus.android.DecimalKeyListener;
 import org.bogus.android.LockableScrollView;
 import org.bogus.domowygpx.application.Application;
 import org.bogus.domowygpx.services.GpxDownloaderService;
@@ -21,7 +23,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -41,7 +42,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class MainActivity extends Activity implements OnSharedPreferenceChangeListener
+public class MainActivity extends Activity
 {
 	private static final String LOG_TAG = "MainActivity";
 	
@@ -53,7 +54,17 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 	
 	private EditText editMaxNumOfCaches;
 	private EditText editMaxCacheDistance;
+	private CacheTypesConfig cacheTypesConfig;
+	private CacheTypesConfigRenderer cacheTypesConfigRenderer;
 
+	private RangeConfig cacheTaskDifficultyConfig, cacheTerrainDifficultyConfig;
+	private CacheDifficultiesRenderer cacheDifficultiesRenderer;
+
+    private CacheRatingsConfig cacheRatingsConfig;
+    private CacheRecommendationsConfig cacheRecommendationsConfig;
+    private CacheRatingsRenderer cacheRatingsRenderer;
+
+	
     private EditText editTargetFileName;
 
     private LocationManager locman;
@@ -64,11 +75,12 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
     private TextView textViewAutoLocusImport;
     
     private DownloadImagesFragment downloadImagesFragment;
+    private OnlyWithTrackablesFragment onlyWithTrackablesFragment;
     
     private ValidationUtils validationUtils;
     
 	/** Called when the activity is first created. */
-	@Override
+    @Override
 	public void onCreate(final Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
@@ -113,18 +125,21 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 		
 		editMaxNumOfCaches = (EditText) findViewById(R.id.editMaxNumOfCaches);
 		editMaxCacheDistance = (EditText) findViewById(R.id.editMaxCacheDistance);
+		editMaxCacheDistance.setKeyListener(new DecimalKeyListener());
+		
+		final View.OnClickListener hideKeyboardClickListener = new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                if (v.isClickable()){
+                    AndroidUtils.hideSoftKeyboard(MainActivity.this);
+                }
+            }
+        }; 
 		
 		checkBoxAutoLocusImport = (CheckBox) findViewById(R.id.checkBoxAutoLocusImport);
-		checkBoxAutoLocusImport.setOnClickListener(new View.OnClickListener()
-            {
-                @Override
-                public void onClick(View v)
-                {
-                    if (v.isClickable()){
-                        AndroidUtils.hideSoftKeyboard(MainActivity.this);
-                    }
-                }
-            });
+		checkBoxAutoLocusImport.setOnClickListener(hideKeyboardClickListener);
 		tableRowAutoLocusImport = (ViewGroup) findViewById(R.id.tableRowAutoLocusImport);
 		textViewAutoLocusImport = (TextView) findViewById(R.id.textViewAutoLocusImport);
 		textViewAutoLocusImport.setOnClickListener(new View.OnClickListener()
@@ -138,6 +153,24 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
                 }
             }
         });
+		
+		onlyWithTrackablesFragment = new OnlyWithTrackablesFragment(view, getWindow());
+		
+		final TextView editCacheTypes = (TextView) findViewById(R.id.editCacheTypes);
+		cacheTypesConfig = new CacheTypesConfig();
+		cacheTypesConfigRenderer = new CacheTypesConfigRenderer(this, cacheTypesConfig, editCacheTypes);
+		
+		final TextView editCacheDifficulties = (TextView) findViewById(R.id.editCacheDifficulties);
+		cacheTaskDifficultyConfig = new RangeConfig(); 
+		cacheTerrainDifficultyConfig = new RangeConfig();
+		cacheDifficultiesRenderer = new CacheDifficultiesRenderer(this, cacheTaskDifficultyConfig,
+		    cacheTerrainDifficultyConfig, editCacheDifficulties);
+
+        final TextView editCacheRatings = (TextView) findViewById(R.id.editCacheRatings);
+        cacheRatingsConfig = new CacheRatingsConfig(); 
+        cacheRecommendationsConfig = new CacheRecommendationsConfig();
+        cacheRatingsRenderer = new CacheRatingsRenderer(this, cacheRatingsConfig,
+            cacheRecommendationsConfig, editCacheRatings);
 		
 		if (hasActionBar()){
 		    ViewGroup tableRowStart = (ViewGroup) findViewById(R.id.tableRowStart);
@@ -172,9 +205,7 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
         
         locman = (LocationManager)getSystemService(LOCATION_SERVICE);
 
-        downloadImagesFragment = new DownloadImagesFragment();
-        downloadImagesFragment.onCreate(view);
-        downloadImagesFragment.setWindow(getWindow());
+        downloadImagesFragment = new DownloadImagesFragment(view, getWindow());
         
         final boolean hasLocus = locus.api.android.utils.LocusUtils.isLocusAvailable(this, 200);
         tableRowAutoLocusImport.setVisibility(hasLocus ? View.VISIBLE : View.GONE);
@@ -340,23 +371,29 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 	    taskConfiguration.setMaxCacheDistance(editMaxCacheDistance.getText());
 	    taskConfiguration.setTargetFileName(editTargetFileName.getText());
 	    taskConfiguration.setDownloadImagesStrategy(downloadImagesFragment.getCurrentDownloadImagesStrategy());
+	    taskConfiguration.setOnlyWithTrackables(onlyWithTrackablesFragment.isOnlyWithTrackables());
 	    taskConfiguration.setDoLocusImport(checkBoxAutoLocusImport.isChecked());
+	    taskConfiguration.setCacheTypes(cacheTypesConfig.serializeToWebServiceString());
+	    taskConfiguration.setCacheTaskDifficulty(cacheTaskDifficultyConfig.serializeToWebServiceString());
+	    taskConfiguration.setCacheTerrainDifficulty(cacheTerrainDifficultyConfig.serializeToWebServiceString());
+        taskConfiguration.setCacheRatings(cacheRatingsConfig.serializeToWebServiceString());
+        taskConfiguration.setCacheRecommendations(cacheRecommendationsConfig.serializeToWebServiceString());
 	    
 	    taskConfiguration.parseAndValidate(this);
 	    
 	    for (String modifiedField : taskConfiguration.getModifiedFields()){
 	        if ("CACHE_COUNT_LIMIT".equals(modifiedField)){
 	            int maxNumOfCaches = taskConfiguration.getOutMaxNumOfCaches();
-	            editMaxNumOfCaches.setText(maxNumOfCaches <= 0 ? "" : String.valueOf(maxNumOfCaches));
+	            editMaxNumOfCaches.setText(maxNumOfCaches <= 0 ? null : String.valueOf(maxNumOfCaches));
 	        } else 
             if ("MAX_CACHE_DISTANCE".equals(modifiedField)){
-                String s;
-                if (taskConfiguration.getOutMaxCacheDistance() < 1){
-                    s = Math.round(taskConfiguration.getOutMaxCacheDistance()*1000) + " " + getResources().getString(R.string.distanceUnit_m);
+                if (taskConfiguration.getOutMaxCacheDistance() < 0){
+                    editMaxCacheDistance.setText(null);
                 } else {
-                    s = taskConfiguration.getOutMaxCacheDistance() + " " + getResources().getString(R.string.distanceUnit_km);
+                    DecimalFormat df = new DecimalFormat("###0.###");
+                    String s = df.format(taskConfiguration.getOutMaxCacheDistance());
+                    editMaxCacheDistance.setText(s);
                 }
-                editMaxCacheDistance.setText(s);
             } 
 	    }
 	    
@@ -392,9 +429,14 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
         config.putString("maxCacheDistance", editMaxCacheDistance.getText().toString());
         config.putString("maxNumOfCaches", editMaxNumOfCaches.getText().toString());
         config.putString("downloadImagesStrategy", downloadImagesFragment.getCurrentDownloadImagesStrategy());
+        config.putBoolean("onlyWithTrackables", onlyWithTrackablesFragment.isOnlyWithTrackables());
         config.putBoolean("autoLocusImport", checkBoxAutoLocusImport.isChecked());
-
-        config.commit();
+        config.putString("cacheTypes", cacheTypesConfig.serializeToConfigString());
+        config.putString("cacheTaskDifficulty", cacheTaskDifficultyConfig.serializeToConfigString());
+        config.putString("cacheTerrainDifficulty", cacheTerrainDifficultyConfig.serializeToConfigString());
+        config.putString("cacheRatings", cacheRatingsConfig.serializeToConfigString());
+        config.putString("cacheRecommendations", cacheRecommendationsConfig.serializeToConfigString());
+        AndroidUtils.applySharedPrefsEditor(config);
 	}
 	
 	@Override
@@ -403,7 +445,6 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 		super.onStart();
 		
 		final SharedPreferences config = this.getSharedPreferences("egpx", MODE_PRIVATE);
-		config.registerOnSharedPreferenceChangeListener(this);
 		try{
 		    int version = config.getInt("MainActivity.configVersion", -1);
 		    // XXX todo: migracja
@@ -428,13 +469,23 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
             
 		    downloadImagesFragment.setCurrentDownloadImagesStrategy(
                 config.getString("downloadImagesStrategy", TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI));
+		    onlyWithTrackablesFragment.setOnlyWithTrackables(config.getBoolean("onlyWithTrackables", false));
+		    
+		    cacheTypesConfig.parseFromConfigString(config.getString("cacheTypes", cacheTypesConfig.getDefaultConfig()));
+		    cacheTaskDifficultyConfig.parseFromConfigString(config.getString("cacheTaskDifficulty", null));
+		    cacheTerrainDifficultyConfig.parseFromConfigString(config.getString("cacheTerrainDifficulty", null));
+		    cacheRatingsConfig.parseFromConfigString(config.getString("cacheRatings", null));
+		    cacheRecommendationsConfig.parseFromConfigString(config.getString("cacheRecommendations", null));
 		    
             updateBtnGetLocationFromGps(isGpsPending());
 		}catch(Exception e){
 		    Log.e(LOG_TAG, "Failed to read config", e);
 		    initNewConfig();
 		}
-
+		
+		cacheTypesConfigRenderer.applyToTextView();
+		cacheDifficultiesRenderer.applyToTextView();
+		cacheRatingsRenderer.applyToTextView();
 	}
 	
 	@SuppressLint("SimpleDateFormat")
@@ -452,6 +503,10 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
 	        editTargetFileName.setText(fileName);
 	    }
 	    downloadImagesFragment.setCurrentDownloadImagesStrategy(TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI);
+	    cacheTypesConfig.parseFromConfigString(cacheTypesConfig.getDefaultConfig());
+	    cacheTypesConfigRenderer.applyToTextView();
+	    cacheDifficultiesRenderer.applyToTextView();
+	    cacheRatingsRenderer.applyToTextView();
 	}
 
     /**
@@ -514,14 +569,6 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
         return super.onOptionsItemSelected(item);
     }  
     
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences config, String key) {    
-        if ("downloadImagesStrategy".equals(key)){
-            downloadImagesFragment.setCurrentDownloadImagesStrategy(
-                config.getString("downloadImagesStrategy", TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI));
-        }
-    }
-    
     @TargetApi(Build.VERSION_CODES.GINGERBREAD)
     @Override
     protected void onPause()
@@ -531,11 +578,7 @@ public class MainActivity extends Activity implements OnSharedPreferenceChangeLi
         final String currentDownloadImagesStrategy = downloadImagesFragment.getCurrentDownloadImagesStrategy();
         if (!currentDownloadImagesStrategy.equals(config.getString("downloadImagesStrategy", null))){
             editor.putString("downloadImagesStrategy", currentDownloadImagesStrategy);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD){
-                editor.apply();
-            } else {
-                editor.commit();
-            }
+            AndroidUtils.applySharedPrefsEditor(editor);
         }
         super.onPause();
     }

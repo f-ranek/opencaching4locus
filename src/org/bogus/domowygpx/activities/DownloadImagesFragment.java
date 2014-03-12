@@ -8,6 +8,9 @@ import org.bogus.android.SimpleQueue;
 import org.bogus.geocaching.egpx.R;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Looper;
@@ -19,7 +22,7 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.TextView;
 
-public class DownloadImagesFragment
+public class DownloadImagesFragment implements OnSharedPreferenceChangeListener
 {
     private ConnectivityManager conectivityManager;
 
@@ -29,19 +32,18 @@ public class DownloadImagesFragment
     
     boolean preventEvents;
 
-    Window window;
     ViewGroup view;
     
     private LockableScrollView lockableScrollViewCache;
     private boolean lockableScrollViewCached;
     
-    public void onCreate(final ViewGroup owner)
+    public DownloadImagesFragment(final ViewGroup view, final Window window)
     {
-        this.view = owner;
-        conectivityManager = (ConnectivityManager)owner.getContext().getSystemService(
+        this.view = view;
+        conectivityManager = (ConnectivityManager)view.getContext().getSystemService(
             Activity.CONNECTIVITY_SERVICE);
 
-        checkBoxDownloadImages = (CheckBox) owner.findViewById(R.id.checkBoxDownloadImages);
+        checkBoxDownloadImages = (CheckBox) view.findViewById(R.id.checkBoxDownloadImages);
         checkBoxDownloadImages.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
         {
             @Override
@@ -59,7 +61,7 @@ public class DownloadImagesFragment
                 AndroidUtils.hideSoftKeyboard(window);
             }
         });
-        textViewDownloadImages = (TextView) owner.findViewById(R.id.textViewDownloadImages);
+        textViewDownloadImages = (TextView) view.findViewById(R.id.textViewDownloadImages);
         textViewDownloadImages.setOnClickListener(new View.OnClickListener()
         {
             @Override
@@ -83,6 +85,9 @@ public class DownloadImagesFragment
                 AndroidUtils.hideSoftKeyboard(window);
             }
         });
+        
+        SharedPreferences config = view.getContext().getSharedPreferences("egpx", Context.MODE_PRIVATE);
+        config.registerOnSharedPreferenceChangeListener(this);
     }
 
     void updateDownloadImagesState()
@@ -188,14 +193,12 @@ public class DownloadImagesFragment
         }
     }
 
-    public Window getWindow()
-    {
-        return window;
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences config, String key) {    
+        if ("downloadImagesStrategy".equals(key)){
+            setCurrentDownloadImagesStrategy(
+                config.getString("downloadImagesStrategy", TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI));
+        }
     }
-
-    public void setWindow(Window window)
-    {
-        this.window = window;
-    }
-
+    
 }

@@ -1,6 +1,8 @@
 package org.bogus.domowygpx.activities;
 
 import java.io.File;
+import java.text.DecimalFormat;
+import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -21,9 +23,12 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 public class TaskConfiguration implements java.io.Serializable, Parcelable
 {
+    private final static String LOG_TAG = "TaskConfiguration";
+    
     private static final long serialVersionUID = 8437257680737553390L;
     
     private final static Pattern spaces = Pattern.compile("[ \t\u00A0]+");
@@ -42,12 +47,18 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
     private String maxCacheDistance;
     private boolean doLocusImport;
     private String targetFileName;
+    private String cacheTypes;
+    private String cacheTaskDifficulty;
+    private String cacheTerrainDifficulty;
+    private String cacheRatings;
+    private String cacheRecommendations;
 
     // config
     private String gpxTargetDirName;
     private String gpxTargetDirNameTemp;
     private String imagesTargetDirName;
     private String downloadImagesStrategy;
+    private boolean onlyWithTrackables;
     
     private double outLatitude = Double.NaN;
     private double outLongitude = Double.NaN;
@@ -146,25 +157,17 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         outMaxCacheDistance = -1;
         String mcd = maxCacheDistance == null ? null : spaces.matcher(maxCacheDistance).replaceAll("");
         if (mcd != null && mcd.length() > 0){
-            boolean meters = false;
-            if (mcd.endsWith("km")){
-                mcd = mcd.substring(0, maxCacheDistance.length()-2);
-            } else if (mcd.endsWith("m")){
-                mcd = mcd.substring(0, maxCacheDistance.length()-1);
-                meters = true;
-            }
-            try{
-                outMaxCacheDistance = Double.parseDouble(mcd.trim());
-                if (meters){
-                    outMaxCacheDistance = outMaxCacheDistance / 1000.0;
-                }
+            DecimalFormat nf = new DecimalFormat("####0.###");
+            ParsePosition pp = new ParsePosition(0);
+            outMaxCacheDistance = nf.parse(mcd, pp).doubleValue();
+            if (pp.getIndex() != mcd.length()){
+                errors.add(Pair.makePair("MAX_CACHE_DISTANCE", R.string.validationInvalidCacheDistance));
+            } else {
                 if (outMaxCacheDistance < 0.02){
                     outMaxCacheDistance = 0.02;
                     modifiedFields.add("MAX_CACHE_DISTANCE");
                     warnings.add(Pair.makePair("MAX_CACHE_DISTANCE", R.string.validationMinCacheDistanceWarning));
                 }
-            }catch(NumberFormatException nfe){
-                errors.add(Pair.makePair("MAX_CACHE_DISTANCE", R.string.validationInvalidCacheDistance));
             }
         }
         
@@ -255,7 +258,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
                 boolean hasWiFi = wifiInfo.isConnected();
                 outDownloadImages = hasWiFi;
             } else {
-                errors.add(Pair.makePair("DOWNLOAD_IMAGES_STRATEGY", R.string.validationInvalidImagesDownloadStrategy));
+                Log.e(LOG_TAG, "Invalid download images strategy: " + downloadImagesStrategy);
             }
         }
 
@@ -394,11 +397,17 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         dest.writeString(maxCacheDistance);
         dest.writeByte((byte)(doLocusImport ? 1 : 0));
         dest.writeString(targetFileName);
-
+        dest.writeString(cacheTypes);
+        dest.writeString(cacheTaskDifficulty);
+        dest.writeString(cacheTerrainDifficulty);
+        dest.writeString(cacheRatings);
+        dest.writeString(cacheRecommendations);
+        
         dest.writeString(gpxTargetDirName);
         dest.writeString(gpxTargetDirNameTemp);
         dest.writeString(imagesTargetDirName);
         dest.writeString(downloadImagesStrategy);
+        dest.writeByte((byte)(onlyWithTrackables ? 1 : 0));
         
         dest.writeDouble(outLatitude);
         dest.writeDouble(outLongitude);
@@ -421,11 +430,17 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         result.maxCacheDistance = src.readString();
         result.doLocusImport = src.readByte() == 1;
         result.targetFileName = src.readString();
+        result.cacheTypes = src.readString();
+        result.cacheTaskDifficulty = src.readString();
+        result.cacheTerrainDifficulty = src.readString();
+        result.cacheRatings = src.readString();
+        result.cacheRecommendations = src.readString();
         
         result.gpxTargetDirName = src.readString();
         result.gpxTargetDirNameTemp = src.readString();
         result.imagesTargetDirName = src.readString();
         result.downloadImagesStrategy = src.readString();
+        result.onlyWithTrackables = src.readByte() == 1;
         
         result.outLatitude = src.readDouble();
         result.outLongitude = src.readDouble();
@@ -481,6 +496,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         int result = 1;
         result = prime * result + (doLocusImport ? 1231 : 1237);
         result = prime * result + ((downloadImagesStrategy == null) ? 0 : downloadImagesStrategy.hashCode());
+        result = prime * result + (onlyWithTrackables ? 1231 : 1237);
         result = prime * result + (outDownloadImages ? 1231 : 1237);
         long temp;
         temp = Double.doubleToLongBits(outLatitude);
@@ -492,6 +508,11 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         result = prime * result + outMaxNumOfCaches;
         result = prime * result + ((outTargetDirName == null) ? 0 : outTargetDirName.hashCode());
         result = prime * result + ((outTargetFileName == null) ? 0 : outTargetFileName.hashCode());
+        result = prime * result + ((cacheTypes == null) ? 0 : cacheTypes.hashCode());
+        result = prime * result + ((cacheTaskDifficulty == null) ? 0 : cacheTaskDifficulty.hashCode());
+        result = prime * result + ((cacheTerrainDifficulty == null) ? 0 : cacheTerrainDifficulty.hashCode());
+        result = prime * result + ((cacheRatings == null) ? 0 : cacheRatings.hashCode());
+        result = prime * result + ((cacheRecommendations == null) ? 0 : cacheRecommendations.hashCode());
         return result;
     }
 
@@ -507,6 +528,9 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         TaskConfiguration other = (TaskConfiguration)obj;
         if (doLocusImport != other.doLocusImport)
             return false;
+        if (onlyWithTrackables != other.onlyWithTrackables){
+            return false;
+        }
         if (downloadImagesStrategy == null) {
             if (other.downloadImagesStrategy != null)
                 return false;
@@ -532,6 +556,32 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
                 return false;
         } else if (!outTargetFileName.equals(other.outTargetFileName))
             return false;
+        if (cacheTypes == null) {
+            if (other.cacheTypes != null)
+                return false;
+        } else if (!cacheTypes.equals(other.cacheTypes))
+            return false;
+        if (cacheTaskDifficulty == null) {
+            if (other.cacheTaskDifficulty != null)
+                return false;
+        } else if (!cacheTaskDifficulty.equals(other.cacheTaskDifficulty))
+            return false;
+        if (cacheTerrainDifficulty == null) {
+            if (other.cacheTerrainDifficulty != null)
+                return false;
+        } else if (!cacheTerrainDifficulty.equals(other.cacheTerrainDifficulty))
+            return false;
+        if (cacheRatings == null) {
+            if (other.cacheRatings != null)
+                return false;
+        } else if (!cacheRatings.equals(other.cacheRatings))
+            return false;
+        if (cacheRecommendations == null) {
+            if (other.cacheRecommendations != null)
+                return false;
+        } else if (!cacheRecommendations.equals(other.cacheRecommendations))
+            return false;
+
         return true;
     }
 
@@ -543,12 +593,18 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
         builder.add("longitude", longitude);
         builder.add("maxNumOfCaches", maxNumOfCaches);
         builder.add("maxCacheDistance", maxCacheDistance);
+        builder.add("cacheTypes", cacheTypes);
+        builder.add("cacheTaskDifficulty", cacheTaskDifficulty); 
+        builder.add("cacheTerrainDifficulty", cacheTerrainDifficulty); 
+        builder.add("cacheRatings", cacheRatings);
+        builder.add("cacheRecommendations", cacheRecommendations);
         builder.add("doLocusImport", doLocusImport);
         builder.add("targetFileName", targetFileName);
         builder.add("gpxTargetDirName", gpxTargetDirName);
         builder.add("gpxTargetDirNameTemp", gpxTargetDirNameTemp);
         builder.add("imagesTargetDirName", imagesTargetDirName);
         builder.add("downloadImagesStrategy", downloadImagesStrategy);
+        builder.add("onlyWithTrackables", onlyWithTrackables, false);
         builder.add("outLatitude", outLatitude, Double.NaN);
         builder.add("outLongitude", outLongitude, Double.NaN);
         builder.add("outMaxNumOfCaches", outMaxNumOfCaches);
@@ -570,6 +626,66 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
     public void setOutLatitude(double outLatitude)
     {
         this.outLatitude = outLatitude;
+    }
+
+    public String getCacheTypes()
+    {
+        return cacheTypes;
+    }
+
+    public void setCacheTypes(String cacheTypes)
+    {
+        this.cacheTypes = cacheTypes;
+    }
+
+    public String getCacheTaskDifficulty()
+    {
+        return cacheTaskDifficulty;
+    }
+
+    public String getCacheTerrainDifficulty()
+    {
+        return cacheTerrainDifficulty;
+    }
+
+    public void setCacheTaskDifficulty(String cacheTaskDifficulty)
+    {
+        this.cacheTaskDifficulty = cacheTaskDifficulty;
+    }
+
+    public void setCacheTerrainDifficulty(String cacheTerrainDifficulty)
+    {
+        this.cacheTerrainDifficulty = cacheTerrainDifficulty;
+    }
+
+    public String getCacheRatings()
+    {
+        return cacheRatings;
+    }
+
+    public String getCacheRecommendations()
+    {
+        return cacheRecommendations;
+    }
+
+    public void setCacheRatings(String cacheRatings)
+    {
+        this.cacheRatings = cacheRatings;
+    }
+
+    public void setCacheRecommendations(String cacheRecommendations)
+    {
+        this.cacheRecommendations = cacheRecommendations;
+    }
+
+    public boolean isOnlyWithTrackables()
+    {
+        return onlyWithTrackables;
+    }
+
+    public void setOnlyWithTrackables(boolean onlyWithTrackables)
+    {
+        this.onlyWithTrackables = onlyWithTrackables;
     }
 
 }

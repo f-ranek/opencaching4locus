@@ -1,10 +1,13 @@
 package org.bogus.domowygpx.activities;
 
+import java.text.DecimalFormat;
+
 import locus.api.android.utils.LocusConst;
 import locus.api.android.utils.LocusUtils;
 import locus.api.objects.extra.Waypoint;
 
 import org.bogus.android.AndroidUtils;
+import org.bogus.android.DecimalKeyListener;
 import org.bogus.domowygpx.activities.DownloadListContext.GpxListItem;
 import org.bogus.domowygpx.activities.DownloadListContext.ListItemViewHolder;
 import org.bogus.domowygpx.application.Application;
@@ -67,7 +70,18 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
     EditText editMaxCacheDistance;
     CheckBox checkBoxDontAskAgain;
     
+    CacheTypesConfig cacheTypesConfig;
+    CacheTypesConfigRenderer cacheTypesConfigRenderer;
+    
+    RangeConfig cacheTaskDifficultyConfig, cacheTerrainDifficultyConfig;
+    CacheDifficultiesRenderer cacheDifficultiesRenderer;
+
+    CacheRatingsConfig cacheRatingsConfig;
+    CacheRecommendationsConfig cacheRecommendationsConfig;
+    CacheRatingsRenderer cacheRatingsRenderer;
+    
     DownloadImagesFragment downloadImagesFragment;
+    OnlyWithTrackablesFragment onlyWithTrackablesFragment;
     
     private ValidationUtils validationUtils;
     
@@ -79,6 +93,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
     String maxNumOfCachesText;
     String maxCacheDistanceText;
     String downloadImagesStrategy;
+    boolean onlyWithTrackables;
     AlertDialog paramsDialog;
     AlertDialog progressDialog;
     
@@ -98,25 +113,33 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
                 throw new IllegalArgumentException("null intent");
             }
 
-            isPointTools = LocusUtils.isIntentPointTools(intent);
-            isSearchList = LocusUtils.isIntentSearchList(intent);
-            if (!isPointTools && !isSearchList){
-                throw new IllegalArgumentException("Unknown action=" + intent.getAction());
-            }
-            
-            if (isSearchList){
-                location = LocusUtils.getLocationFromIntent(intent, LocusConst.INTENT_EXTRA_LOCATION_MAP_CENTER);
-                if (location == null){
-                    throw new IllegalArgumentException("null location for action=" + intent.getAction());
+            if ("org.bogus.domowygpx.activities.LOCUS_INVOKER".equals(intent.getAction())){
+                isPointTools = intent.getBooleanExtra("isPointTool", false);
+                isSearchList = !isPointTools;
+                location = new locus.api.objects.extra.Location();
+                location.latitude = intent.getDoubleExtra("latitude", 50);
+                location.longitude = intent.getDoubleExtra("longitude", 18);
+            } else {
+                isPointTools = LocusUtils.isIntentPointTools(intent);
+                isSearchList = LocusUtils.isIntentSearchList(intent);
+                if (!isPointTools && !isSearchList){
+                    throw new IllegalArgumentException("Unknown action=" + intent.getAction());
                 }
-            } else
-            if (isPointTools){
-                final Waypoint wpt = LocusUtils.handleIntentPointTools(this, intent);
-                if (wpt != null){
-                    location = wpt.getLocation();
-                }
-                if (location == null){
-                    throw new IllegalArgumentException("null location for action=" + intent.getAction());
+                
+                if (isSearchList){
+                    location = LocusUtils.getLocationFromIntent(intent, LocusConst.INTENT_EXTRA_LOCATION_MAP_CENTER);
+                    if (location == null){
+                        throw new IllegalArgumentException("null location for action=" + intent.getAction());
+                    }
+                } else
+                if (isPointTools){
+                    final Waypoint wpt = LocusUtils.handleIntentPointTools(this, intent);
+                    if (wpt != null){
+                        location = wpt.getLocation();
+                    }
+                    if (location == null){
+                        throw new IllegalArgumentException("null location for action=" + intent.getAction());
+                    }
                 }
             }
         }catch(Exception e){
@@ -141,8 +164,28 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
             config.getString("Locus.downloadImagesStrategy",
                 config.getString("downloadImagesStrategy", 
                     TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI));
+        onlyWithTrackables = config.getBoolean("Locus.onlyWithTrackables", 
+            config.getBoolean("onlyWithTrackables", false));
+        cacheTypesConfig = new CacheTypesConfig();
+        cacheTypesConfig.parseFromConfigString(config.getString("Locus.cacheTypes", 
+            config.getString("cacheTypes", cacheTypesConfig.getDefaultConfig())));
+        
+        cacheTaskDifficultyConfig = new RangeConfig(); 
+        cacheTaskDifficultyConfig.parseFromConfigString(config.getString("Locus.cacheTaskDifficulty", 
+            config.getString("cacheTaskDifficulty", null)));
 
+        cacheTerrainDifficultyConfig = new RangeConfig();
+        cacheTerrainDifficultyConfig.parseFromConfigString(config.getString("Locus.cacheTerrainDifficulty", 
+            config.getString("cacheTerrainDifficulty", null)));
+        
+        cacheRatingsConfig = new CacheRatingsConfig(); 
+        cacheRatingsConfig.parseFromConfigString(config.getString("Locus.cacheRatings", 
+            config.getString("cacheRatings", null)));
 
+        cacheRecommendationsConfig = new CacheRecommendationsConfig();
+        cacheRecommendationsConfig.parseFromConfigString(config.getString("Locus.cacheRecommendations", 
+            config.getString("cacheRecommendations", null)));
+        
         validationUtils = new ValidationUtils(this);
         
         validationUtils.addErrorField("CACHE_COUNT_LIMIT", R.id.errorMaxNumOfCaches);
@@ -219,7 +262,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         }
         
         final LayoutInflater inflater = LayoutInflater.from(this);
-        final ViewGroup view = (ViewGroup)inflater.inflate(R.layout.activity_locus_search_for_caches, null);
+        final ViewGroup view = (ViewGroup)inflater.inflate(R.layout.dialog_locus_search_for_caches, null);
         
         {
             TextView textViewGeoPosition = (TextView) view.findViewById(R.id.textViewGeoPosition);
@@ -230,7 +273,22 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         }
         editMaxNumOfCaches = (EditText) view.findViewById(R.id.editMaxNumOfCaches);
         editMaxCacheDistance = (EditText) view.findViewById(R.id.editMaxCacheDistance);
+        editMaxCacheDistance.setKeyListener(new DecimalKeyListener());
+
+        final TextView editCacheTypes = (TextView) view.findViewById(R.id.editCacheTypes);
+        cacheTypesConfigRenderer = new CacheTypesConfigRenderer(this, cacheTypesConfig, editCacheTypes);
+        cacheTypesConfigRenderer.applyToTextView();
         
+        final TextView editCacheDifficulties = (TextView) view.findViewById(R.id.editCacheDifficulties);
+        cacheDifficultiesRenderer = new CacheDifficultiesRenderer(this, cacheTaskDifficultyConfig,
+            cacheTerrainDifficultyConfig, editCacheDifficulties);
+        cacheDifficultiesRenderer.applyToTextView();
+        
+        final TextView editCacheRatings = (TextView) view.findViewById(R.id.editCacheRatings);
+        cacheRatingsRenderer = new CacheRatingsRenderer(this, cacheRatingsConfig,
+            cacheRecommendationsConfig, editCacheRatings);
+        cacheRatingsRenderer.applyToTextView();
+
         checkBoxDontAskAgain = (CheckBox) view.findViewById(R.id.checkBoxDontAskAgain);
         checkBoxDontAskAgain.setChecked(dontAskAgain);
         checkBoxDontAskAgain.setOnClickListener(new View.OnClickListener()
@@ -259,12 +317,8 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         validationUtils.setOwnerView(view);
         validationUtils.resetViewErrors();
         
-        downloadImagesFragment = new DownloadImagesFragment();
-        downloadImagesFragment.onCreate(view);
-        
         editMaxCacheDistance.setText(maxCacheDistanceText);
         editMaxNumOfCaches.setText(maxNumOfCachesText);
-        downloadImagesFragment.setCurrentDownloadImagesStrategy(downloadImagesStrategy);
         
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
         dialogBuilder.setTitle(R.string.titleLocusSearch);
@@ -288,7 +342,13 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         dialogBuilder.setView(view);
         
         paramsDialog = dialogBuilder.create();
-        downloadImagesFragment.setWindow(paramsDialog.getWindow());
+        final Window window = paramsDialog.getWindow();
+        downloadImagesFragment = new DownloadImagesFragment(view, window);
+        onlyWithTrackablesFragment = new OnlyWithTrackablesFragment(view, window);
+
+        downloadImagesFragment.setCurrentDownloadImagesStrategy(downloadImagesStrategy);
+        onlyWithTrackablesFragment.setOnlyWithTrackables(onlyWithTrackables);
+        
         paramsDialog.setOnDismissListener(new DialogInterface.OnDismissListener()
         {
             @Override
@@ -301,6 +361,12 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
                 editor.putString("Locus.maxCacheDistance", AndroidUtils.toString(editMaxCacheDistance.getText()));
                 editor.putString("Locus.maxNumOfCaches", AndroidUtils.toString(editMaxNumOfCaches.getText()));
                 editor.putString("Locus.downloadImagesStrategy", downloadImagesFragment.getCurrentDownloadImagesStrategy());
+                editor.putBoolean("Locus.onlyWithTrackables", onlyWithTrackablesFragment.isOnlyWithTrackables());
+                editor.putString("Locus.cacheTypes", cacheTypesConfig.serializeToConfigString());
+                editor.putString("Locus.cacheTaskDifficulty", cacheTaskDifficultyConfig.serializeToConfigString());
+                editor.putString("Locus.cacheTerrainDifficulty", cacheTerrainDifficultyConfig.serializeToConfigString());
+                editor.putString("Locus.cacheRatings", cacheRatingsConfig.serializeToConfigString());
+                editor.putString("Locus.cacheRecommendations", cacheRecommendationsConfig.serializeToConfigString());
                 
                 if (isPointTools){ 
                     editor.putBoolean("Locus.point_searchWithoutAsking", checkBoxDontAskAgain.isChecked());
@@ -309,7 +375,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
                     editor.putBoolean("Locus.search_searchWithoutAsking", checkBoxDontAskAgain.isChecked());
                 }
                 
-                editor.commit();
+                AndroidUtils.applySharedPrefsEditor(editor);
                 paramsDialog = null;
             }
         });
@@ -331,6 +397,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         maxNumOfCachesText = AndroidUtils.toString(editMaxNumOfCaches.getText());
         maxCacheDistanceText = AndroidUtils.toString(editMaxCacheDistance.getText());
         downloadImagesStrategy = downloadImagesFragment.getCurrentDownloadImagesStrategy();
+        onlyWithTrackables = onlyWithTrackablesFragment.isOnlyWithTrackables();
         validationUtils.resetViewErrors();
         startDownload();
     }
@@ -345,7 +412,13 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
         taskConfiguration.setMaxNumOfCaches(maxNumOfCachesText);
         taskConfiguration.setMaxCacheDistance(maxCacheDistanceText);
         taskConfiguration.setDownloadImagesStrategy(downloadImagesStrategy);
+        taskConfiguration.setOnlyWithTrackables(onlyWithTrackables);
         taskConfiguration.setDoLocusImport(true);
+        taskConfiguration.setCacheTypes(cacheTypesConfig.serializeToWebServiceString());
+        taskConfiguration.setCacheTaskDifficulty(cacheTaskDifficultyConfig.serializeToWebServiceString());
+        taskConfiguration.setCacheTerrainDifficulty(cacheTerrainDifficultyConfig.serializeToWebServiceString());
+        taskConfiguration.setCacheRatings(cacheRatingsConfig.serializeToWebServiceString());
+        taskConfiguration.setCacheRecommendations(cacheRecommendationsConfig.serializeToWebServiceString());
         
         taskConfiguration.parseAndValidate(this);
         
@@ -359,13 +432,13 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
                 editMaxNumOfCaches.setText(maxNumOfCaches <= 0 ? "" : String.valueOf(maxNumOfCaches));
             } else 
             if ("MAX_CACHE_DISTANCE".equals(modifiedField)){
-                String s;
-                if (taskConfiguration.getOutMaxCacheDistance() < 1){
-                    s = Math.round(taskConfiguration.getOutMaxCacheDistance()*1000) + " m";
+                if (taskConfiguration.getOutMaxCacheDistance() < 0){
+                    editMaxCacheDistance.setText(null);
                 } else {
-                    s = taskConfiguration.getOutMaxCacheDistance() + " km";
+                    DecimalFormat df = new DecimalFormat("###0.###");
+                    String s = df.format(taskConfiguration.getOutMaxCacheDistance());
+                    editMaxCacheDistance.setText(s);
                 }
-                editMaxCacheDistance.setText(s);
             } 
         }
 

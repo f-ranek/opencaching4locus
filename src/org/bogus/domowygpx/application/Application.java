@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.regex.Pattern;
 
+import org.bogus.android.AndroidUtils;
 import org.bogus.domowygpx.oauth.OKAPI;
 import org.bogus.domowygpx.utils.TargetDirLocator;
 import org.bogus.geocaching.egpx.R;
@@ -19,6 +20,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
@@ -35,6 +37,7 @@ public class Application extends android.app.Application implements OnSharedPref
     private volatile OKAPI okApi;
     private int notificationIconResid;
     
+    StateCollector stateCollector; 
     File offlineDump;
     long offlineDumpPostpone;
     
@@ -67,7 +70,7 @@ public class Application extends android.app.Application implements OnSharedPref
         Editor editor = getSharedPreferences("egpx", MODE_PRIVATE).edit();
         editor.remove("Dump.offlineDumpFile");
         editor.remove("Dump.offlineDumpPostpone");
-        editor.commit();
+        AndroidUtils.applySharedPrefsEditor(editor);
     }
     
     protected void postponeOfflineDumpState()
@@ -76,12 +79,14 @@ public class Application extends android.app.Application implements OnSharedPref
             offlineDumpPostpone = System.currentTimeMillis() + 15L*60L*1000L;
             Editor editor = getSharedPreferences("egpx", MODE_PRIVATE).edit();
             editor.putLong("Dump.offlineDumpPostpone", offlineDumpPostpone);
-            editor.commit();
+            AndroidUtils.applySharedPrefsEditor(editor);
         }
     }
     
     public boolean showErrorDumpInfo(final Activity activity)
     {
+        stateCollector.checkSmallStateDump();
+        
         if (offlineDump != null && System.currentTimeMillis() > offlineDumpPostpone){
             if (!offlineDump.exists()){
                 cleanupOfflineDumpState();
@@ -148,7 +153,7 @@ public class Application extends android.app.Application implements OnSharedPref
         
         final SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
         
-        final StateCollector stateCollector = new StateCollector(this);
+        stateCollector = new StateCollector(this);
         final long offlineDumpTimestamp = stateCollector.hasOfflineDump();
         if (offlineDumpTimestamp > 0){
             try{
@@ -180,7 +185,7 @@ public class Application extends android.app.Application implements OnSharedPref
                                 Editor editor = config.edit();
                                 editor.putString("Dump.offlineDumpFile", dumpFile.toString());
                                 editor.remove("Dump.offlineDumpPostpone");
-                                editor.commit();
+                                AndroidUtils.applySharedPrefsEditor(editor);
                                 Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(dumpFile));
                                 intent.setType("application/octet-stream");
                                 sendBroadcast(intent);
@@ -192,7 +197,7 @@ public class Application extends android.app.Application implements OnSharedPref
                 };
                 // don't bother with previous dump, we are preparing the next one :-]
                 cleanupOfflineDumpState();
-                dumpTask.execute();    
+                AndroidUtils.executeAsyncTask(dumpTask);
                 offlineDumpReady.acquireUninterruptibly();
             }catch(Exception e){
                 Log.e(LOG_TAG, "Failed to create offline dump", e);
@@ -204,6 +209,9 @@ public class Application extends android.app.Application implements OnSharedPref
                 offlineDumpPostpone = config.getLong("Dump.offlineDumpPostpone", 0);
             }
         }
+        
+        // this may execute serially with other tasks in one background thread
+        stateCollector.checkSmallStateDump();
         
         final Thread main = Thread.currentThread();
         final UncaughtExceptionHandler mueh = main.getUncaughtExceptionHandler();
@@ -218,6 +226,11 @@ public class Application extends android.app.Application implements OnSharedPref
                     thread.setUncaughtExceptionHandler(mueh);
                 }
                 Log.e(LOG_TAG, "Error in threadId=" + thread.getId() + " [" + thread.getName() + "]", ex);
+                try{
+                    stateCollector.createSmallStateDump();
+                }catch(Exception e){
+                    Log.e(LOG_TAG, "Failed to create ssd", e);
+                }
                 try{
                     stateCollector.createEmergencyDump();
                 }catch(Exception e){
@@ -237,8 +250,16 @@ public class Application extends android.app.Application implements OnSharedPref
             }});
         
         setupPreferences();
-        cleanupDevDumps();
-        cleanupTempGpx(config);
+        AsyncTask<Void, Void, Void> cleanupTask = new AsyncTask<Void, Void, Void>(){
+
+            @Override
+            protected Void doInBackground(Void... params){
+                cleanupDevDumps();
+                cleanupTempGpx(config);
+                return null;
+            }
+        };
+        AndroidUtils.executeAsyncTask(cleanupTask);
         
         config.registerOnSharedPreferenceChangeListener(this);
         
@@ -269,7 +290,7 @@ public class Application extends android.app.Application implements OnSharedPref
             }});
     }
     
-    private void cleanupDevDumps()
+    protected void cleanupDevDumps()
     {
         try{
             final File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
@@ -358,7 +379,7 @@ public class Application extends android.app.Application implements OnSharedPref
                 case 1: 
                     updatePreferences(config, editor, 1);
                     editor.putInt("configVersion", 2);
-                    editor.commit();
+                    AndroidUtils.applySharedPrefsEditor(editor);
                     
                     createSaveDirectories(config);
                     break;
@@ -378,7 +399,7 @@ public class Application extends android.app.Application implements OnSharedPref
         }
     }
 
-    private void cleanupTempGpx(SharedPreferences config)
+    protected void cleanupTempGpx(SharedPreferences config)
     {
         String dir = config.getString("gpxTargetDirNameTemp", null);
         if (dir == null){
@@ -425,7 +446,7 @@ public class Application extends android.app.Application implements OnSharedPref
         initSaveDirectories(config, editor);
         
         editor.putInt("configVersion", 2);
-        editor.commit();    
+        AndroidUtils.applySharedPrefsEditor(editor);    
     }
     
     private void initSaveDirectories(SharedPreferences config, Editor editor)
@@ -435,23 +456,23 @@ public class Application extends android.app.Application implements OnSharedPref
         File gpxTargetDirName = null;
         File gpxTargetDirNameTemp = null;
         File imagesTargetDirName = null;
+        Resources res = getResources();
         if (locus != null && !locus.isEmpty()){
             File loc = locus.get(0); 
             gpxTargetDirName = new File(loc, "mapItems");
-            gpxTargetDirNameTemp = new File (loc, "mapItems-temp");
-            imagesTargetDirName = new File(loc, ".cacheImages");
+            gpxTargetDirNameTemp = new File (loc, res.getString(R.string.dir_locus_temp));
+            imagesTargetDirName = new File(loc, res.getString(R.string.dir_locus_images));
         } else {
             final List<File> data = tdl.locateSaveDirectories();
             final File dir = data.get(0);
-            gpxTargetDirName = new File(dir, "awaryjniejszy-gpx/kesze"); // XXX localization!!!
-            gpxTargetDirNameTemp = new File (dir, "awaryjniejszy-gpx/kesze-temp");
-            imagesTargetDirName = new File(dir, "awaryjniejszy-gpx/.cacheImages");
+            gpxTargetDirName = new File(dir, res.getString(R.string.dir_default));
+            gpxTargetDirNameTemp = new File (dir, res.getString(R.string.dir_default_temp));
+            imagesTargetDirName = new File(dir, res.getString(R.string.dir_default_images));
         }
         
         editor.putString("gpxTargetDirName", gpxTargetDirName.toString());
-        editor.putString("gpxTargetDirNameTemp", gpxTargetDirNameTemp.toString()); 
-        editor.putString("imagesTargetDirName", imagesTargetDirName.toString());
-        
+        AndroidUtils.savePrefValueWithHistory(config, editor, "gpxTargetDirNameTemp", gpxTargetDirNameTemp.toString()); 
+        AndroidUtils.savePrefValueWithHistory(config, editor, "imagesTargetDirName", imagesTargetDirName.toString());
     }
     
     private boolean createDirectories(SharedPreferences config, String key)
@@ -479,8 +500,8 @@ public class Application extends android.app.Application implements OnSharedPref
                     editor.putString("gpxTargetDirName", tdn.toString());
                     File tdnp = tdn.getParentFile();
                     if (tdnp != null){
-                        editor.putString("gpxTargetDirNameTemp", new File(tdnp, tdn.getName() + "-temp").toString());
-                        editor.putString("imagesTargetDirName", new File(tdnp, ".cacheImages").toString()); 
+                        AndroidUtils.savePrefValueWithHistory(config, editor, "gpxTargetDirNameTemp", new File(tdnp, tdn.getName() + "-temp").toString());
+                        AndroidUtils.savePrefValueWithHistory(config, editor, "imagesTargetDirName", new File(tdnp, ".cacheImages").toString()); 
                     }
                 }
             }
@@ -493,7 +514,7 @@ public class Application extends android.app.Application implements OnSharedPref
         SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
         Editor editor = config.edit();
         initSaveDirectories(config, editor);
-        editor.commit();
+        AndroidUtils.applySharedPrefsEditor(editor);
         boolean result = createSaveDirectories(config);
         return result;
     }

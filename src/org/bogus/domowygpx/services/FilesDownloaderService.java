@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.http.ConnectionClosedException;
 import org.apache.http.client.HttpClient;
 import org.bogus.ToStringBuilder;
+import org.bogus.android.AndroidUtils;
 import org.bogus.domowygpx.activities.DownloadListActivity;
 import org.bogus.domowygpx.application.Application;
 import org.bogus.domowygpx.services.downloader.DownloadProgressMonitor;
@@ -44,17 +45,18 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.os.MessageQueue;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.util.Pair;
@@ -602,13 +604,28 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
      * Reads files to be downloaded for a given task, and schedules them for download
      * @param task
      * @param restartFromScratch
-     * @return false, if no files have been scheduled for a download (this should not happen)
      */
-    protected boolean startTaskFromDatabase(
+    protected void startTaskFromDatabase(
         final FilesDownloadTask task, 
-        boolean restartFromScratch) 
+        final DownloadProgressMonitorImpl dpm,
+        final boolean restartFromScratch) 
     {
-        // TODO: move this method to the downloader thread... somewhere, somehow
+        AsyncTask<Void, Void, Void> task2 = new AsyncTask<Void, Void, Void>(){
+
+            @Override
+            protected Void doInBackground(Void... params)
+            {
+                startTaskFromDatabaseInThread(task, dpm, restartFromScratch);
+                return null;
+            }};
+            AndroidUtils.executeAsyncTask(task2);
+    }
+
+    protected void startTaskFromDatabaseInThread(
+        final FilesDownloadTask task, 
+        final DownloadProgressMonitorImpl dpm,
+        final boolean restartFromScratch) 
+    {
         final List<FileData> files; 
         database.beginTransaction();
         try{
@@ -645,18 +662,13 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             database.endTransaction();
         }
         
-        final MessageQueue queue = Looper.myQueue();
-        queue.addIdleHandler(new MessageQueue.IdleHandler(){
-
-            @Override
-            public boolean queueIdle()
-            {
-                Log.i(LOG_TAG, "Submitting task files, id=" + task.taskId + 
-                    ", count=" + files.size());
-                task.filesDownloader.submit(files);
-                return false;
-            }});
-        return files.size() > 0;
+        Log.i(LOG_TAG, "Submitting task files, id=" + task.taskId + 
+            ", count=" + files.size());
+        task.filesDownloader.submit(files);
+        
+        if (files.size() == 0){
+            onTaskFinished(dpm, false);
+        }
     }
     
     /**
@@ -760,18 +772,19 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             }
         }
         
+        final Resources res = getResources();
         final NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setOngoing(runningCount != 0);
         if (runningCount > 0){
-            builder.setContentTitle("Pobieram pliki"); 
+            builder.setContentTitle(res.getString(R.string.files_downloader_in_progrss)); 
         } else
         if (stoppedCount > 0){
-            builder.setContentTitle("Pobieranie wstrzymane"); 
+            builder.setContentTitle(res.getString(R.string.files_downloader_paused)); 
         } else
         if (failedCount == finishedCount) {
-            builder.setContentTitle("Błąd pobierania");
+            builder.setContentTitle(res.getString(R.string.files_downloader_error));
         } else {
-            builder.setContentTitle("Pobieranie zakończone"); 
+            builder.setContentTitle(res.getString(R.string.files_downloader_finished)); 
         }
         final StringBuilder sb = new StringBuilder();
         boolean wasFirstTaskInfo = false;
@@ -789,7 +802,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                 sb.append(", "); 
             }
             sb.append(getResources().getQuantityString(
-                wasFirstTaskInfo ? R.plurals.finished : R.plurals.taskFinished, 
+                wasFirstTaskInfo ? R.plurals.downloader_finished : R.plurals.taskFinished, 
                 finishedCount, finishedCount));
             wasFirstTaskInfo = true;
         }
@@ -797,13 +810,13 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             if (sb.length() > 0){
                 sb.append(", "); 
             }
-            sb.append(failedCount).append(" błędnie"); 
+            sb.append(res.getString(R.string.files_downloader_with_errors1, failedCount));
         }
         if (withFailuresCount > 0){
             if (sb.length() > 0){
                 sb.append(", "); 
             }
-            sb.append(withFailuresCount).append(" z błędami"); 
+            sb.append(res.getString(R.string.files_downloader_with_errors2, withFailuresCount)); 
         }
         
         if (sb.length() > 0){
@@ -1037,10 +1050,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                             filesDownloader.setDownloadProgressMonitor(dpm);
                             final boolean restartFromScratch = intent == null ? false : 
                                 intent.getBooleanExtra(INTENT_EXTRA_RESTART_FROM_SCRATCH, false); 
-                            boolean started = startTaskFromDatabase(task, restartFromScratch);
-                            if (!started){
-                                onTaskFinished(dpm, false);
-                            }
+                            startTaskFromDatabase(task, dpm, restartFromScratch);
                         }
                     }
                 }

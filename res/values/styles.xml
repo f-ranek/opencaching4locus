@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
     <style name="Theme.Main" parent="android:Theme.Light" />
-    
+
     <style name="Theme.Transparent" parent="Theme.Main">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
@@ -10,12 +10,11 @@
         <item name="android:windowIsFloating">true</item>
         <item name="android:backgroundDimEnabled">true</item>
     </style>
-
-    <style name="TextAppearance.Large" 
-           parent="@android:style/TextAppearance.Large">
-        <item name="android:textColor">?android:textColorSecondary</item>
-    </style>
-
+    
+    <color name="bright_background_light">#FFFFFF</color>
+    <color name="bright_foreground_light">#ff000000</color>
+    <color name="bright_foreground_light_disabled">#80000000</color>
+        
     <style name="TextAppearance.Large.Error" 
            parent="@android:style/TextAppearance.Large">
         <item name="android:textColor">@color/error_color</item>
@@ -36,4 +35,21 @@
         <item name="android:textColor">@color/warning_color</item>
     </style>
 
-</resources>
+    <style name="ScrollViewStyle"
+            parent="@android:style/Widget.ScrollView">
+        <item name="android:background">@color/bright_background_light</item>
+    </style>
+
+    <style name="Widget.TextView.ListSeparator"
+        parent="@android:style/Widget.TextView">
+        <item name="android:textColor">@color/bright_foreground_light</item>
+        <item name="android:background">@drawable/list_section_divider_holo_light</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingLeft">5sp</item>
+    </style>
+    
+ </resources>

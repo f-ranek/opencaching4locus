@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.bogus.geocaching.egpx"
-    android:versionCode="26"
-    android:versionName="1.2f Burning Pipers Hul">
+    android:versionCode="27"
+    android:versionName="1.3 beta4 Bez słów">
 
     <uses-sdk
         android:minSdkVersion="8"
@@ -69,6 +69,10 @@
             </intent-filter>
             <intent-filter>
                 <action android:name="locus.api.android.INTENT_ITEM_SEARCH_LIST" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="org.bogus.domowygpx.activities.LOCUS_INVOKER" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             

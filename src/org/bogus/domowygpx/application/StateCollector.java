@@ -13,18 +13,29 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.FileEntity;
 import org.bogus.android.AndroidUtils;
+import org.bogus.domowygpx.apache.http.client.utils.ResponseUtils;
 import org.bogus.domowygpx.services.DumpableDatabase;
 import org.bogus.domowygpx.services.FilesDownloaderService;
 import org.bogus.domowygpx.services.GpxDownloaderService;
 import org.bogus.domowygpx.services.LocalBinderIntf;
 import org.bogus.domowygpx.utils.DumpDatabase;
+import org.bogus.domowygpx.utils.HttpClientFactory;
+import org.bogus.domowygpx.utils.HttpClientFactory.CreateHttpClientConfig;
 import org.bogus.geocaching.egpx.R;
+import org.bogus.utils.io.MemoryBufferStream;
 import org.xeustechnologies.jtar.TarEntry;
 import org.xeustechnologies.jtar.TarOutputStream;
 
@@ -37,7 +48,10 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.os.IBinder;
 import android.provider.Settings.Secure;
@@ -81,6 +95,70 @@ public class StateCollector
         }
     }
 
+    private void collectLogCatOutput2(List<File> files, File root, String bufferName)
+    {
+        final int lines = 150;
+        File output = null;
+        OutputStream os = null;
+        InputStream is = null;
+        try{
+            Process process = Runtime.getRuntime().exec("logcat -d -v long -b " + bufferName);
+            output = new File(root, "logcat-" + bufferName + ".log");
+            is = process.getInputStream();
+            
+            final List<MemoryBufferStream> mbss = new ArrayList<MemoryBufferStream>(lines);
+            MemoryBufferStream mbs = new MemoryBufferStream(32);
+            int len;
+            final byte[] buffer = new byte[32];
+            while((len = is.read(buffer)) != -1){
+                int start = 0;
+                for (int i=0; i<len; i++){
+                    byte ch = buffer[i];
+                    if (ch == '\n' || ch == '\r'){
+                        mbs.write(buffer, start, i-start);
+                        start = i+1;
+                        if (mbs.length() != 0){
+                            MemoryBufferStream mbs2 = null;
+                            if (mbss.size() >= lines){
+                                mbs2 = mbss.remove(0);
+                                mbs2.reset();
+                            } else {
+                                mbs2 = new MemoryBufferStream(32);
+                            }
+                            mbss.add(mbs);
+                            mbs = mbs2;
+                        }
+                    }
+                }
+                mbs.write(buffer, start, len-start);
+            }
+            if (mbs.length() != 0){
+                if (mbss.size() >= lines){
+                    mbss.remove(0);
+                }
+                mbss.add(mbs);
+            }
+
+            if (!mbss.isEmpty()){
+                os = new FileOutputStream(output);
+                os = new BufferedOutputStream(os, 512);
+                for (MemoryBufferStream mbsi : mbss){
+                    mbsi.writeTo(os);
+                    os.write('\n');
+                }
+                os.flush();
+                files.add(output);
+            }
+        }catch(Exception e){
+            Log.e(LOG_TAG, "Failed to dump logcat buffer=" + bufferName, e);
+            if (output != null){
+                output.delete();
+            }
+        }finally{
+            IOUtils.closeQuietly(os);
+            IOUtils.closeQuietly(is);
+        }
+    }
     
     private void collectOfflineServicesState(List<File> files, File rootDir)
     {
@@ -473,6 +551,196 @@ public class StateCollector
         collectLogCatOutput(new ArrayList<File>(1), root);
         
         Log.i(LOG_TAG, "Emergency dump saved to " + root);
+    }
+    
+    /**
+     * Creates a dump with only minimum amount of logcat data, plus application info
+     * @throws IOException
+     */
+    public void createSmallStateDump()
+    throws IOException
+    {
+        final long now = System.currentTimeMillis();
+        Log.i(LOG_TAG, "Creating ssd " + now);
+        final File root = new File(context.getCacheDir(), "ssd_" + now);
+        root.mkdirs();
+        
+        List<File> files = new ArrayList<File>(5);
+        collectLogCatOutput2(files, root, "main");
+        collectLogCatOutput2(files, root, "events");
+        saveDeviceInfo(files, root, 0);
+    }
+    
+    public void checkSmallStateDump()
+    {
+        File file = context.getCacheDir();
+        File[] dirFiles = file.listFiles();
+        if (dirFiles != null && dirFiles.length > 0){
+            final List<File> files = new ArrayList<File>();
+            for (File f : dirFiles){
+                if (f.getName().startsWith("ssd_")){
+                    files.add(f);
+                }
+            }
+            if (!files.isEmpty()){
+                AsyncTask<Void, Void, Void> processTask = new AsyncTask<Void, Void, Void>(){
+                    HttpClient httpClient;
+                    String deviceId;
+                    Pattern fileNamePattern;
+                    
+                    File processDir(File dir)
+                    {
+                        OutputStream os = null;
+                        File outFile = new File(dir.getParentFile(), dir.getName() + ".tgz");
+                        try{
+                            File[] dirFiles = dir.listFiles();
+                            if (dirFiles == null || dirFiles.length == 0){
+                                return null;
+                            }
+
+                            os = new FileOutputStream(outFile);
+                            os = new GZIPOutputStream(os, 16*1024);
+                            final TarOutputStream tos = new TarOutputStream(os);
+                            for (File file : dirFiles){
+                                final String name = file.getName();
+                                final InputStream is = new FileInputStream(file);
+                                try{
+                                    tos.putNextEntry(new TarEntry(file, name));
+                                    IOUtils.copy(is, tos);
+                                }finally{
+                                    IOUtils.closeQuietly(is);
+                                    file.delete();
+                                }
+                            }
+                            tos.flush();
+                            tos.close();
+                            os.close();
+                            return outFile;
+                        }catch(Exception e){
+                            outFile.delete();
+                            Log.e(LOG_TAG, "Failed to process ssd=" + dir.getName(), e);
+                            return null;
+                        }finally{
+                            IOUtils.closeQuietly(os);
+                            try{
+                                FileUtils.deleteDirectory(dir);
+                            }catch(IOException e){
+                                Log.e(LOG_TAG, "Failed to cleanup ssd=" + dir.getName(), e);
+                            }
+                        }
+                    }
+                    
+                    void processFile(File file)
+                    {
+                        if (fileNamePattern == null){
+                            fileNamePattern = Pattern.compile("ssd_([0-9]+)(_([0-9]{1,3}))?(\\.[a-z0-9]{1,6})?", Pattern.CASE_INSENSITIVE);
+                        }
+                        final String name = file.getName();
+                        final Matcher matcher = fileNamePattern.matcher(name);
+                        if (!matcher.matches()){
+                            file.delete();
+                            return ;
+                        }
+                        
+                        if (httpClient == null){
+                            CreateHttpClientConfig cfg = new CreateHttpClientConfig(context);
+                            cfg.preventCaching = true;
+                            httpClient = HttpClientFactory.createHttpClient(cfg);
+                            deviceId = Secure.getString(context.getContentResolver(), Secure.ANDROID_ID);
+                        }
+
+                        HttpResponse response = null;
+                        try{
+                            final String uri = "http://bogus.ovh.org/oc4l/ssd.php?deviceId=" 
+                                    + deviceId + "&timestamp=" + matcher.group(1);
+                            HttpPut put = new HttpPut(uri);
+                            put.setEntity(new FileEntity(file, "application/x-compressed"));
+                            Log.i(LOG_TAG, "Sending " + name);
+                            StatusLine statusLine = null;
+                            try{
+                                response = httpClient.execute(put);
+                                statusLine = response.getStatusLine();
+                            }catch(IOException ioe){
+                                Log.w(LOG_TAG, "Failed to send ssd=" + name, ioe);
+                            }
+                            
+                            if (statusLine != null && (
+                                    statusLine.getStatusCode() == 200 || statusLine.getStatusCode() == 204))
+                            {
+                                Log.i(LOG_TAG, "File send");
+                                file.delete();
+                            } else {
+                                // check and increment failure count
+                                final String counter = matcher.group(3);
+                                int cnt = 2;
+                                if (counter != null){
+                                    cnt = Integer.parseInt(counter);
+                                    if (cnt > 5){
+                                        Log.i(LOG_TAG, "Deleting file=" + name);
+                                        file.delete();
+                                    } else {
+                                        cnt++;
+                                    }
+                                }
+                                String ext = matcher.group(4);
+                                if (ext == null){
+                                    ext = "";
+                                }
+                                String newName = "ssd_" + matcher.group(1) + "_" + cnt + ext;
+                                file.renameTo(new File(file.getParent(), newName));
+                            }
+                        }catch(Exception ex){
+                            Log.w(LOG_TAG, "Failed to send ssd=" + name, ex);
+                            file.delete();
+                        }finally{
+                            ResponseUtils.closeResponse(response);
+                        }
+                    }
+                    
+                    @Override
+                    protected Void doInBackground(Void... params)
+                    {
+                        try{
+                            final List<File> files2 = new ArrayList<File>();
+                            for (File f : files){
+                                if (f.isDirectory()){
+                                    File f2 = processDir(f);
+                                    if (f2 != null){
+                                        files2.add(f2);
+                                    }
+                                } else
+                                if (f.isFile()){
+                                    files2.add(f);
+                                }
+                            }
+                            
+                            if (files2.isEmpty()){
+                                return null;
+                            }
+                            
+                            // wait up to 5 seconds for an active network connection
+                            final ConnectivityManager cm = (ConnectivityManager)
+                                    context.getSystemService(Context.CONNECTIVITY_SERVICE);
+                            final NetworkInfo ni = cm.getActiveNetworkInfo();
+                            if (ni == null || !ni.isConnected()){
+                                return null;
+                            }
+                            for (File f : files2){
+                                processFile(f);
+                            }
+                            
+                            return null;
+                        }catch(Exception e){
+                            Log.e(LOG_TAG, "Failed to process ssd", e);
+                            return null;
+                        }finally{
+                            HttpClientFactory.closeHttpClient(httpClient);
+                        }
+                    }
+                };
+                AndroidUtils.executeAsyncTask(processTask);    
+            }
+        }
     }
     
     /**

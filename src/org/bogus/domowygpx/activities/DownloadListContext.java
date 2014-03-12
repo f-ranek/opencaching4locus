@@ -428,7 +428,7 @@ public abstract class DownloadListContext
         {
             StringBuilder msg = new StringBuilder(64);
             if (cancelling){
-                msg.append("Przerywam");
+                msg.append(context.getResources().getString(R.string.downloader_cancelling));
             }
             if (task.currentCacheCode != null){
                 if (msg.length() > 0){
@@ -605,28 +605,31 @@ public abstract class DownloadListContext
 
         private void generateMainInfo()
         {
+            int msgId = -1;
             switch(task.state){
                 case FilesDownloadTask.STATE_CANCELLING:
-                    message = "Trwa anulowanie";
+                    msgId = R.string.downloader_cancelling2;
                     break;
                 case FilesDownloadTask.STATE_PAUSING:
-                    message = "Zatrzymuję";
+                    msgId = R.string.downloader_stopping;
                     break;
                 case FilesDownloadTask.STATE_RUNNING:
-                    message = "Pobieram";
+                    msgId = R.string.downloader_downloading;
                     break;
                 case FilesDownloadTask.STATE_FINISHED:
-                    message = "Pobieranie zakończone";
+                    msgId = R.string.downloader_download_finished;
                     progressCurrent = progressMax = -1;
                     isError = task.isFailed();
                     isDone = !isError;
                     break;
                 case FilesDownloadTask.STATE_STOPPED:
-                    message = "Pobieranie zatrzymane";
+                    msgId = R.string.downloader_download_stopped;
                     progressCurrent = progressMax = -1;
                     break;
             }
-            
+            if (msgId > 0){
+                message = context.getResources().getString(msgId);
+            }
         }
         
         private void generateDetails()

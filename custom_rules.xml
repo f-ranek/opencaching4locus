@@ -11,13 +11,19 @@
             <format property="release.user.timestamp" pattern="yyyy-MM-dd HH:mm" />
         </tstamp>
 		<exec executable="git" failonerror="true">
-		    <arg line="describe --tags HEAD" />
+		    <arg line="describe --dirty --tags" />
 		    <redirector outputproperty="release.user.version" logerror="true" />
 		</exec>
 		<propertybyreplace name="release.user.application.packageDir" input="${release.user.application.packageName}" 
 			replace="." with="/" />
 		<property name="release.user.infoFile" value="${gen.absolute.dir}/${release.user.application.packageDir}/BuildInfo.java" />
-		<echo append="false" file="${release.user.infoFile}">/** Automatically generated file. DO NOT MODIFY */
+		<echo append="false" file="${release.user.infoFile}">/**
+</echo>
+        <echo append="true" file="${release.user.infoFile}"> * Automatically generated file. DO NOT MODIFY
+</echo>
+        <echo append="true" file="${release.user.infoFile}"> * Call ant generate-build-info to regenerate this file
+</echo>
+	    <echo append="true" file="${release.user.infoFile}"> */
 </echo>
 		<echo append="true" file="${release.user.infoFile}">package ${release.user.application.packageName};
 </echo>
@@ -43,14 +49,20 @@
     	<echo>Release postprocessing</echo>
         <xpath input="${manifest.abs.file}" expression="/manifest/@android:versionCode"
                 output="release.final.application.versionCode" />
+        <xpath input="${manifest.abs.file}" expression="/manifest/@android:versionName"
+                output="release.final.application.versionName" />
     	<tstamp>
     		<format property="release.final.timestamp" pattern="yyyyMMdd" />
     	</tstamp>
         <property name="release.final.dir" value="${releases.dir}${release.final.timestamp}" />        
         <mkdir dir="${release.final.dir}" />
     	<property name="release.final.dir.abs" location="${release.final.dir}" />
-    	<property name="release.final.apk" 
-    		value="${release.final.dir.abs}/${ant.project.name}-${release.final.application.versionCode}.apk" />
+    	<property name="release.final.apk0" 
+    		value="${release.final.dir.abs}/${ant.project.name}-${release.final.application.versionCode}" />
+    	<condition property="release.final.beta" value="-beta" else="">
+    		   <contains string="${release.final.application.versionName}" substring="beta"/>
+    	</condition>
+        <property name="release.final.apk" value="${release.final.apk0}${release.final.beta}.apk" />
         <property name="release.final.mappings" 
             value="${release.final.dir.abs}/mapping-${release.final.application.versionCode}.txt" />
     	<property name="release.final.version" 

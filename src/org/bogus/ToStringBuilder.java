@@ -123,6 +123,15 @@ public class ToStringBuilder
         return this;
     }
 
+    public ToStringBuilder add(String name, boolean value, boolean defValue)
+    {
+        if (value != defValue){
+            processState();
+            sb.append(name).append('=').append(value);
+        }
+        return this;
+    }
+
     public ToStringBuilder add(String name, byte value)
     {
         processState();
