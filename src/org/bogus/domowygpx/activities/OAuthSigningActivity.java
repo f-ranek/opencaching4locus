@@ -17,6 +17,7 @@ import org.bogus.domowygpx.oauth.OKAPI;
 import org.bogus.domowygpx.utils.HttpClientFactory;
 import org.bogus.domowygpx.utils.HttpClientFactory.CreateHttpClientConfig;
 import org.bogus.domowygpx.utils.Pair;
+import org.bogus.geocaching.egpx.BuildConfig;
 import org.bogus.geocaching.egpx.R;
 import org.json.JSONObject;
 
@@ -107,8 +108,10 @@ public class OAuthSigningActivity extends Activity
         @Override
         protected void onPostExecute(Map<String, String> result)
         {
-            progress.dismiss();
-            progress = null;
+            if (progress != null){
+                progress.dismiss();
+                progress = null;
+            }
         }
         
         @Override
@@ -194,7 +197,9 @@ public class OAuthSigningActivity extends Activity
             public void onClick(View v)
             {
                 final URI uri1 = oauth.getRequestToken1Uri();
-                Log.i(LOG_TAG, "OAuth URI 1 " + uri1);
+                if (BuildConfig.DEBUG){
+                    Log.i(LOG_TAG, "OAuth URI 1 " + uri1);
+                }
                 edtPin.setText(null);
                 currentTask = new OAuthHttpRequest(){
 
@@ -206,7 +211,9 @@ public class OAuthSigningActivity extends Activity
                             if (result != null){
                                 oauth.gotRequestToken1Response(result);
                                 final URI uri2 = oauth.getAuthorize2Uri();
-                                Log.i(LOG_TAG, "OAuth URI 2 " + uri2);
+                                if (BuildConfig.DEBUG){
+                                    Log.i(LOG_TAG, "OAuth URI 2 " + uri2);
+                                }
                                 Intent intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(uri2.toString()));
                                 OAuthSigningActivity.this.startActivity(intent);
                             }
@@ -250,7 +257,9 @@ public class OAuthSigningActivity extends Activity
             {
                 final String pin = edtPin.getText().toString().trim();
                 final URI uri3 = oauth.gotAuthorize2Pin(pin);
-                Log.i(LOG_TAG, "OAuth URI 3 " + uri3);
+                if (BuildConfig.DEBUG){
+                    Log.i(LOG_TAG, "OAuth URI 3 " + uri3);
+                }
                 currentTask = new OAuthHttpRequest(){
 
                     private void getCurrentUserName()
