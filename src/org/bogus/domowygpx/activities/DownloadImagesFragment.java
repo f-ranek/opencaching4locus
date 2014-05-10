@@ -24,7 +24,7 @@ import android.widget.TextView;
 
 public class DownloadImagesFragment implements OnSharedPreferenceChangeListener
 {
-    private ConnectivityManager conectivityManager;
+    private ConnectivityManager connectivityManager;
 
     String currentDownloadImagesStrategy;
     CheckBox checkBoxDownloadImages;
@@ -40,7 +40,7 @@ public class DownloadImagesFragment implements OnSharedPreferenceChangeListener
     public DownloadImagesFragment(final ViewGroup view, final Window window)
     {
         this.view = view;
-        conectivityManager = (ConnectivityManager)view.getContext().getSystemService(
+        connectivityManager = (ConnectivityManager)view.getContext().getSystemService(
             Activity.CONNECTIVITY_SERVICE);
 
         checkBoxDownloadImages = (CheckBox) view.findViewById(R.id.checkBoxDownloadImages);
@@ -97,8 +97,8 @@ public class DownloadImagesFragment implements OnSharedPreferenceChangeListener
             int lblResId;
             boolean state;
             if (TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI.equals(currentDownloadImagesStrategy)){
-                NetworkInfo wifiInfo = conectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-                state = wifiInfo.isConnected();        
+                NetworkInfo wifiInfo = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+                state = !connectivityManager.isActiveNetworkMetered() && wifiInfo != null && wifiInfo.isConnected();
                 lblResId = R.string.downloadImages_wifi;
             } else
             if (TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_NEVER.equals(currentDownloadImagesStrategy)){

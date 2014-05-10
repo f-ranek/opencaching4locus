@@ -253,9 +253,9 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
             } else
             if (downloadImagesStrategy.equals(DOWNLOAD_IMAGES_STRATEGY_ON_WIFI)){
                 // check, if WiFi is enabled and in use    
-                ConnectivityManager conectivityManager = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
-                NetworkInfo wifiInfo = conectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-                boolean hasWiFi = wifiInfo.isConnected();
+                ConnectivityManager connectivityManager = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+                NetworkInfo wifiInfo = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+                boolean hasWiFi = !connectivityManager.isActiveNetworkMetered() && wifiInfo != null && wifiInfo.isConnected();
                 outDownloadImages = hasWiFi;
             } else {
                 Log.e(LOG_TAG, "Invalid download images strategy: " + downloadImagesStrategy);

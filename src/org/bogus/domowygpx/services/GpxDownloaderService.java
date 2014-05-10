@@ -75,7 +75,11 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
+import android.net.wifi.WifiManager.WifiLock;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Handler;
@@ -97,6 +101,10 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
     private static final int NOTIFICATION_ID_FINISHED = NOTIFICATION_ID_ONGOING+1;
     
     private HttpClient httpClient;
+
+    private ConnectivityManager connectivityManager;
+    private WifiManager wifiManager;
+    private WifiLock wifiLock;
     
     synchronized HttpClient getHttpClient(){
         if (httpClient == null){
@@ -109,12 +117,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             httpClient = aHttpClient;
         }
         return httpClient;        
-    }
-    
-    private synchronized void closeHttpClient()
-    {
-        HttpClientFactory.closeHttpClient(httpClient);
-        httpClient = null;
     }
     
     final static AtomicInteger threadIndexCount = new AtomicInteger();
@@ -1193,9 +1195,28 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 (NotificationManager)getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         final Notification notif = builder.build();
         if (foreground){
+            if (wifiLock == null){
+                if (connectivityManager == null){
+                    connectivityManager = (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
+                }
+                final NetworkInfo wifiInfo = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+                if (wifiInfo != null && wifiInfo.isConnected()){
+                    if (wifiManager == null){
+                        wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+                    }
+                    if (wifiManager != null) {
+                        wifiLock = wifiManager.createWifiLock("Awaryjniejszy GPX - GPX downloader");
+                        wifiLock.acquire();
+                    }
+                }
+            }
             notificationManager.cancel(NOTIFICATION_ID_FINISHED);
             super.startForeground(NOTIFICATION_ID_ONGOING, notif);
         } else {
+            if (wifiLock != null){
+                wifiLock.release();
+                wifiLock = null;
+            }
             super.stopForeground(true);
             notificationManager.notify(NOTIFICATION_ID_FINISHED, notif);
         }
@@ -1304,8 +1325,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         if (threads.isEmpty()){
             super.stopForeground(false);
             
-            closeHttpClient();
-
             boolean willBeStopped = false;
             for (Integer startId : startIds){
                 willBeStopped = super.stopSelfResult(startId);
@@ -1808,10 +1827,16 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             }
         }
         
+        if (wifiLock != null){
+            wifiLock.release();
+            wifiLock = null;
+        }
+
         threads.clear();
         listeners.clear();
         
-        closeHttpClient();
+        HttpClientFactory.closeHttpClient(httpClient);
+        httpClient = null;
         
         databaseHelper.close();
         databaseHelper = null;

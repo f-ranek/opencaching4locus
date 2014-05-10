@@ -224,7 +224,7 @@ public class HttpClientFactory
         try{
             final String packageName = cfg.context.getPackageName();
             final PackageInfo packageInfo = cfg.context.getPackageManager().getPackageInfo(packageName, 0);
-            String userAgent = "Apache-HttpClient/AwaryjniejszyGPX " + packageInfo.versionName + " (" + packageInfo.versionCode + ")";
+            String userAgent = "Apache-HttpClient/AwaryjniejszyGPX " + packageInfo.versionCode;
             HttpProtocolParams.setUserAgent(params, userAgent);
         }catch(NameNotFoundException nnfe){
             // should not happen ;)
@@ -234,7 +234,6 @@ public class HttpClientFactory
         boolean disableCompression = config.getBoolean("HttpClientFactory_disableCompression", false);
         if (!disableCompression){
             // setup compression
-            //httpClient = new DecompressingHttpClient(httpClient) ;
             httpClient.addRequestInterceptor(new RequestAcceptEncoding());
             httpClient.addResponseInterceptor(new ResponseContentEncoding());
         } 

@@ -51,6 +51,10 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabase.CursorFactory;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiManager;
+import android.net.wifi.WifiManager.WifiLock;
 import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Build;
@@ -64,7 +68,6 @@ import android.util.Pair;
 public class FilesDownloaderService extends Service implements FilesDownloaderApi
 {
     private final static String LOG_TAG = "FilesDownloaderSvc";  
-    //private static final List<FilesDownloadTask> EMPTY_LIST = Collections.emptyList();
     
     private static final int NOTIFICATION_ID_ONGOING = 0x20;
     private static final int NOTIFICATION_ID_FINISHED = NOTIFICATION_ID_ONGOING+1;
@@ -80,6 +83,10 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     private ConcurrentMap<File, Boolean> filesOnHold = new ConcurrentHashMap<File, Boolean>(8);
     private FilesDownloader freeFilesDownloader;
     private volatile List<FilesDownloadTask> downloadTasks;
+    
+    private ConnectivityManager connectivityManager;
+    private WifiManager wifiManager;
+    private WifiLock wifiLock;
     
     public static class FilesDownloadTask implements Cloneable {
         public int taskId;
@@ -116,7 +123,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         // final static int FLAG_NOTIFICATION_DONE = 2;
         /** Used to optimise system notifications */
         final static int FLAG_FIRST_FILE_STARTED = 4;
-        
+        // final static int FLAG_HAS_WIFI_LOCK = 8;
         
         public final long createdDate;
         
@@ -732,9 +739,28 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                 (NotificationManager)getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
         final Notification notif = builder.build();
         if (foreground){
+            if (wifiLock == null){
+                if (connectivityManager == null){
+                    connectivityManager = (ConnectivityManager)getSystemService(CONNECTIVITY_SERVICE);
+                }
+                final NetworkInfo wifiInfo = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+                if (wifiInfo != null && wifiInfo.isConnected()){
+                    if (wifiManager == null){
+                        wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+                    }
+                    if (wifiManager != null) {
+                        wifiLock = wifiManager.createWifiLock("Awaryjniejszy GPX - files downloader");
+                        wifiLock.acquire();
+                    }
+                }
+            }
             notificationManager.cancel(NOTIFICATION_ID_FINISHED);
             super.startForeground(NOTIFICATION_ID_ONGOING, notif);
         } else {
+            if (wifiLock != null){
+                wifiLock.release();
+                wifiLock = null;
+            }
             super.stopForeground(true);
             notificationManager.notify(NOTIFICATION_ID_FINISHED, notif);
         }
@@ -1611,10 +1637,6 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         if (allTasksFinished){
             super.stopForeground(false);
 
-            // early recycle
-            HttpClientFactory.closeHttpClient(httpClient);
-            httpClient = null;
-            
             boolean willBeStopped = false;
             for (Integer startId : startIds){
                 willBeStopped = super.stopSelfResult(startId);
@@ -1629,6 +1651,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     {
         try{
             Log.i(LOG_TAG, "called onDestroy");
+            
             if (downloadTasks != null){
                 boolean anyTask = false;
                 synchronized(this){
@@ -1677,6 +1700,11 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             HttpClientFactory.closeHttpClient(httpClient);
             httpClient = null;
             
+            if (wifiLock != null){
+                wifiLock.release();
+                wifiLock = null;
+            }
+
             if (freeFilesDownloader != null){
                 freeFilesDownloader.abortDownload();
             }
