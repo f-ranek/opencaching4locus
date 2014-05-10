@@ -288,6 +288,9 @@ public class MainActivity extends Activity
         }
         if (lastKnown != null){
             updateLocationInfo(lastKnown);
+            if (initialLoading){
+                return ;
+            }
 	    }	    
 
         String provider;
