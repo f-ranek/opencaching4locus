@@ -142,11 +142,12 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             this.createdDate = createdDate;
         }
         
-        @Override
-        public synchronized FilesDownloadTask clone()
+        public synchronized FilesDownloadTask cloneForUI()
         {
             try{
-                return (FilesDownloadTask)super.clone();
+                FilesDownloadTask result = (FilesDownloadTask)super.clone();
+                result.filesDownloader = null;
+                return result;
             }catch(CloneNotSupportedException cnse){
                 throw new IllegalStateException(cnse);
             }
@@ -278,8 +279,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                     return ;
                 }
                 
-                final FilesDownloadTask task2 = task.clone();
-                task2.filesDownloader = null;
+                final FilesDownloadTask task2 = task.cloneForUI();
                 for (final Pair<Handler, FilesDownloaderListener> listener : listeners){
                     final FilesDownloaderListener fdl = listener.second;
                     listener.first.post(new Runnable(){
@@ -297,6 +297,21 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         }
     }
     
+    private void onFileStartingAny(DownloadProgressMonitorImpl caller)
+    {
+        final FilesDownloadTask task = caller.downloadTask;
+        boolean updateNotification;
+        synchronized(task){
+            updateNotification = (task.flags & FilesDownloadTask.FLAG_FIRST_FILE_STARTED) == 0;
+            if (updateNotification){
+                task.flags |= FilesDownloadTask.FLAG_FIRST_FILE_STARTED;
+            }
+        }
+        if (updateNotification){
+            updateNotification();
+        }
+    }
+    
     void onFileStarting(DownloadProgressMonitorImpl caller, final FileData fileData)
     {
         // TODO: check network availability, if not available sleep in a loop for a while,
@@ -306,24 +321,12 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         //   - then catch it in onFileFinished, but do not notify client of an error 
         // - add callback to notify client of task state changes 
         //   (ie. paused due to the network outage, other's client actions and so on)
-        final FilesDownloadTask task = caller.downloadTask;
-        final FilesDownloadTask task2;
-        boolean updateNotification;
-        synchronized(task){
-            updateNotification = (task.flags & FilesDownloadTask.FLAG_FIRST_FILE_STARTED) == 0;
-            if (updateNotification){
-                task.flags |= FilesDownloadTask.FLAG_FIRST_FILE_STARTED;
-            }
-            task2 = task.clone();
-        }
-        if (updateNotification){
-            updateNotification();
-        }
+        onFileStartingAny(caller);
         
         fileData.state = FileData.FILE_STATE_RUNNING;
         
-        task2.filesDownloader = null;
         final FileData fileData2 = fileData.clone();
+        final FilesDownloadTask task2 = caller.downloadTask.cloneForUI();
         for (final Pair<Handler, FilesDownloaderListener> listener : listeners){
             final FilesDownloaderListener fdl = listener.second;
             listener.first.post(new Runnable(){
@@ -339,8 +342,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
     {
         updateFileInDatabase(fileData, true);
         
-        final FilesDownloadTask task2 = caller.downloadTask.clone();
-        task2.filesDownloader = null;
+        final FilesDownloadTask task2 = caller.downloadTask.cloneForUI();
         final FileData fileData2 = fileData.clone();
         for (final Pair<Handler, FilesDownloaderListener> listener : listeners){
             final FilesDownloaderListener fdl = listener.second;
@@ -355,14 +357,15 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
 
     void onFileSkipped(DownloadProgressMonitorImpl caller, FileData fileData)
     {
+        onFileStartingAny(caller);
+        
         fileData.state = FileData.FILE_STATE_SKIPPED;
         synchronized(caller.downloadTask){
             caller.downloadTask.skippedFiles++;
         }
         updateFileInDatabase(fileData, false);
         
-        final FilesDownloadTask task2 = caller.downloadTask.clone();
-        task2.filesDownloader = null;
+        final FilesDownloadTask task2 = caller.downloadTask.cloneForUI();
         final FileData fileData2 = fileData.clone();
         for (final Pair<Handler, FilesDownloaderListener> listener : listeners){
             final FilesDownloaderListener fdl = listener.second;
@@ -381,9 +384,8 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         final FilesDownloadTask task2;
         synchronized(task){
             task.totalDownloadSize += loopAmount; 
-            task2 = caller.downloadTask.clone();
+            task2 = caller.downloadTask.cloneForUI();
         }
-        task2.filesDownloader = null;
         final FileData fileData2 = fileData.clone();
         for (final Pair<Handler, FilesDownloaderListener> listener : listeners){
             final FilesDownloaderListener fdl = listener.second;
@@ -482,8 +484,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         }
         
         
-        final FilesDownloadTask task2 = downloadTask.clone();
-        task2.filesDownloader = null;
+        final FilesDownloadTask task2 = downloadTask.cloneForUI();
         final FileData fileData2 = fileData.clone();
         for (final Pair<Handler, FilesDownloaderListener> listener : listeners){
             final FilesDownloaderListener fdl = listener.second;
@@ -1298,7 +1299,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
 
     private void sendTaskStateChangedNotification(final FilesDownloadTask task, final int previousState)
     {
-        final FilesDownloadTask clonedTask = task.clone();
+        final FilesDownloadTask clonedTask = task.cloneForUI();
         for (final Pair<Handler, FilesDownloaderListener> listener : listeners){
             final FilesDownloaderListener fdl = listener.second;
             if (listener.first.getLooper() == Looper.myLooper()){
@@ -1371,8 +1372,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                             return false;
                         }
                         
-                        final FilesDownloadTask task2 = task.clone();
-                        task2.filesDownloader = null;
+                        final FilesDownloadTask task2 = task.cloneForUI();
                         for (final Pair<Handler, FilesDownloaderListener> listener : listeners) {
                             final FilesDownloaderListener fdl = listener.second;
                             if (listener.first.getLooper() == Looper.myLooper()){
@@ -1444,7 +1444,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                 return false;
             }
             
-            final FilesDownloadTask taskClone = task.clone(); 
+            final FilesDownloadTask taskClone = task.cloneForUI(); 
             int currState = task.state;
             // the stats will get updated in #startTaskFromDatabase
             if (restartFromScratch){
@@ -1494,8 +1494,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
                             return false;
                         }
                         
-                        final FilesDownloadTask task2 = task.clone();
-                        task2.filesDownloader = null;
+                        final FilesDownloadTask task2 = task.cloneForUI();
                         for (final Pair<Handler, FilesDownloaderListener> listener : listeners) {
                             final FilesDownloaderListener fdl = listener.second;
                             if (listener.first.getLooper() == Looper.myLooper()){
@@ -1567,8 +1566,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         loadDatabase(false);
         List<FilesDownloadTask> result = new ArrayList<FilesDownloadTask>(downloadTasks.size());
         for (FilesDownloadTask task : downloadTasks){
-            FilesDownloadTask task2 = task.clone();
-            task2.filesDownloader = null;
+            FilesDownloadTask task2 = task.cloneForUI();
             result.add(task2);
         }
         return result;

@@ -518,7 +518,7 @@ public class FilesDownloader implements Closeable
                 sessionDone += count;
                 
                 final long now = System.currentTimeMillis();
-                if ((loopAmount > 1024) || (loopAmount > 0) && (lastProgressUpdateCall+1000L < now)){
+                if ((loopAmount > 1024) && (lastProgressUpdateCall+1000L < now)){
                     lastProgressUpdateCall = now;
                     if (downloadProgressMonitor != null){
                         downloadProgressMonitor.notifyFileProgress(data, loopAmount, sessionDone);
