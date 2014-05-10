@@ -87,7 +87,7 @@
                 android:adjustViewBounds="true"
                 android:contentDescription="@string/btnDownloadItemStopDescription"
                 android:longClickable="false"
-                android:src="@drawable/ic_stop_2" />
+                android:src="@drawable/ic_stop" />
 
             <ImageButton
                 android:id="@+id/btnDownloadItemPlay"
@@ -97,7 +97,7 @@
                 android:adjustViewBounds="true"
                 android:contentDescription="@string/btnDownloadItemPlayDescription"
                 android:longClickable="false"
-                android:src="@drawable/ic_play_2" />
+                android:src="@drawable/ic_play" />
 
             <ImageButton
                 android:id="@+id/btnDownloadItemCancel"
@@ -107,7 +107,7 @@
                 android:adjustViewBounds="true"
                 android:contentDescription="@string/btnDownloadItemCancelDescription"
                 android:longClickable="false"
-                android:src="@drawable/ic_cancel_3" />
+                android:src="@drawable/ic_cancel" />
 
         </LinearLayout>
     </LinearLayout>

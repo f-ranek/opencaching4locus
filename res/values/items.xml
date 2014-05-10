@@ -2,4 +2,5 @@
 <resources>
     <item name="imageButtonOriginalImage" type="id" />
     <item name="imageButtonGrayedImage" type="id" />
+    <item name="imageButtonGrayedState" type="id" />
 </resources>

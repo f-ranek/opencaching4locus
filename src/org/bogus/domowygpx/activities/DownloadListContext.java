@@ -279,7 +279,7 @@ public abstract class DownloadListContext
                 case GpxTask.STATE_RUNNING:
                     holder.btnDownloadItemCancel.setVisibility(View.VISIBLE);
                     holder.btnDownloadItemCancel.setOnClickListener(onCancelListener);
-                    AndroidUtils.setImageButtonEnabled(!cancelling, holder.btnDownloadItemCancel);
+                    holder.btnDownloadItemCancel.setEnabled(!cancelling);
                     break;
                 case GpxTask.STATE_DONE:
                 case GpxTask.STATE_CANCELED:
@@ -503,40 +503,42 @@ public abstract class DownloadListContext
             if (!super.applyToView(holder, isFresh)){
                 return false;
             }
-            boolean canStop = false;
-            boolean enableStop = true;
-            boolean canPlay = false;
-            boolean canCancel = false;
+            boolean showStop = false;
+            boolean enableStop = false;
+            boolean showPlay = false;
+            boolean showCancel = false;
             boolean enableCancel = true;
             switch(task.state){
                 case FilesDownloadTask.STATE_RUNNING:
-                    canCancel = canStop = true;
+                    showCancel = showStop = true;
+                    enableStop = true;
                     break;
                 case FilesDownloadTask.STATE_FINISHED:
                     break;
                 case FilesDownloadTask.STATE_CANCELLING:
-                    canCancel = true;
+                    showCancel = true;
                     enableCancel = false;
                     break;
                 case FilesDownloadTask.STATE_PAUSING:
-                    canStop = canCancel = true;
-                    enableStop = false;
+                    showStop = showCancel = true;
                     break;
                 case FilesDownloadTask.STATE_STOPPED:
-                    canPlay = true;
+                    showPlay = true;
                     break;
+                default:
             }
             
-            AndroidUtils.setViewVisible(canStop, holder.btnDownloadItemStop);
-            AndroidUtils.setViewVisible(canPlay, holder.btnDownloadItemPlay);
-            AndroidUtils.setViewVisible(canCancel, holder.btnDownloadItemCancel);
+            AndroidUtils.setViewVisible(showStop, holder.btnDownloadItemStop);
+            AndroidUtils.setViewVisible(showPlay, holder.btnDownloadItemPlay);
+            AndroidUtils.setViewVisible(showCancel, holder.btnDownloadItemCancel);
 
             holder.btnDownloadItemStop.setOnClickListener(onStopListener);
             holder.btnDownloadItemPlay.setOnClickListener(onPlayListener);
             holder.btnDownloadItemCancel.setOnClickListener(onCancelListener);
+
+            holder.btnDownloadItemStop.setEnabled(enableStop);
+            holder.btnDownloadItemCancel.setEnabled(enableCancel);
             
-            AndroidUtils.setImageButtonEnabled(enableStop, holder.btnDownloadItemStop);
-            AndroidUtils.setImageButtonEnabled(enableCancel, holder.btnDownloadItemCancel);
             return true;
         }
 
