@@ -53,7 +53,7 @@ public class ByteArraysInputStream extends InputStream{
             System.arraycopy(buff, 0, this.buff, 0, count);
         }
         lastChunkLimit = lastLength;
-        chunk = buff[0];
+        chunk = this.buff[0];
     }
     
     @Override
