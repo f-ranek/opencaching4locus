@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 import org.bogus.android.AndroidUtils;
 import org.bogus.domowygpx.oauth.OKAPI;
 import org.bogus.domowygpx.utils.TargetDirLocator;
+import org.bogus.geocaching.egpx.BuildConfig;
 import org.bogus.geocaching.egpx.R;
 
 import android.app.Activity;
@@ -212,6 +213,19 @@ public class Application extends android.app.Application implements OnSharedPref
         
         // this may execute serially with other tasks in one background thread
         stateCollector.checkSmallStateDump();
+        
+        if (BuildConfig.DEBUG){
+            AsyncTask<Void, Void, Void> decryptApiKeyTask = new AsyncTask<Void, Void, Void>(){
+    
+                @Override
+                protected Void doInBackground(Void... params)
+                {
+                    OKAPI.getInstance(Application.this).getOAuth().getAPIKey();
+                    return null;
+                }
+            };
+            decryptApiKeyTask.execute();
+        }
         
         final Thread main = Thread.currentThread();
         final UncaughtExceptionHandler mueh = main.getUncaughtExceptionHandler();
