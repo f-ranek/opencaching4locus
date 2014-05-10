@@ -197,6 +197,7 @@ public class ChooseCacheTypesDialog
         final Resources resources = parent.getResources();
         final int[][] androidConfig = cacheTypesConfig.getAndroidConfig();
         cacheTypeItems = new CacheTypeItem[cacheTypesConfig.getCount()];
+        /*
         {
             CacheTypeItem cti = new CacheTypeItem(0);
             cti.onCheckedListener = new CompoundButton.OnCheckedChangeListener()
@@ -219,9 +220,9 @@ public class ChooseCacheTypesDialog
             }
             cacheTypeItems[0] = cti;
         }
+        */
         
-        
-        for (int i=1; i<cacheTypeItems.length; i++){
+        for (int i=0; i<cacheTypeItems.length; i++){
             CacheTypeItem cti = new CacheTypeItem(i);
             final int fi = i;
             cti.onCheckedListener = new CompoundButton.OnCheckedChangeListener()
@@ -255,7 +256,7 @@ public class ChooseCacheTypesDialog
             public void onDismiss(DialogInterface dlg)
             {
                 dialog = null;
-                if (!cacheTypesConfig.isAnySet()){
+                if (!cacheTypesConfig.isAnySet()){ // TODO: co z tym zrobić - brak zaznaczenia jakiejkolwiek pozycji
                     cacheTypesConfig.set(0, true);
                 }
                 if (onTypesChosenListener != null){
