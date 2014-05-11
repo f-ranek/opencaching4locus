@@ -516,6 +516,7 @@ public class FilesDownloader implements Closeable
                 os.write(buffer, 0, count);
                 loopAmount += count;
                 sessionDone += count;
+                data.sessionAmount = sessionDone;
                 
                 final long now = System.currentTimeMillis();
                 if ((loopAmount > 1024) && (lastProgressUpdateCall+1000L < now)){

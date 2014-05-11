@@ -360,12 +360,14 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         onFileStartingAny(caller);
         
         fileData.state = FileData.FILE_STATE_SKIPPED;
-        synchronized(caller.downloadTask){
+        final FilesDownloadTask task = caller.downloadTask; 
+        final FilesDownloadTask task2;
+        synchronized(task){
             caller.downloadTask.skippedFiles++;
+            task2 = task.cloneForUI();
         }
         updateFileInDatabase(fileData, false);
         
-        final FilesDownloadTask task2 = caller.downloadTask.cloneForUI();
         final FileData fileData2 = fileData.clone();
         for (final Pair<Handler, FilesDownloaderListener> listener : listeners){
             final FilesDownloaderListener fdl = listener.second;
@@ -384,7 +386,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         final FilesDownloadTask task2;
         synchronized(task){
             task.totalDownloadSize += loopAmount; 
-            task2 = caller.downloadTask.cloneForUI();
+            task2 = task.cloneForUI();
         }
         final FileData fileData2 = fileData.clone();
         for (final Pair<Handler, FilesDownloaderListener> listener : listeners){

@@ -53,7 +53,7 @@ public class FileData implements java.io.Serializable, Cloneable, Parcelable {
     // TEMPORARY STATE
     /** Number of bytes stored in a temp file (from previous session) */
     public long initialSize;
-    /** Number of bytes read in this session */
+    //** Number of bytes read in this session */
     public long sessionAmount;
     /** Expected final file size */
     public long expectedSize;

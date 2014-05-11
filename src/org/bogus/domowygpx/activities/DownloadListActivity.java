@@ -304,7 +304,6 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
         if (listItem.onFileProgress(task, fileData)){
             listViewAdapter.notifyDataSetChanged();
         }
-
     }
 
     /**
