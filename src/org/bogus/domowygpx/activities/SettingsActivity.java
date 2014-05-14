@@ -1,5 +1,6 @@
 package org.bogus.domowygpx.activities;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +36,7 @@ import android.text.TextUtils;
  */ 
 public class SettingsActivity extends PreferenceActivity implements FolderPreferenceHelperActivity
 {
-    private FolderPreferenceHelperActivityListener currActivityResultListener;
+    private WeakReference<FolderPreferenceHelperActivityListener> currActivityResultListener;
     private final List<Object> preventGCStorage = new ArrayList<Object>();
     
     @Override
@@ -410,7 +411,12 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
     {
         boolean preventDefault = false; 
         if (currActivityResultListener != null){
-            preventDefault = currActivityResultListener.onActivityResult(requestCode, resultCode, data);
+            FolderPreferenceHelperActivityListener fphal = this.currActivityResultListener.get();
+            if (fphal != null){
+                preventDefault = fphal.onActivityResult(requestCode, resultCode, data);
+            } else {
+                currActivityResultListener = null;
+            }
         } 
         if (!preventDefault){
             super.onActivityResult(requestCode, resultCode, data);
@@ -421,16 +427,7 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
     @Override
     public void register(FolderPreferenceHelperActivityListener self)
     {
-        currActivityResultListener = self;
-    }
-
-
-    @Override
-    public void unregister(FolderPreferenceHelperActivityListener self)
-    {
-        if (currActivityResultListener == self){
-            currActivityResultListener = null;
-        }
+        currActivityResultListener = new WeakReference<FolderPreferenceHelperActivityListener>(self);
     }
     
     static class CompoundPreferenceChangeListener implements Preference.OnPreferenceChangeListener

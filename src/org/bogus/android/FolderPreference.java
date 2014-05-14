@@ -92,9 +92,6 @@ public class FolderPreference extends EditTextPreference
         } else {
             super.onDialogClosed(false);
         }
-        if (folderPreferenceHelperActivity != null){
-            folderPreferenceHelperActivity.unregister(this);
-        }
     }
 
     @Override
@@ -186,7 +183,6 @@ public class FolderPreference extends EditTextPreference
         }
         */
         if (!intentSent){
-            folderPreferenceHelperActivity.unregister(this);
             Toast.makeText(getContext(), R.string.pref_btn_choose_directory_failed, 
                 Toast.LENGTH_SHORT).show();
         }
@@ -203,7 +199,6 @@ public class FolderPreference extends EditTextPreference
     public boolean onActivityResult(int requestCode, int resultCode, Intent data)
     {
         if (requestCode == REQUEST_CODE_PICK_DIRECTORY){
-            folderPreferenceHelperActivity.unregister(this);
             if (resultCode == Activity.RESULT_OK && data != null) {
                 // obtain the filename
                 Uri fileUri = data.getData();

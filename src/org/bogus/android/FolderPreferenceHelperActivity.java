@@ -23,8 +23,6 @@ public interface FolderPreferenceHelperActivity {
      */
     void startActivityForResult(Intent intent, int requestCode);
     
-    void unregister(FolderPreferenceHelperActivityListener fphal);
-
     public interface FolderPreferenceHelperActivityListener {
         /**
          * Receives activity's result 
