@@ -4,3 +4,4 @@
 \Qimages/uploads/
 \Qimages/
 \Qlib/tinymce/plugins/
+\Qlib/tinymce4/plugins/
