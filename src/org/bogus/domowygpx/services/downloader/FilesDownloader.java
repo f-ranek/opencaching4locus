@@ -502,6 +502,7 @@ public class FilesDownloader implements Closeable
                     if (attemptCount-- <= 0){
                         throw fnfe;
                     }
+                    logger.warn("Failed to create " + targetDir, fnfe);
                     Thread.sleep(250 - 30*attemptCount + Math.abs(System.identityHashCode(this)) % 50);
                 }
             }while(true);
@@ -519,7 +520,7 @@ public class FilesDownloader implements Closeable
                 data.sessionAmount = sessionDone;
                 
                 final long now = System.currentTimeMillis();
-                if ((loopAmount > 1024) && (lastProgressUpdateCall+1000L < now)){
+                if ((loopAmount > 1024) && (lastProgressUpdateCall+100L < now)){
                     lastProgressUpdateCall = now;
                     if (downloadProgressMonitor != null){
                         downloadProgressMonitor.notifyFileProgress(data, loopAmount, sessionDone);

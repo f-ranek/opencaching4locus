@@ -81,7 +81,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
     };
     
     private int stableIdCounter;
-    
+    int filesDownloadRunningCounter;
     
     private ListView listViewOperations;
     OperationsListAdapter listViewAdapter;
@@ -277,7 +277,27 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
         final FileListItem listItem = getFilesListItem(task, false);
         listItem.onFileStarted(task, fileData, false);
         listViewAdapter.notifyDataSetChanged();
+        if (filesDownloadRunningCounter <= 0){
+            filesDownloadRunningCounter = 0;
+            listItemContext.handler.postDelayed(new Runnable(){
+
+                @Override
+                public void run()
+                {
+                    if (filesDownloadRunningCounter > 0 && listItemContext.filesDownloader != null){
+                        // TODO: see DownloadListContext.GpxListItem.onGpxEvent for more work explanation
+                        Log.d(LOG_TAG, "Files periodic list refresh");
+                        listViewAdapter.notifyDataSetChanged();
+                        listItemContext.handler.postDelayed(this, 550);
+                    }
+                    
+                }}, 550);
+        }
+        filesDownloadRunningCounter++;
     }
+    
+    
+    
     
     /**
      * Fired, when the file begins to download, all headers are read, but content data is not
@@ -301,9 +321,7 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
     public void onFileProgress(FilesDownloadTask task, FileData fileData)
     {
         final FileListItem listItem = getFilesListItem(task, false);
-        if (listItem.onFileProgress(task, fileData)){
-            listViewAdapter.notifyDataSetChanged();
-        }
+        listItem.onFileProgress(task, fileData);
     }
 
     /**
@@ -318,6 +336,9 @@ public class DownloadListActivity extends Activity implements GpxDownloaderListe
         final FileListItem listItem = getFilesListItem(task, false);
         listItem.onFileFinished(task, fileData, exception);
         listViewAdapter.notifyDataSetChanged();
+        if (filesDownloadRunningCounter > 0){
+            filesDownloadRunningCounter--;
+        }
     }
 
     @Override

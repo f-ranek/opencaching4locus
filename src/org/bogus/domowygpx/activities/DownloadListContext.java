@@ -12,10 +12,12 @@ import org.bogus.domowygpx.services.GpxDownloaderListener;
 import org.bogus.domowygpx.services.GpxDownloaderService.GpxTask;
 import org.bogus.domowygpx.services.GpxDownloaderService.GpxTaskEvent;
 import org.bogus.domowygpx.services.downloader.FileData;
+import org.bogus.geocaching.egpx.BuildConfig;
 import org.bogus.geocaching.egpx.R;
 
 import android.content.Context;
 import android.os.Handler;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -28,6 +30,7 @@ import android.widget.TextView;
 
 public abstract class DownloadListContext
 {
+    private final static String LOG_TAG = "DownloadListContext";
     Context context;
     GpxDownloaderApi gpxDownloader;
     FilesDownloaderApi filesDownloader;
@@ -372,7 +375,9 @@ public abstract class DownloadListContext
                         if (!updated || statusUpdater == null){
                             statusUpdater = null;
                         } else {
-                            handler.postDelayed(statusUpdater, 1000);
+                            // TODO: keep only ONE queue with periodic refresh requests, and perform them
+                            // only when last list update was before those 1000 ms
+                            handler.postDelayed(statusUpdater, 1000); 
                         }
                     }
                 };
@@ -454,7 +459,6 @@ public abstract class DownloadListContext
     
     class FileListItem extends BaseListItem {
 
-        private long oldTotalSize;
         FilesDownloadTask task;
         
         final View.OnClickListener onPlayListener = new View.OnClickListener()
@@ -657,22 +661,27 @@ public abstract class DownloadListContext
                     R.plurals.skipped, skipped, skipped));
             }
             if (msg.length() > 0){
-                details = msg.toString();
+                String newDetails = msg.toString();
+                if (BuildConfig.DEBUG){
+                    if (details == null || !newDetails.equals(details)){
+                        Log.d(LOG_TAG, "Item details=" + newDetails);
+                    }
+                }
+                details = newDetails;
             } else {
+                if (BuildConfig.DEBUG){
+                    if (details != null){
+                        Log.d(LOG_TAG, "Item details=" + details);
+                    }
+                }
                 details = null;
             }
         }
         
-        boolean onFileProgress(FilesDownloadTask task, FileData fileData)
+        void onFileProgress(FilesDownloadTask task, FileData fileData)
         {
             this.task = task;
-            long totalSize = task.totalDownloadSize;
-            if (totalSize >= 1048576 && totalSize-oldTotalSize<1024){
-                return false;
-            }
-            oldTotalSize = totalSize;
             generateDetails();
-            return true;
         }
         
         void onFileStarted(FilesDownloadTask task, FileData fileData, boolean started)

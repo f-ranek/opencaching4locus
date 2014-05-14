@@ -388,6 +388,9 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
             task.totalDownloadSize += loopAmount; 
             task2 = task.cloneForUI();
         }
+        if (BuildConfig.DEBUG){
+            Log.d(LOG_TAG, "onFileProgress, file=" + fileData.target.getName() + ", sessionDone=" + sessionDone +", totalDownloadSize=" + task.totalDownloadSize);
+        }
         final FileData fileData2 = fileData.clone();
         for (final Pair<Handler, FilesDownloaderListener> listener : listeners){
             final FilesDownloaderListener fdl = listener.second;
