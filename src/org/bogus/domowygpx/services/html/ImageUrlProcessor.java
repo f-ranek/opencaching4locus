@@ -446,8 +446,9 @@ public class ImageUrlProcessor implements ImageSourceResolver
                     // tinymce images and so on
                     localPath = cleanupInternalPath(trustedUri);
                     boolean isInternal = false;
+                    final String path = trustedUri.getPath();
                     for (Pattern p : internalPathPatterns){
-                        if (p.matcher(trustedUri.getPath()).find()){
+                        if (p.matcher(path).find()){
                             isInternal = true;
                             break;
                         }
@@ -471,7 +472,7 @@ public class ImageUrlProcessor implements ImageSourceResolver
                 }
                 final String virtualTarget = virtualLocation + localPath;
                 imageData.target = new File(targetBase, localPath);
-                if (downloadImages || useExistingImages && imageData.target.exists()){
+                if (downloadImage || useExistingImages && imageData.target.exists()){
                     // existing images will be cleaned up in GpxDownloaderService, but we will get stats for them
                     queue.add(imageData);
                     return virtualTarget;
