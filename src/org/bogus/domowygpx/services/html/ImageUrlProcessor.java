@@ -102,7 +102,7 @@ public class ImageUrlProcessor implements ImageSourceResolver
     private File targetBase;
     private boolean downloadImages = true;
     private boolean useExistingImages = true;
-    private boolean extractDataImages = true;
+    private final boolean extractDataImages = true;
     private boolean downloadCommentImages;
     private int totalImages;
     
@@ -509,7 +509,7 @@ public class ImageUrlProcessor implements ImageSourceResolver
         this.downloadCommentImages = downloadCommentImages;
     }
 
-    public boolean isExtractDataImages()
+    /*public boolean isExtractDataImages()
     {
         return extractDataImages;
     }
@@ -517,7 +517,7 @@ public class ImageUrlProcessor implements ImageSourceResolver
     public void setExtractDataImages(boolean extractDataImages)
     {
         this.extractDataImages = extractDataImages;
-    }
+    }*/
 
     public boolean isUseExistingImages()
     {
