@@ -12,7 +12,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Looper;
 import android.os.MessageQueue;
 import android.view.View;
@@ -97,8 +96,7 @@ public class DownloadImagesFragment implements OnSharedPreferenceChangeListener
             int lblResId;
             boolean state;
             if (TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI.equals(currentDownloadImagesStrategy)){
-                NetworkInfo wifiInfo = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-                state = !connectivityManager.isActiveNetworkMetered() && wifiInfo != null && wifiInfo.isConnected();
+                state = AndroidUtils.isOnWiFi(connectivityManager);
                 lblResId = R.string.downloadImages_wifi;
             } else
             if (TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_NEVER.equals(currentDownloadImagesStrategy)){

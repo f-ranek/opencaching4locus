@@ -14,6 +14,8 @@ import android.content.SharedPreferences.Editor;
 import android.graphics.Color;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.view.View;
@@ -126,5 +128,19 @@ public class AndroidUtils
                 editor.putStringSet(key2, history);
             }
         }
+    }
+    
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    public static boolean isOnWiFi(ConnectivityManager cm)
+    {
+        final NetworkInfo wifiInfo = cm.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+        boolean hasWiFi = wifiInfo != null && wifiInfo.isConnected();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN){
+            if (hasWiFi && cm.isActiveNetworkMetered()){
+                hasWiFi = false;
+            }
+        }
+        return hasWiFi;
+        
     }
 }

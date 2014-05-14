@@ -20,7 +20,6 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
@@ -254,9 +253,7 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
             if (downloadImagesStrategy.equals(DOWNLOAD_IMAGES_STRATEGY_ON_WIFI)){
                 // check, if WiFi is enabled and in use    
                 ConnectivityManager connectivityManager = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
-                NetworkInfo wifiInfo = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-                boolean hasWiFi = !connectivityManager.isActiveNetworkMetered() && wifiInfo != null && wifiInfo.isConnected();
-                outDownloadImages = hasWiFi;
+                outDownloadImages = AndroidUtils.isOnWiFi(connectivityManager);
             } else {
                 Log.e(LOG_TAG, "Invalid download images strategy: " + downloadImagesStrategy);
             }
@@ -687,5 +684,4 @@ public class TaskConfiguration implements java.io.Serializable, Parcelable
     {
         this.onlyWithTrackables = onlyWithTrackables;
     }
-
 }
