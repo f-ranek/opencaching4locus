@@ -643,6 +643,8 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         database.beginTransaction();
         try{
             synchronized(task){
+                // TODO: check taask state, since user may have cancelled task before we get here
+                
                 if (restartFromScratch){
                     ContentValues cv = new ContentValues(2);
                     cv.put("state", FileData.FILE_STATE_SCHEDULED);
