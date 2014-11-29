@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="360"
+   height="360"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.2 r9819"
+   sodipodi:docname="cache_type_drive_in_1.svg"
+   inkscape:export-filename="E:\Home\Bogus\Pulpit\KESZE\opencaching4locus\res\drawable-ldpi\cache_type_quiz.png"
+   inkscape:export-xdpi="3.5"
+   inkscape:export-ydpi="3.5">
+  <defs
+     id="defs4">
+    <linearGradient
+       id="linearGradient3765">
+      <stop
+         id="stop4344"
+         offset="0"
+         style="stop-color:#748ae3;stop-opacity:1;" />
+      <stop
+         id="stop4342"
+         offset="0.49514562"
+         style="stop-color:#173cd0;stop-opacity:1;" />
+      <stop
+         style="stop-color:#001c8b;stop-opacity:1;"
+         offset="1"
+         id="stop4333" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3765"
+       id="linearGradient3771"
+       x1="132.78571"
+       y1="395.2908"
+       x2="592.78571"
+       y2="395.2908"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.70710678,0.70710678,-0.70710678,0.70710678,0,0)" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.5455961"
+     inkscape:cx="159.82288"
+     inkscape:cy="183.86044"
+     inkscape:document-units="px"
+     inkscape:current-layer="g2990"
+     showgrid="false"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     inkscape:window-width="883"
+     inkscape:window-height="619"
+     inkscape:window-x="33"
+     inkscape:window-y="42"
+     inkscape:window-maximized="0" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-692.36218)">
+    <g
+       id="g2990"
+       transform="matrix(0.65081122,0,0,0.65081122,-56.105008,615.1025)">
+      <rect
+         y="166.8092"
+         x="134.30412"
+         height="456.96317"
+         width="456.96317"
+         id="rect2989"
+         style="opacity:0.80000000000000004;fill:#0000ff;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:4;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
+      <text
+         sodipodi:linespacing="125%"
+         id="text2985"
+         y="571.42303"
+         x="199.42358"
+         style="font-size:480.97851563000006000px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:3.84135971;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;font-family:Times New Roman;-inkscape-font-specification:Times New Roman"
+         xml:space="preserve"><tspan
+           style="font-size:480.97848511000001000px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:3.84135971;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;font-family:MS Reference Sans Serif;-inkscape-font-specification:MS Reference Sans Serif Bold"
+           y="571.42303"
+           x="199.42358"
+           id="tspan2987"
+           sodipodi:role="line">P</tspan></text>
+    </g>
+  </g>
+</svg>

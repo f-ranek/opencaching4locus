@@ -26,6 +26,10 @@ set filename=cache_type_virtual
 call :export_image
 set filename=cache_type_webcam
 call :export_image
+set filename=cache_type_math
+call :export_image
+set filename=cache_type_drive_in
+call :export_image
 goto :EOF
 
 :export_image
