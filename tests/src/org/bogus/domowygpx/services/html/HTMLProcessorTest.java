@@ -1,4 +1,4 @@
-package org.bogus.domowygpx.html;
+package org.bogus.domowygpx.services.html;
 
 import org.junit.Assert;
 import org.junit.Test;

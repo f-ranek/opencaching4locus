@@ -1,5 +1,6 @@
 package org.bogus.domowygpx.activities;
 
+import org.bogus.domowygpx.oauth.OKAPI;
 import org.bogus.geocaching.egpx.R;
 
 import android.app.Activity;
@@ -141,9 +142,9 @@ public class ChooseCacheTypesDialog
      * Parse the config and display dialog. Make sure to {@link #setOnTypesChosenListener(OnTypesChosenListener)}
      * @param cacheTypes
      */
-    public void display(String cacheTypes)
+    public void display(String cacheTypes, OKAPI okApi)
     {
-        CacheTypesConfig cacheTypesConfig = new CacheTypesConfig(); 
+        CacheTypesConfig cacheTypesConfig = new CacheTypesConfig(okApi); 
         cacheTypesConfig.parseFromConfigString(cacheTypes);
         display(cacheTypesConfig);
     }

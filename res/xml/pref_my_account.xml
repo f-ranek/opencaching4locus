@@ -1,10 +1,10 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     
     <org.bogus.android.ButtonPreference
-        android:key="signToService"
-        android:title="@string/pref_my_account_sign"
-        android:summary="@string/pref_my_account_sign_desc"
-        android:text="@string/pref_my_account_sign_btn"
+        android:key="installation"
+        android:title="@null"
+        android:summary="@string/pref_my_account_installation_desc"
+        android:text="@string/pref_my_account_installation_btn"
     />
     
     <EditTextPreference
@@ -33,7 +33,6 @@
         android:negativeButtonText="@null"
         android:positiveButtonText="@null"
         android:title="@string/pref_my_account_my_notes" 
-        android:dependency="signToService"
         />
     <CheckBoxPreference 
         android:key="excludeMyOwn"
@@ -46,13 +45,11 @@
         android:title="@string/pref_my_account_exclude_ignored"
         android:summary="@string/pref_my_account_exclude_ignored_desc"
         android:defaultValue="true"
-        android:dependency="signToService"
         />
     <CheckBoxPreference
         android:key="userCoordsAsDefault" 
         android:title="@string/pref_my_account_user_coords_as_default"
         android:summary="@string/pref_my_account_user_coords_as_default_desc"
         android:defaultValue="true"
-        android:dependency="signToService"
         />
 </PreferenceScreen>

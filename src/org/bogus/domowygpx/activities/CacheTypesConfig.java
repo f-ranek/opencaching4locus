@@ -1,7 +1,14 @@
 package org.bogus.domowygpx.activities;
 
+import java.util.Arrays;
 import java.util.BitSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
+import org.bogus.domowygpx.oauth.OKAPI;
 import org.bogus.geocaching.egpx.R;
 
 /**
@@ -14,7 +21,7 @@ import org.bogus.geocaching.egpx.R;
 public class CacheTypesConfig
 {
     // TODO: make it configurable by okapi server
-    private final static int[][] CACHE_TYPES_CONFIG = new int[][]{
+    private final static int[][] CACHE_TYPES_CONFIG_PL = new int[][]{
         {R.drawable.cache_type_traditional, R.string.cacheTypeTraditional},
         {R.drawable.cache_type_multi, R.string.cacheTypeMulti},
         {R.drawable.cache_type_quiz, R.string.cacheTypeQuiz},
@@ -25,7 +32,19 @@ public class CacheTypesConfig
         {R.drawable.cache_type_webcam, R.string.cacheTypeWebcam},
         {R.drawable.cache_type_own, R.string.cacheTypeOwn},
     };
-    private final static String[] CACHE_TYPE_NAMES = new String[] {
+    private final static int[][] CACHE_TYPES_CONFIG_DE = new int[][]{
+        {R.drawable.cache_type_traditional, R.string.cacheTypeTraditional},
+        {R.drawable.cache_type_drive_in, R.string.cacheTypeDriveIn},
+        {R.drawable.cache_type_multi, R.string.cacheTypeMulti},
+        {R.drawable.cache_type_quiz, R.string.cacheTypeQuiz},
+        {R.drawable.cache_type_math, R.string.cacheTypeMath},
+        {R.drawable.cache_type_moving, R.string.cacheTypeMoving},
+        {R.drawable.cache_type_virtual, R.string.cacheTypeVirtual},
+        {R.drawable.cache_type_event, R.string.cacheTypeEvent},
+        {R.drawable.cache_type_webcam, R.string.cacheTypeWebcam},
+        {R.drawable.cache_type_unknown, R.string.cacheTypeUnknown},
+    };
+    final static String[] CACHE_TYPE_NAMES_PL = new String[] {
         "Traditional",
         "Multi",
         "Quiz",
@@ -36,7 +55,49 @@ public class CacheTypesConfig
         "Webcam",
         "Own",
     };
-    private BitSet values = new BitSet(CACHE_TYPES_CONFIG.length);
+    final static String[] CACHE_TYPE_NAMES_DE = new String[] {
+        "Traditional",
+        "Drive-In", // XXX
+        "Multi",
+        "Quiz",
+        "Math", // XXX
+        "Moving",
+        "Virtual",
+        "Event",
+        "Webcam",
+        "Other",
+    };
+    
+    private final static Map<String, int[][]> CACHE_TYPES_CONFIG;
+    private final static Map<String, String[]> CACHE_TYPE_NAMES;
+    private final static Map<String, String> DEFAULT_CONFIG;
+    static {
+        CACHE_TYPES_CONFIG = new HashMap<String, int[][]>(2);
+        CACHE_TYPES_CONFIG.put("pl", CACHE_TYPES_CONFIG_PL);
+        CACHE_TYPES_CONFIG.put("de", CACHE_TYPES_CONFIG_DE);
+        CACHE_TYPE_NAMES = new HashMap<String, String[]>(2);
+        CACHE_TYPE_NAMES.put("pl", CACHE_TYPE_NAMES_PL);
+        CACHE_TYPE_NAMES.put("de", CACHE_TYPE_NAMES_DE);
+        DEFAULT_CONFIG = new HashMap<String, String>(2);
+        DEFAULT_CONFIG.put("pl", "Traditional|Multi|Moving|Virtual|Other|Quiz");
+        DEFAULT_CONFIG.put("de", "Traditional|Multi|Moving|Virtual|Other|Quiz|Drive-In|Math");
+    }
+    
+    private final BitSet values;
+    private final Set<String> selectedTypes = new HashSet<String>(16);
+    
+    private final int[][] cacheTypesConfig;
+    private final String[] cacheTypeNames;
+    
+    private final OKAPI okapi;
+    
+    public CacheTypesConfig(OKAPI okapi)
+    {
+        this.okapi = okapi;
+        this.cacheTypesConfig = CACHE_TYPES_CONFIG.get(okapi.getBranchCode());
+        this.cacheTypeNames = CACHE_TYPE_NAMES.get(okapi.getBranchCode());
+        this.values = new BitSet(cacheTypesConfig.length);
+    }
     
     /**
      * Parses from preferences string.
@@ -46,19 +107,32 @@ public class CacheTypesConfig
     public void parseFromConfigString(String cacheTypes)
     {
         values.clear();
-        if (cacheTypes == null || cacheTypes.length() == 0
-                || cacheTypes.startsWith("ALL"))
-        {
-            for (int idx = 0; idx < CACHE_TYPES_CONFIG.length; idx++){
-                values.set(idx);
+        selectedTypes.clear();
+        if (cacheTypes == null || cacheTypes.length() == 0 || cacheTypes.startsWith("ALL")){
+            values.set(0, cacheTypesConfig.length);
+            for (String[] val : CACHE_TYPE_NAMES.values()){
+                selectedTypes.addAll(Arrays.asList(val));
             }
-        } 
-        String[] types = cacheTypes.split("\\Q|");
-        for (String type : types){
-            for (int idx = 0; idx < CACHE_TYPES_CONFIG.length; idx++){
-                if (type.equals(CACHE_TYPE_NAMES[idx])){
-                    values.set(idx);
-                    break;
+            return ;
+        }
+        String[] typeNames = cacheTypes.split("\\Q|");
+        for (String typeName : typeNames){
+            if (typeName.startsWith("All_")){
+                String branch = typeName.substring(4);
+                String[] allTypes = CACHE_TYPE_NAMES.get(branch);
+                if (allTypes != null){
+                    selectedTypes.addAll(Arrays.asList(allTypes));
+                }
+                if (branch.equals(okapi.getBranchCode())){
+                    values.set(0, cacheTypesConfig.length);
+                }
+            } else {
+                selectedTypes.add(typeName);
+                for (int idx = 0; idx < cacheTypesConfig.length; idx++){
+                    if (typeName.equals(cacheTypeNames[idx])){
+                        values.set(idx);
+                        break;
+                    }
                 }
             }
         }
@@ -71,16 +145,31 @@ public class CacheTypesConfig
      */
     public String serializeToConfigString()
     {
-        StringBuilder result = new StringBuilder();
-        if (isAllItemsSet()){
-            result.append("ALL"); 
-        }
-        for (int idx = 0; idx < CACHE_TYPE_NAMES.length; idx++){
+        StringBuilder result = new StringBuilder(128);
+        for (int idx = 0; idx < cacheTypeNames.length; idx++){
             if (values.get(idx)){
-                if (result.length() > 0){
-                    result.append('|');
+                selectedTypes.add(cacheTypeNames[idx]);
+            } else {
+                selectedTypes.remove(cacheTypeNames[idx]);
+            }
+        }
+        for (String typeName : selectedTypes){
+            if (result.length() > 0){
+                result.append('|');
+            }
+            result.append(typeName);
+        }
+        for (Entry<String, String[]> entry : CACHE_TYPE_NAMES.entrySet()){
+            boolean hasAll = true;
+            for (String type : entry.getValue()){
+                if (!selectedTypes.contains(type)){
+                    hasAll = false;
+                    break;
                 }
-                result.append(CACHE_TYPE_NAMES[idx]);
+            }
+            if (hasAll){
+                result.append('|');
+                result.append("All_").append(entry.getKey());
             }
         }
         return result.toString();
@@ -92,7 +181,20 @@ public class CacheTypesConfig
      */
     public String serializeToWebServiceString()
     {
-        return isAllItemsSet() ? null : serializeToConfigString();
+        if (isAllItemsSet()){
+            return null;
+        } else {
+            StringBuilder result = new StringBuilder(64);
+            for (int idx = 0; idx < cacheTypeNames.length; idx++){
+                if (values.get(idx)){
+                    if (result.length() > 0){
+                        result.append('|');
+                    }
+                    result.append(cacheTypeNames[idx]);
+                }
+            }
+            return result.toString();
+        }
     }
     
     /**
@@ -101,7 +203,7 @@ public class CacheTypesConfig
      */
     public boolean isAllItemsSet()
     {
-        return getSelectedCount() == CACHE_TYPE_NAMES.length;
+        return getSelectedCount() == cacheTypeNames.length;
     }
 
     /**
@@ -148,7 +250,7 @@ public class CacheTypesConfig
      */
     public int getCount()
     {
-        return CACHE_TYPES_CONFIG.length;
+        return cacheTypesConfig.length;
     }
     
     /**
@@ -160,7 +262,7 @@ public class CacheTypesConfig
      */
     public int[][] getAndroidConfig()
     {
-        return CACHE_TYPES_CONFIG;
+        return cacheTypesConfig;
     }
     
     /**
@@ -170,6 +272,6 @@ public class CacheTypesConfig
      */
     public String getDefaultConfig()
     {
-        return "Traditional|Multi|Moving|Virtual|Other|Quiz";
+        return DEFAULT_CONFIG.get(okapi.getBranchCode());
     }
 }

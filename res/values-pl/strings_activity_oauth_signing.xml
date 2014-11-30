@@ -1,6 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <string name="title_activity_oauth_signing">Logowanie w oc.pl</string>
+    <string name="title_activity_oauth_signing">Logowanie w OpenCaching</string>
     <string name="msgLogoutInfo">Czy na pewno chcesz się wylogować?</string>
     <string name="btnLogout">Wyloguj</string>
     <string name="btnCancel">Anuluj</string>

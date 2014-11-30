@@ -6,7 +6,7 @@
     <!-- Strings related to Settings -->
 
     <!-- My account -->
-    <string name="pref_title_my_account">My oc.pl account</string>
+    <string name="pref_title_my_account">My OpenCaching account</string>
     <string name="pref_my_account_login">Login</string>
     <string name="pref_my_account_found_strategy">Found caches</string>
     <string-array name="pref_my_account_found_strategy_titles">
@@ -23,12 +23,12 @@
     </string-array>
 
 
-    <string name="pref_my_account_sign">Log into oc.pl</string>
+    <string name="pref_my_account_sign">Log into OpenCaching</string>
     <string name="pref_my_account_sign_desc">Logging into service lets you i.e. download personal cache notes</string>
     <string name="pref_my_account_sign_btn">Login</string>
 
-    <string name="pref_my_account_sign_forget">Log out from oc.pl</string>
-    <string name="pref_my_account_sign_forget_desc">Log out from oc.pl</string>
+    <string name="pref_my_account_sign_forget">Log out from OpenCaching</string>
+    <string name="pref_my_account_sign_forget_desc">Log out from OpenCaching</string>
     <string name="pref_my_account_sign_forget_btn">Forget</string>
 
     <string name="pref_my_account_exclude_my_own">Skip my own geocaches</string>
@@ -38,7 +38,7 @@
     <string name="pref_my_account_exclude_ignored_desc">When set, ignored geocaches are skipped</string>
 
     <string name="pref_my_account_user_coords_as_default">Use personal coordinates by default</string>
-    <string name="pref_my_account_user_coords_as_default_desc">When set, geocaches will be displayed in your alternate (personal) coordinates, the ones which you have provided in the oc.pl webpage</string>
+    <string name="pref_my_account_user_coords_as_default_desc">When set, geocaches will be displayed in your alternate (personal) coordinates, the ones which you have provided in the OpenCaching webpage</string>
 
     <!-- Directories -->
     <string name="pref_title_directories">File locations</string>

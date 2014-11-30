@@ -116,7 +116,7 @@
     <string name="infoWaiting">Waiting&#8230;</string>
     <string name="infoWorkInProgress">Please wait, working&#8230;</string>
 
-    <string name="okapiErrorInvalidToken">We got "access denied" from oc.pl. You need to re-authorize.</string>
+    <string name="okapiErrorInvalidToken">We got "access denied" from OpenCaching. You need to re-authorize.</string>
     <string name="okapiErrorInvalidTimestamp">Check your system time, in needs to be valid!</string> <!-- BTW, this error can be fixed internally -->
 
     <string name="titleActivityInfo">About</string>
@@ -151,7 +151,9 @@
     <string name="cacheTypeUnknown">Other type</string>
     <string name="cacheTypeVirtual">Virtual</string>
     <string name="cacheTypeWebcam">Webcam</string>
-
+    <string name="cacheTypeDriveIn">Drive-In</string>
+    <string name="cacheTypeMath">Math/Physics Quiz</string>
+    
     <string name="difficultyTask">Task difficulty</string>
     <string name="difficultyTerrain">Terrain difficulty</string>
     <string name="difficulties">Difficulty:</string>

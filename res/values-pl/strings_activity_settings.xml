@@ -5,7 +5,7 @@
     <!-- Strings related to Settings -->
 
     <!-- My account -->
-    <string name="pref_title_my_account">Ja w oc.pl</string>
+    <string name="pref_title_my_account">Ja w OpenCaching</string>
     <string name="pref_my_account_login">Login</string>
     <string name="pref_my_account_found_strategy">Znalezione skrzynki</string>
     <string-array name="pref_my_account_found_strategy_titles">
@@ -21,12 +21,14 @@
         <item>w opisie i atrybutach skrzynki</item>
     </string-array>
         
+    <string name="pref_my_account_installation_desc">Pozwala wybrać serwis, z którego będą pobierane dane</string>
+    <string name="pref_my_account_installation_btn">Zmień</string>
     
-    <string name="pref_my_account_sign">Zaloguj w oc.pl</string>
+    <string name="pref_my_account_sign">Zaloguj w opencaching</string>
     <string name="pref_my_account_sign_desc">Zalogowanie w serwisie umożliwia pobieranie np. własnych notatek do skrzynek</string>
     <string name="pref_my_account_sign_btn">Zaloguj</string>
     
-    <string name="pref_my_account_sign_forget">Zapomnij mnie w oc.pl</string>
+    <string name="pref_my_account_sign_forget">Zapomnij mnie w opencaching</string>
     <string name="pref_my_account_sign_forget_desc">Wylogowuje z serwisu</string>
     <string name="pref_my_account_sign_forget_btn">Zapomnij</string>
     
@@ -37,7 +39,7 @@
     <string name="pref_my_account_exclude_ignored_desc">Gdy zaznaczone, ignorowane skrzynki są pomijane</string>
     
     <string name="pref_my_account_user_coords_as_default">Własne współrzędne jako domyślne</string>
-    <string name="pref_my_account_user_coords_as_default_desc">Gdy zaznaczone, przenosi skrzynkę pod własne współrzędne, wprowadzone przez użytkownika na stronie oc.pl</string>
+    <string name="pref_my_account_user_coords_as_default_desc">Gdy zaznaczone, przenosi skrzynkę pod własne współrzędne, wprowadzone przez użytkownika na stronie OpenCaching</string>
     
     <!-- Directories -->
     <string name="pref_title_directories">Katalogi zapisu</string>

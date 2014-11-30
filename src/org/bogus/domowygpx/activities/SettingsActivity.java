@@ -1,6 +1,8 @@
 package org.bogus.domowygpx.activities;
 
 import java.lang.ref.WeakReference;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +31,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceGroup;
 import android.text.TextUtils;
+import android.widget.Toast;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. 
@@ -38,6 +41,9 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
 {
     private WeakReference<FolderPreferenceHelperActivityListener> currActivityResultListener;
     private final List<Object> preventGCStorage = new ArrayList<Object>();
+    EditTextPreference userNamePref;
+    ButtonPreference installationPref; 
+    OKAPI okapi;
     
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -65,7 +71,7 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
     private void setupSimplePreferencesScreen()
     {
         final SharedPreferences config = getPreferenceManager().getSharedPreferences();
-        final OAuth oauth = OKAPI.getInstance(SettingsActivity.this).getOAuth();
+        final OAuth oauth = (okapi = OKAPI.getInstance(SettingsActivity.this)).getOAuth();
 
         addPreferencesFromResource(R.xml.pref_header);
         {
@@ -88,7 +94,10 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
             fakeHeader.setTitle(R.string.pref_title_advanced);
             getPreferenceScreen().addPreference(fakeHeader);
             addPreferencesFromResource(R.xml.pref_advanced);
-        }        
+        }  
+
+        userNamePref = (EditTextPreference)findPreference("userName");
+        
         {
             final Preference downloadImagesStrategyPref = findPreference("downloadImagesStrategy");
             CompoundPreferenceChangeListener.add(downloadImagesStrategyPref, 
@@ -190,9 +199,21 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
         }
 
         {
-            final Preference userName = findPreference("userName");
-            
-            CompoundPreferenceChangeListener.add(userName, 
+            installationPref = (ButtonPreference)findPreference("installation");
+            installationPref.setMakeTitleClickable(true);
+            installationPref.setOnClickListener(new ButtonPreference.OnClickListener()
+            {
+                @Override
+                public void onClick(ButtonPreference pref)
+                {
+                    // XXX
+                    Toast.makeText(SettingsActivity.this, "Ups, unimplemented", Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+        
+        {
+            CompoundPreferenceChangeListener.add(userNamePref, 
                 new Preference.OnPreferenceChangeListener(){
                 boolean preventEvent;
                 @Override
@@ -246,7 +267,7 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
                     }
                 }});
 
-            final ButtonPreference signToService = (ButtonPreference)findPreference("signToService");
+            //final ButtonPreference signToService = (ButtonPreference)findPreference("signToService");
             OnSharedPreferenceChangeListener spcl = new OnSharedPreferenceChangeListener()
             {
                 
@@ -261,20 +282,23 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
                         public void run()
                         {
                             final boolean signed = oauth.hasOAuth3();
-                            if (signed){
-                                signToService.setTitle(R.string.pref_my_account_sign_forget);
-                                signToService.setSummary(R.string.pref_my_account_sign_forget_desc);
-                                signToService.getButton().setText(R.string.pref_my_account_sign_forget_btn);
-                            } else {
-                                signToService.setTitle(R.string.pref_my_account_sign);
-                                signToService.setSummary(R.string.pref_my_account_sign_desc);
-                                signToService.getButton().setText(R.string.pref_my_account_sign_btn);
-                            }
-                            signToService.setShouldDisableDependents(!signed);
-                            userName.setEnabled(!signed);
+                            findPreference("myNotes").setEnabled(signed);
+                            findPreference("excludeIgnored").setEnabled(signed);
+                            findPreference("userCoordsAsDefault").setEnabled(signed);
+                            //if (signed){
+                            //    signToService.setTitle(R.string.pref_my_account_sign_forget);
+                            //    signToService.setSummary(R.string.pref_my_account_sign_forget_desc);
+                            //    signToService.getButton().setText(R.string.pref_my_account_sign_forget_btn);
+                            //} else {
+                            //    signToService.setTitle(R.string.pref_my_account_sign);
+                            //    signToService.setSummary(R.string.pref_my_account_sign_desc);
+                            //    signToService.getButton().setText(R.string.pref_my_account_sign_btn);
+                            //}
+                            //signToService.setShouldDisableDependents(!signed);
+                            userNamePref.setEnabled(!signed);
                             
-                            if (key != null && key.equals(userName.getKey())){
-                                userName.getOnPreferenceChangeListener().onPreferenceChange(userName, config.getString("userName", null));
+                            if (key != null && key.equals(userNamePref.getKey())){
+                                userNamePref.getOnPreferenceChangeListener().onPreferenceChange(userNamePref, okapi.getUserName());
                             }
                         }
                     });
@@ -283,15 +307,14 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
             config.registerOnSharedPreferenceChangeListener(spcl);
             spcl.onSharedPreferenceChanged(config, null);
             preventGCStorage.add(spcl); // we must keep a strong reference, since SharedPreferences keeps week refs
-            userName.getOnPreferenceChangeListener().onPreferenceChange(userName, config.getString("userName", null));
-            signToService.setOnClickListener(new ButtonPreference.OnClickListener(){
-    
-                @Override
-                public void onClick(ButtonPreference pref)
-                {
-                    Intent intent = new Intent(Intent.ACTION_VIEW, null, SettingsActivity.this, OAuthSigningActivity.class);
-                    SettingsActivity.this.startActivityForResult(intent, 0);
-                }});
+            userNamePref.getOnPreferenceChangeListener().onPreferenceChange(userNamePref, okapi.getUserName());
+            //signToService.setOnClickListener(new ButtonPreference.OnClickListener(){
+            //    @Override
+            //    public void onClick(ButtonPreference pref)
+            //    {
+            //        Intent intent = new Intent(Intent.ACTION_VIEW, null, SettingsActivity.this, OAuthSigningActivity.class);
+            //        SettingsActivity.this.startActivityForResult(intent, 0);
+            //    }});
         }
         {
             Preference.OnPreferenceChangeListener historySaver = new Preference.OnPreferenceChangeListener()
@@ -315,6 +338,44 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
         }
     }
 
+    
+    
+    @Override
+    protected void onResume()
+    {
+        {
+            final String apiUrl = OKAPI.getInstance(this).getAPIUrl();
+            final URL apiUrl2;
+            try {
+                apiUrl2 = new URL(apiUrl);
+            } catch (MalformedURLException e) {
+                throw new IllegalStateException(e);
+            }
+            String host = apiUrl2.getHost();
+            if (host.startsWith("www.")){
+                host = host.substring(4);
+            }
+            host = Character.toUpperCase(host.charAt(0)) + host.substring(1);
+            final String ocInstallation = "(" + host + "=%0)";
+            
+            final StringBuilder ocUrl3 = new StringBuilder(); 
+            ocUrl3.append(apiUrl2.getProtocol()).append("://").append(apiUrl2.getHost());
+            if (apiUrl2.getPort() != -1){
+                ocUrl3.append(':').append(apiUrl2.getPort());
+            }
+            ocUrl3.append('/');
+            CharSequence ocInstallation2 = AndroidUtils.insertUrls(ocInstallation, new String[]{ocUrl3.toString()});
+            installationPref.setTitle(ocInstallation2);
+            
+        }
+        {
+            // TODO: optymalizacja
+            userNamePref.setKey(okapi.getInstallationCode().concat(":userName"));
+            userNamePref.getOnPreferenceChangeListener().onPreferenceChange(userNamePref, okapi.getUserName());
+        }
+        super.onResume();
+    }
+    
     private void setupPrefereneHierarchy(PreferenceGroup group, Map<String, ?> values)
     {
         int count = group.getPreferenceCount();
@@ -475,4 +536,6 @@ public class SettingsActivity extends PreferenceActivity implements FolderPrefer
         }
         
     }
+
+
 }

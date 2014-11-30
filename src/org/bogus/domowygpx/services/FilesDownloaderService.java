@@ -553,7 +553,7 @@ public class FilesDownloaderService extends Service implements FilesDownloaderAp
         if (fd == null || fd.isClosed()){
             if (httpClient == null){
                 final CreateHttpClientConfig ccc = new CreateHttpClientConfig(this);
-                ccc.shared = true;
+                ccc.sharingContext = HttpClientFactory.createSharingContext(this); 
                 httpClient = HttpClientFactory.createHttpClient(ccc);
             }
             fd = new FilesDownloader(httpClient, 1, filesOnHold);

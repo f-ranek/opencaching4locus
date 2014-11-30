@@ -36,7 +36,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.bogus.ToStringBuilder;
-import org.bogus.android.AndroidUtils;
 import org.bogus.domowygpx.activities.DownloadListActivity;
 import org.bogus.domowygpx.activities.TaskConfiguration;
 import org.bogus.domowygpx.apache.http.client.utils.ResponseUtils;
@@ -50,6 +49,7 @@ import org.bogus.domowygpx.services.html.ImageUrlProcessor;
 import org.bogus.domowygpx.utils.DumpDatabase;
 import org.bogus.domowygpx.utils.HttpClientFactory;
 import org.bogus.domowygpx.utils.HttpClientFactory.CreateHttpClientConfig;
+import org.bogus.domowygpx.utils.HttpClientFactory.SharingContext;
 import org.bogus.domowygpx.utils.HttpException;
 import org.bogus.domowygpx.utils.InputStreamHolder;
 import org.bogus.geocaching.egpx.BuildConfig;
@@ -68,7 +68,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -100,23 +99,17 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
     private static final int NOTIFICATION_ID_ONGOING = 0x10;
     private static final int NOTIFICATION_ID_FINISHED = NOTIFICATION_ID_ONGOING+1;
     
-    private HttpClient httpClient;
+    private SharingContext sharingContext;
 
     private ConnectivityManager connectivityManager;
     private WifiManager wifiManager;
     private WifiLock wifiLock;
     
-    synchronized HttpClient getHttpClient(){
-        if (httpClient == null){
-            final CreateHttpClientConfig ccc = new CreateHttpClientConfig(this);
-            ccc.authorizeRequests = true;
-            ccc.shared = true;
-            ccc.preventCaching = true;
-            final HttpClient aHttpClient = HttpClientFactory.createHttpClient(ccc);
-            // aHttpClient.getParams().setIntParameter(HttpClientFactory.RAW_SOCKET_RECEIVE_BUFFER_SIZE, 32*1024);
-            httpClient = aHttpClient;
+    synchronized SharingContext getSharingContext(){
+        if (sharingContext == null){
+            sharingContext = HttpClientFactory.createSharingContext(this);
         }
-        return httpClient;        
+        return sharingContext;        
     }
     
     final static AtomicInteger threadIndexCount = new AtomicInteger();
@@ -305,11 +298,9 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         }
     }
     
-
-    OKAPI okApi;
-    
     class WorkerThread extends Thread implements GpxProcessMonitor 
     {
+        private final OKAPI okApi;
         final TaskConfiguration taskConfig;
         final GpxTask taskState;
         private boolean hasErrorDescription;
@@ -322,11 +313,10 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         public WorkerThread(TaskConfiguration taskConfiguration, GpxTask taskState)
         {
             super("gpx-downloader-thread-" + threadIndexCount.getAndIncrement());
+            this.okApi = OKAPI.getInstance(GpxDownloaderService.this).lockInstallationCode();
             this.taskConfig = taskConfiguration;
             this.taskState = taskState;
         }
-        
-        
         
         protected void appendSearchParameters(StringBuilder query, String userUuid) 
         throws JSONException
@@ -395,7 +385,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
             final boolean searchAndRetrieve = true;
             JSONObject retrParams = new JSONObject();
             
-            retrParams.put("langpref","pl|en"); // XXX configurable!
+            retrParams.put("langpref", okApi.getPreferredLanguageCode() + "|en"); // XXX
             retrParams.put("ns_ground", "true");
             retrParams.put("ns_gsak", "true");
             retrParams.put("ns_ox", "true");
@@ -455,9 +445,14 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         @Override
         public void run()
         {
+            Log.i(LOG_TAG, "START");
             try{
-                this.httpClient = getHttpClient();
-                Log.i(LOG_TAG, "START");
+                final CreateHttpClientConfig ccc = new CreateHttpClientConfig(GpxDownloaderService.this);
+                ccc.authorizeRequests = true;
+                ccc.sharingContext = getSharingContext();
+                ccc.preventCaching = true;
+                ccc.okapi = this.okApi;
+                this.httpClient = HttpClientFactory.createHttpClient(ccc);
                 run0();
             }finally{
                 httpClient = null;
@@ -473,13 +468,12 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         throws Exception
         {
             final Resources res = getResources();
-            final SharedPreferences config = getSharedPreferences("egpx", MODE_PRIVATE);
-            String userUuid = config.getString("userUuid", null);
+            String userUuid = okApi.getUserUuid(null);
             if (userUuid != null){
                 return userUuid;
             }
             
-            String userName = config.getString("userName", null);
+            String userName = okApi.getUserName();
             final boolean hasOAuth3 = okApi.getOAuth().hasOAuth3();
             
             HttpResponse resp = null;
@@ -497,19 +491,13 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                     if (userUuid == null || userUuid.length() == 0){
                         throw new IllegalStateException(res.getString(R.string.gpx_downloader_failed_to_get_user));
                     } 
-                    Editor editor = config.edit();
-                    editor.putString("userName", userName);
-                    editor.putString("userUuid", userUuid);
-                    editor.putString("userUUID:" + userName, userUuid);
-                    AndroidUtils.applySharedPrefsEditor(editor);
-                   
+                    okApi.setUserName(userName, userUuid);                   
                     return userUuid;
                 } else {
                     if (userName == null){
                         return null;
                     }
-                    final String key = "userUUID:" + userName;
-                    userUuid = config.getString(key, null);
+                    userUuid = okApi.getUserUuid(userName);
                     if (userUuid == null){
                         String url = okApi.getAPIUrl() + 
                                 "services/users/by_username?username="
@@ -524,7 +512,7 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                         if (userUuid == null){
                             throw new IllegalStateException("userUuid is null"); 
                         } else {
-                            config.edit().putString(key, userUuid).commit();
+                            okApi.setUserName(userName, userUuid);      
                         }
                     }
                     return userUuid;
@@ -536,7 +524,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
                 } else {
                     setErrorDescription(res.getString(R.string.gpx_downloader_no_such_user, userName), e); 
                 }
-                // 
                 throw e;
             }finally{
                 ResponseUtils.closeResponse(resp);
@@ -1390,8 +1377,6 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         Log.i(LOG_TAG, "Called onCreate");
         super.onCreate();
         
-        okApi = OKAPI.getInstance(this);
-        
         try{
             databaseHelper = new DatabaseHelper(this, "GpxDownloaderDatabase.db", null, 3);
             database = databaseHelper.getWritableDatabase();
@@ -1835,8 +1820,8 @@ public class GpxDownloaderService extends Service implements GpxDownloaderApi
         threads.clear();
         listeners.clear();
         
-        HttpClientFactory.closeHttpClient(httpClient);
-        httpClient = null;
+        HttpClientFactory.closeSharingContext(sharingContext);
+        sharingContext = null;
         
         databaseHelper.close();
         databaseHelper = null;

@@ -11,6 +11,7 @@ import org.apache.http.StatusLine;
 import org.apache.http.message.BasicStatusLine;
 import org.apache.http.protocol.HttpContext;
 import org.bogus.domowygpx.utils.Pair;
+import org.bogus.geocaching.egpx.BuildConfig;
 
 import android.content.Context;
 import android.util.Log;
@@ -18,12 +19,15 @@ import android.util.Log;
 public class OAuthRevocationDetectorInterceptor implements HttpResponseInterceptor
 {
     protected final Context context;
-    protected final OAuth oauth;
     protected final OKAPI okapi;
 
-    public OAuthRevocationDetectorInterceptor(Context context)
+    public OAuthRevocationDetectorInterceptor(Context context, OKAPI okapi)
     {
-        this.oauth = (okapi = OKAPI.getInstance(this.context = context)).getOAuth();
+        if (BuildConfig.DEBUG && (context == null || okapi == null)){
+            throw new NullPointerException();
+        }
+        this.context = context;
+        this.okapi = okapi;
     }
     
     @Override
@@ -45,7 +49,7 @@ public class OAuthRevocationDetectorInterceptor implements HttpResponseIntercept
                 }
                 
                 if ("invalid_token".equals(errorCode.first)){
-                    oauth.forgetOAuthCredentials();
+                    okapi.getOAuth().forgetOAuthCredentials();
                 }
                 
                 int resId = okapi.mapErrorCodeToMessage(errorCode.first);

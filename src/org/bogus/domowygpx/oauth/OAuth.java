@@ -12,9 +12,11 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
@@ -39,14 +41,26 @@ public class OAuth
     private final static Pattern AMPERSAND = Pattern.compile("\\Q&");
     private final static Pattern EQUALS = Pattern.compile("\\Q=");
     
-    final Context ctx;
-    final OKAPI okApi;
+    private final Context ctx;
+    private final OKAPI okApi;
+
+    private final SharedPreferences config;
+    private final AtomicInteger nonce;
     
+    private Map<String, String[]> consumerData;
+
     private String consumerKey;
     private String consumerSecret;
     
-    private SharedPreferences config;
-    private AtomicInteger nonce;
+    OAuth(OAuth oAuth)
+    {
+        this.ctx = oAuth.ctx;
+        this.okApi = oAuth.okApi;
+        this.config = oAuth.config;
+        this.nonce = oAuth.nonce;
+        oAuth.parseApiKeys();
+        this.consumerData = oAuth.consumerData;
+    }
     
     OAuth(Context ctx, OKAPI okApi)
     {
@@ -57,17 +71,46 @@ public class OAuth
         nonce = new AtomicInteger((int)(System.currentTimeMillis()%100000));
     }
     
+    void onInstallationChanged()
+    {
+        consumerKey = consumerSecret = null;
+    }
+    
+    private void parseApiKeys()
+    {
+        if (consumerData == null){
+            Map<String, String[]> cd = new HashMap<String, String[]>();
+            final String apiSecret = OKAPISecrets.getApiKey(ctx);
+            String[] installations = apiSecret.split("\n");
+            for (String installation : installations){
+                int idx = apiSecret.indexOf('=');
+                String code = installation.substring(0, idx);
+                installation = apiSecret.substring(idx+1);
+                idx = installation.indexOf('|');
+                String[] data = new String[] {
+                        installation.substring(0, idx),
+                        installation.substring(idx+1)
+                };
+                cd.put(code, data);
+            }
+            consumerData = cd;
+        }
+    }
+    
     public String getAPIKey()
     {
         if (consumerKey == null){
-            final String apiSecret = OKAPISecrets.getApiKey(ctx);
-            int idx = apiSecret.indexOf('|');
-            if (idx > 0){
-                consumerKey = apiSecret.substring(0, idx);
-                consumerSecret = apiSecret.substring(idx+1);
-            } else {
-                consumerKey = apiSecret;
+            parseApiKeys();
+            String[] data = consumerData.get(okApi.getInstallationCode());
+            if (data == null){
+                if (BuildConfig.DEBUG){
+                    throw new IllegalStateException("No okapi key for installation " + okApi.getInstallationCode());
+                } else {
+                    throw new IllegalStateException();
+                }
             }
+            consumerKey = data[0];
+            consumerSecret = data[1];
         }
         return consumerKey;
     }
@@ -78,21 +121,41 @@ public class OAuth
         return consumerSecret;
     }
     
-    public String getOAuthRequestTokenUrl()
+    String getOAuthRequestTokenUrl()
     {
         return okApi.getAPIUrl() + "services/oauth/request_token";
     }
     
-    public String getOAuthAuthorizeUrl()
+    String getOAuthAuthorizeUrl()
     {
         return okApi.getAPIUrl() + "services/oauth/authorize";
     }
    
-    public String getOAuthAccessTokenUrl()
+    String getOAuthAccessTokenUrl()
     {
         return okApi.getAPIUrl() + "services/oauth/access_token";
     }
 
+    void migratePlConfig(Editor editor, String target)
+    {
+        for (Entry<String, ?> entry : config.getAll().entrySet()){
+            final String key = entry.getKey();
+            if (key.startsWith("oauth") || key.startsWith("userName") || 
+                    key.toLowerCase(Locale.ENGLISH).startsWith("useruuid"))
+            {
+                Object value = entry.getValue();
+                String newKey = target + ":" + key;
+                editor.remove(key);
+                if (value instanceof String){
+                    editor.putString(newKey, (String)value);
+                } else
+                if (value instanceof Long){
+                    editor.putLong(newKey, (Long)value);
+                }
+            }
+        }
+    }
+    
     /**
      * Indicates, whether {@link #gotRequestToken1Response(Map)} has been called with appropriate
      * arguments. Now, {@link #getAuthorize2Uri()} should be called.
@@ -101,9 +164,10 @@ public class OAuth
      */
     public boolean hasOAuth2()
     {
-        boolean result = config.getString("oauth2_token", "").length() > 0
-                && config.getString("oauth2_token_secret", "").length() > 0
-                && config.getLong("oauth2_token_time", -1) > System.currentTimeMillis()-15L*60L*1000L;  
+        // TODO: add prefix
+        boolean result = config.getString(okApi.getInstallationCode().concat(":oauth2_token"), "").length() > 0
+                && config.getString(okApi.getInstallationCode().concat(":oauth2_token_secret"), "").length() > 0
+                && config.getLong(okApi.getInstallationCode().concat(":oauth2_token_time"), -1) > System.currentTimeMillis()-15L*60L*1000L;  
         return result;
     }    
 
@@ -117,8 +181,8 @@ public class OAuth
      */
     public boolean hasOAuth3()
     {
-        boolean result = config.getString("oauth3_token", "").length() > 0
-                && config.getString("oauth3_token_secret", "").length() > 0;
+        boolean result = config.getString(okApi.getInstallationCode().concat(":oauth3_token"), "").length() > 0
+                && config.getString(okApi.getInstallationCode().concat(":oauth3_token_secret"), "").length() > 0;
         return result;
     }    
 
@@ -264,9 +328,9 @@ public class OAuth
         }
         
         Editor editor = config.edit();
-        editor.putString("oauth2_token", token);
-        editor.putString("oauth2_token_secret", secret);
-        editor.putLong("oauth2_token_time", System.currentTimeMillis());
+        editor.putString(okApi.getInstallationCode().concat(":oauth2_token"), token);
+        editor.putString(okApi.getInstallationCode().concat(":oauth2_token_secret"), secret);
+        editor.putLong(okApi.getInstallationCode().concat(":oauth2_token_time"), System.currentTimeMillis());
         AndroidUtils.applySharedPrefsEditor(editor);
     }
     
@@ -277,7 +341,7 @@ public class OAuth
     public synchronized URI getAuthorize2Uri()
     throws IllegalStateException
     {
-        final String token = config.getString("oauth2_token", "");
+        final String token = config.getString(okApi.getInstallationCode().concat(":oauth2_token"), "");
         if (token.length() == 0){
             throw new IllegalStateException("No OAuth2 authorization");
         }
@@ -302,8 +366,8 @@ public class OAuth
         if (verifierValue == null || verifierValue.length() == 0){
             throw new IllegalArgumentException("No verifierValue");
         }
-        final String secret = config.getString("oauth2_token_secret", "");
-        final String token = config.getString("oauth2_token", "");
+        final String secret = config.getString(okApi.getInstallationCode().concat(":oauth2_token_secret"), "");
+        final String token = config.getString(okApi.getInstallationCode().concat(":oauth2_token"), "");
         if (secret.length() == 0 || token.length() == 0){
             throw new IllegalStateException("No OAuth2 authorization");
         }
@@ -344,22 +408,22 @@ public class OAuth
         }
         
         Editor editor = config.edit();
-        editor.putString("oauth3_token", token);
-        editor.putString("oauth3_token_secret", secret);
-        editor.remove("oauth2_token_time");
-        editor.remove("oauth2_token");
-        editor.remove("oauth2_token_secret");
+        editor.putString(okApi.getInstallationCode().concat(":oauth3_token"), token);
+        editor.putString(okApi.getInstallationCode().concat(":oauth3_token_secret"), secret);
+        editor.remove(okApi.getInstallationCode().concat(":oauth2_token_time"));
+        editor.remove(okApi.getInstallationCode().concat(":oauth2_token"));
+        editor.remove(okApi.getInstallationCode().concat(":oauth2_token_secret"));
         AndroidUtils.applySharedPrefsEditor(editor);
     }
     
     public synchronized void forgetOAuthCredentials()
     {
         Editor editor = config.edit();
-        editor.remove("userUuid");
-        editor.remove("oauth2_token");
-        editor.remove("oauth2_token_secret");
-        editor.remove("oauth3_token");
-        editor.remove("oauth3_token_secret");
+        editor.remove(okApi.getInstallationCode().concat(":userUuid"));
+        editor.remove(okApi.getInstallationCode().concat(":oauth2_token"));
+        editor.remove(okApi.getInstallationCode().concat(":oauth2_token_secret"));
+        editor.remove(okApi.getInstallationCode().concat(":oauth3_token"));
+        editor.remove(okApi.getInstallationCode().concat(":oauth3_token_secret"));
         AndroidUtils.applySharedPrefsEditor(editor);        
     }
     
@@ -373,8 +437,8 @@ public class OAuth
     public URI signOAuth3Uri(URI uri)
     throws IllegalStateException, IllegalArgumentException
     {
-        final String token = config.getString("oauth3_token", "");
-        final String secret = config.getString("oauth3_token_secret", "");
+        final String token = config.getString(okApi.getInstallationCode().concat(":oauth3_token"), "");
+        final String secret = config.getString(okApi.getInstallationCode().concat(":oauth3_token_secret"), "");
         if (token.length() == 0 || secret.length() == 0){
             throw new IllegalStateException("No OAuth3 authorization");
         }

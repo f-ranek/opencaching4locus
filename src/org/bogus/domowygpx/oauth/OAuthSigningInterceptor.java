@@ -18,9 +18,9 @@ public class OAuthSigningInterceptor implements HttpRequestInterceptor
 {
     protected final OAuth oauth;
 
-    public OAuthSigningInterceptor(Context context)
+    public OAuthSigningInterceptor(Context context, OKAPI okapi)
     {
-        this.oauth = OKAPI.getInstance(context).getOAuth();
+        this.oauth = okapi.getOAuth();
     }
     
     @Override

@@ -4,6 +4,8 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -18,9 +20,15 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.method.LinkMovementMethod;
+import android.text.method.MovementMethod;
+import android.text.style.URLSpan;
 import android.view.View;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.TextView;
 
 public class AndroidUtils
 {
@@ -143,4 +151,50 @@ public class AndroidUtils
         return hasWiFi;
         
     }
+
+    private final static Pattern URL_TEXT_PATTERN = Pattern.compile("\\(([^\\)]+)=%([0-9])\\)", Pattern.CASE_INSENSITIVE);
+    
+    public static CharSequence insertUrls(CharSequence baseText, String[] urls)
+    {
+        final Matcher matcher = URL_TEXT_PATTERN.matcher(baseText);
+
+        int start = 0;
+        if (matcher.find()) {
+            final SpannableStringBuilder newText = new SpannableStringBuilder();
+            do {
+                int end = matcher.start();
+                if (end > start){
+                    newText.append(baseText.subSequence(start, end));
+                }
+                
+                int len0 = newText.length();
+                newText.append(matcher.group(1));
+                int len1 = newText.length();
+                int idx = Integer.parseInt(matcher.group(2));
+                URLSpan url = new URLSpan(urls[idx]);
+                newText.setSpan(url, len0, len1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                
+                start = matcher.end();
+            }while(matcher.find());
+            if (baseText.length() > start){
+                newText.append(baseText.subSequence(start, baseText.length()));
+            }
+            
+            return newText;
+        }
+        return baseText;
+    }
+    
+    public static void insertUrls(TextView textView, CharSequence baseText, String[] urls)
+    {
+        CharSequence parsedText = insertUrls(baseText, urls);
+        if (parsedText != baseText){
+            final MovementMethod mm = textView.getMovementMethod();
+            if (!(mm instanceof LinkMovementMethod)) {
+                textView.setMovementMethod(LinkMovementMethod.getInstance());
+            }
+            textView.setText(parsedText);
+        }
+    }
+
 }

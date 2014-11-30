@@ -11,6 +11,7 @@ import org.bogus.android.DecimalKeyListener;
 import org.bogus.domowygpx.activities.DownloadListContext.GpxListItem;
 import org.bogus.domowygpx.activities.DownloadListContext.ListItemViewHolder;
 import org.bogus.domowygpx.application.Application;
+import org.bogus.domowygpx.oauth.OKAPI;
 import org.bogus.domowygpx.services.GpxDownloaderApi;
 import org.bogus.domowygpx.services.GpxDownloaderListener;
 import org.bogus.domowygpx.services.GpxDownloaderService;
@@ -166,7 +167,7 @@ public class LocusSearchForCachesActivity extends Activity implements GpxDownloa
                     TaskConfiguration.DOWNLOAD_IMAGES_STRATEGY_ON_WIFI));
         onlyWithTrackables = config.getBoolean("Locus.onlyWithTrackables", 
             config.getBoolean("onlyWithTrackables", false));
-        cacheTypesConfig = new CacheTypesConfig();
+        cacheTypesConfig = new CacheTypesConfig(OKAPI.getInstance(this)); // TODO: cache OKAPI in local variable ?
         cacheTypesConfig.parseFromConfigString(config.getString("Locus.cacheTypes", 
             config.getString("cacheTypes", cacheTypesConfig.getDefaultConfig())));
         

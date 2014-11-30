@@ -24,11 +24,8 @@ import org.json.JSONObject;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
@@ -288,14 +285,9 @@ public class OAuthSigningActivity extends Activity
                             String userUuid = (String)obj.opt("uuid");
                             String userName = (String)obj.opt("username");
                             if (userUuid == null || userName == null || userUuid.length() == 0 || userName.length() == 0){
-                                 Log.e(LOG_TAG, "Ups, can not find out logged user name");
+                                Log.e(LOG_TAG, "Ups, can not find out logged user name");
                             } else {
-                                SharedPreferences config = OAuthSigningActivity.this.getSharedPreferences("egpx", Context.MODE_PRIVATE);
-                                Editor editor = config.edit();
-                                editor.putString("userName", userName);
-                                editor.putString("userUuid", userUuid);
-                                editor.putString("userUUID:" + userName, userUuid);
-                                AndroidUtils.applySharedPrefsEditor(editor);
+                                okApi.setUserName(userName, userUuid);
                             }
                             
                         } catch (Exception e) {
@@ -381,7 +373,7 @@ public class OAuthSigningActivity extends Activity
     {
         super.onCreate(savedInstanceState);
         
-        oauth = (okApi= OKAPI.getInstance(this)).getOAuth();
+        oauth = (okApi= OKAPI.getInstance(this).lockInstallationCode()).getOAuth();
         
         if (oauth.hasOAuth3()){
             prepareSignOutDialog();

@@ -2,11 +2,14 @@ package org.bogus.android;
 
 import android.content.Context;
 import android.preference.Preference;
+import android.text.method.LinkMovementMethod;
+import android.text.method.MovementMethod;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.widget.Button;
+import android.widget.TextView;
 
 /**
  * A preference to execute shot-action. Button title can be set from xml config, using 
@@ -24,6 +27,8 @@ public class ButtonPreference extends Preference
     private Button button;
     private String buttonText;
     private boolean shouldDisableDependents; 
+
+    private boolean makeTitleClickable;
     
     public interface OnClickListener
     {
@@ -67,6 +72,14 @@ public class ButtonPreference extends Preference
         }
         viewGroup.setVisibility(View.VISIBLE);
         viewGroup.setClickable(true);
+        
+        if (makeTitleClickable){
+            TextView title = (TextView)view.findViewById(android.R.id.title);
+            final MovementMethod mm = title.getMovementMethod();
+            if (!(mm instanceof LinkMovementMethod)) {
+                title.setMovementMethod(LinkMovementMethod.getInstance());
+            }
+        }
     }
     
     public void setOnClickListener(final OnClickListener ocl)
@@ -124,6 +137,14 @@ public class ButtonPreference extends Preference
             notifyChanged();
         }
     }
-    
-    
+
+    public boolean isMakeTitleClickable()
+    {
+        return makeTitleClickable;
+    }
+
+    public void setMakeTitleClickable(boolean makeTitleClickable)
+    {
+        this.makeTitleClickable = makeTitleClickable;
+    }
 }

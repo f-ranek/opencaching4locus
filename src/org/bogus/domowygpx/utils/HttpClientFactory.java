@@ -5,7 +5,10 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
@@ -24,6 +27,7 @@ import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.scheme.SocketFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.params.AbstractHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
@@ -33,21 +37,25 @@ import org.bogus.domowygpx.apache.http.client.protocol.RequestAcceptEncoding;
 import org.bogus.domowygpx.apache.http.client.protocol.ResponseContentEncoding;
 import org.bogus.domowygpx.oauth.OAuthRevocationDetectorInterceptor;
 import org.bogus.domowygpx.oauth.OAuthSigningInterceptor;
+import org.bogus.domowygpx.oauth.OKAPI;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.net.http.AndroidHttpClient;
+import android.util.Log;
 
 public class HttpClientFactory
 {
+    private final static String LOG_TAG = "HttpClientFactory";
+    
     public static class CreateHttpClientConfig
     {
         public final Context context;
+        public OKAPI okapi;
 
-        /** Returns shared client, which means it can be used by differet threads simultaneously */
-        public boolean shared;
+        /** Shared client, instance created by {@link HttpClientFactory#createSharingContext(Context) */
+        public SharingContext sharingContext;
         /** Add interceptor to preemptively add OAuth headers */
         public boolean authorizeRequests;
         /** Prevents HTTP caching */
@@ -170,7 +178,96 @@ public class HttpClientFactory
 
     }
     
-    public static HttpClient createHttpClient(CreateHttpClientConfig cfg)
+    public static class MyHttpParams extends AbstractHttpParams
+    {
+        /** Map of HTTP parameters that this collection contains. */
+        Map<String, Object> parameters;
+
+        @Override
+        public Object getParameter(final String name) {
+            // See if the parameter has been explicitly defined
+            Object param = null;
+            if (this.parameters != null) {
+                param = this.parameters.get(name);
+            }    
+            return param;
+        }
+
+        @Override
+        public HttpParams setParameter(final String name, final Object value) {
+            if (this.parameters == null) {
+                this.parameters = new HashMap<String, Object>();
+            }
+            this.parameters.put(name, value);
+            return this;
+        }
+        
+        @Override
+        public boolean removeParameter(String name) {
+            if (this.parameters == null) {
+                return false;
+            }
+            //this is to avoid the case in which the key has a null value
+            if (this.parameters.containsKey(name)) {
+                this.parameters.remove(name);
+                return true;
+            } else {
+                return false;
+            }
+        }
+        
+        @Override
+        public HttpParams copy() {
+            MyHttpParams result = new MyHttpParams();
+            if (parameters != null){
+                result.parameters = new HashMap<String, Object>(this.parameters);
+            }
+            return result;
+        }
+    }
+    
+    public static class SharingContext {
+        MyHttpParams params;
+        ClientConnectionManager ccm;
+    }
+    
+    /** 
+     * Creates config for shared client, which means it can be used by differet threads simultaneously.
+     * The config may be shared (used) across many invocations to {@link #createHttpClient} 
+     */
+    public static SharingContext createSharingContext(Context context)
+    {
+        final SharedPreferences config = context.getSharedPreferences("egpx", Context.MODE_PRIVATE);
+        final MyHttpParams params = new MyHttpParams();
+        // max connections per route
+        final int maxConnectionsPerHost = config.getInt("HttpClientFactory_maxConnectionsPerHost", 4);
+        // total max connections per HttpClient
+        final int maxTotalConnections = config.getInt("HttpClientFactory_maxTotalConnections", 16);
+        // timeout (in seconds) for a connection while blocking on HttpClientFactory_maxConnectionsPerHost
+        // or HttpClientFactory_maxTotalConnections limit
+        final long connectionTimeout = config.getInt("HttpClientFactory_waitForConnectionTimeout", 5*60);
+
+        ConnManagerParams.setTimeout(params, connectionTimeout * 1000L);
+        ConnManagerParams.setMaxTotalConnections(params, maxTotalConnections);
+        
+        ConnManagerParams.setMaxConnectionsPerRoute(params, new ConnPerRoute(){
+            @Override
+            public int getMaxForRoute(HttpRoute route)
+            {
+                return maxConnectionsPerHost;
+            }});
+        params.setParameter(ClientPNames.CONNECTION_MANAGER_FACTORY, new ClientConnectionManagerFactory(){
+        @Override
+        public ClientConnectionManager newInstance(HttpParams params, SchemeRegistry schemeRegistry)
+        {
+            return new ThreadSafeClientConnManager(params, schemeRegistry);
+        }});
+        final SharingContext result = new SharingContext();
+        result.params = params;
+        return result;
+    }
+    
+    public static HttpClient createHttpClient(final CreateHttpClientConfig cfg)
     {
         final SharedPreferences config = cfg.context.getSharedPreferences("egpx", Context.MODE_PRIVATE);
         
@@ -178,34 +275,29 @@ public class HttpClientFactory
             java.util.logging.Logger.getLogger("org.apache.http.headers").setLevel(java.util.logging.Level.FINEST);
         }
         
-        DefaultHttpClient httpClient = new DefaultHttpClient();
+        DefaultHttpClient httpClient = new DefaultHttpClient()
+        {
+            @Override
+            protected ClientConnectionManager createClientConnectionManager() {
+                if (cfg.sharingContext != null){ 
+                    ClientConnectionManager ccm = cfg.sharingContext.ccm;
+                    if (ccm == null){
+                        ccm = super.createClientConnectionManager();
+                        cfg.sharingContext.ccm = ccm;
+                    }
+                    return ccm;
+                } else {
+                    return super.createClientConnectionManager();
+                }
+            }
+        };
 
         final HttpParams params = httpClient.getParams();
        
-        if (cfg.shared){
-            // max connections per route
-            final int maxConnectionsPerHost = config.getInt("HttpClientFactory_maxConnectionsPerHost", 4);
-            // total max connections per HttpClient
-            final int maxTotalConnections = config.getInt("HttpClientFactory_maxTotalConnections", 16);
-            // timeout (in seconds) for a connection while blocking on HttpClientFactory_maxConnectionsPerHost
-            // or HttpClientFactory_maxTotalConnections limit
-            final long connectionTimeout = config.getInt("HttpClientFactory_waitForConnectionTimeout", 5*60);
-
-            ConnManagerParams.setTimeout(params, connectionTimeout * 1000L);
-            ConnManagerParams.setMaxTotalConnections(params, maxTotalConnections);
-            
-            ConnManagerParams.setMaxConnectionsPerRoute(params, new ConnPerRoute(){
-                @Override
-                public int getMaxForRoute(HttpRoute route)
-                {
-                    return maxConnectionsPerHost;
-                }});
-            params.setParameter(ClientPNames.CONNECTION_MANAGER_FACTORY, new ClientConnectionManagerFactory(){
-            @Override
-            public ClientConnectionManager newInstance(HttpParams params, SchemeRegistry schemeRegistry)
-            {
-                return new ThreadSafeClientConnManager(params, schemeRegistry);
-            }});
+        if (cfg.sharingContext != null && cfg.sharingContext.params.parameters != null){
+            for (Entry<String, Object> param : cfg.sharingContext.params.parameters.entrySet()){
+                params.setParameter(param.getKey(), param.getValue());
+            }
         }
 
         // timeout to wait for a connection establishment (in seconds)
@@ -239,8 +331,8 @@ public class HttpClientFactory
         } 
         httpClient.addResponseInterceptor(new CountingEntityInterceptor());
         if (cfg.authorizeRequests){
-            httpClient.addRequestInterceptor(new OAuthSigningInterceptor(cfg.context));
-            httpClient.addResponseInterceptor(new OAuthRevocationDetectorInterceptor(cfg.context));
+            httpClient.addRequestInterceptor(new OAuthSigningInterceptor(cfg.context, cfg.okapi));
+            httpClient.addResponseInterceptor(new OAuthRevocationDetectorInterceptor(cfg.context, cfg.okapi));
         }
         if (cfg.preventCaching){
             httpClient.addRequestInterceptor(new HttpRequestInterceptor(){
@@ -256,13 +348,27 @@ public class HttpClientFactory
     
     public static void closeHttpClient(HttpClient httpClient)
     {
-        try{
-            httpClient.getConnectionManager().shutdown();
-            if (httpClient instanceof AndroidHttpClient){
-                ((AndroidHttpClient)httpClient).close();
+        if (httpClient != null){
+            try{
+                httpClient.getConnectionManager().shutdown();
+            }catch(Exception e){
+                Log.d(LOG_TAG, "Failed to close HttpClient", e);
             }
-        }catch(Exception e){
-            
         }
     }
+    
+    public static void closeSharingContext(SharingContext sharingContext)
+    {
+        if (sharingContext != null){
+            try{
+                final ClientConnectionManager ccm = sharingContext.ccm;
+                if (ccm != null){
+                    ccm.shutdown();
+                }
+            }catch(Exception e){
+                Log.d(LOG_TAG, "Failed to close SharingContext", e);
+            }
+        }
+    }
+
 }

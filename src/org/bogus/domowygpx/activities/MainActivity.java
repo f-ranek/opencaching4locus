@@ -11,6 +11,7 @@ import org.bogus.android.AndroidUtils;
 import org.bogus.android.DecimalKeyListener;
 import org.bogus.android.LockableScrollView;
 import org.bogus.domowygpx.application.Application;
+import org.bogus.domowygpx.oauth.OKAPI;
 import org.bogus.domowygpx.services.GpxDownloaderService;
 import org.bogus.domowygpx.utils.LocationUtils;
 import org.bogus.geocaching.egpx.R;
@@ -157,7 +158,7 @@ public class MainActivity extends Activity
 		onlyWithTrackablesFragment = new OnlyWithTrackablesFragment(view, getWindow());
 		
 		final TextView editCacheTypes = (TextView) findViewById(R.id.editCacheTypes);
-		cacheTypesConfig = new CacheTypesConfig();
+		cacheTypesConfig = new CacheTypesConfig(OKAPI.getInstance(this)); // TODO: cache OKAPI in local variable ?
 		cacheTypesConfigRenderer = new CacheTypesConfigRenderer(this, cacheTypesConfig, editCacheTypes);
 		
 		final TextView editCacheDifficulties = (TextView) findViewById(R.id.editCacheDifficulties);

@@ -161,6 +161,8 @@
     <string name="cacheTypeUnknown">Skrzynka nietypowa</string>
     <string name="cacheTypeVirtual">Wirtualna</string>
     <string name="cacheTypeWebcam">Webcam</string>
+    <string name="cacheTypeDriveIn">Drive-In</string>
+    <string name="cacheTypeMath">Quiz mat.-fizyczny</string>
     
     <string name="difficultyTask">Trudność zadania</string>
     <string name="difficultyTerrain">Trudność terenu</string>
